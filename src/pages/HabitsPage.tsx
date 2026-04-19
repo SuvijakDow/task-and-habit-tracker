@@ -35,8 +35,6 @@ export function HabitsPage() {
   // Drag state
   const [draggedHabitId, setDraggedHabitId] = useState<string | null>(null);
   const [overHabitId, setOverHabitId] = useState<string | null>(null);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchStartY, setTouchStartY] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -255,21 +253,10 @@ export function HabitsPage() {
     setOverHabitId(null);
   };
 
-  // Touch handlers for mobile drag
-  const handleTouchStart = (habitId: string, e: React.TouchEvent) => {
-    setDraggedHabitId(habitId);
-    setTouchStartX(e.touches[0].clientX);
-    setTouchStartY(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!draggedHabitId) return;
-    // Could implement gesture detection here for reordering
-  };
-
-  const handleTouchEnd = () => {
-    setDraggedHabitId(null);
-  };
+  // Touch handlers for mobile drag (for future implementation)
+  // const handleTouchStart = (habitId: string, e: React.TouchEvent) => {
+  //   setDraggedHabitId(habitId);
+  // };
 
   if (authLoading) {
     return <div className="text-center py-8">Loading...</div>;
@@ -364,7 +351,7 @@ export function HabitsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {habits.map((habit, index) => {
+            {habits.map((habit) => {
               const isCompletedToday = habit.completedDates.includes(todayDate);
               const streak = habit.completedDates.length;
               const isDragging = draggedHabitId === habit.id;
@@ -398,7 +385,6 @@ export function HabitsPage() {
 
                     {/* Mobile Drag Handle */}
                     <div
-                      onTouchStart={(e) => handleTouchStart(habit.id, e)}
                       className="flex-shrink-0 text-gray-400 active:text-purple-400 transition-colors duration-200 sm:hidden"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

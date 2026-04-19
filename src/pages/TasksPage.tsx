@@ -74,7 +74,7 @@ export function TasksPage() {
       setIsSubmitting(true);
       setError(null);
 
-      const newTaskId = await createTask(user.uid, {
+      await createTask(user.uid, {
         title: formData.title,
         description: formData.description,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,

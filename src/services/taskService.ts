@@ -9,8 +9,6 @@ import {
   query,
   where,
   Timestamp,
-  DocumentData,
-  QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { Task } from '@/types';
@@ -147,7 +145,7 @@ export const updateTask = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, TASKS_COLLECTION, taskId);
-    const dataToUpdate: DocumentData = {
+    const dataToUpdate: Record<string, any> = {
       ...updates,
       updatedAt: Timestamp.now(),
     };

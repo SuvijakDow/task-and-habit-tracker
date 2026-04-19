@@ -9,7 +9,6 @@ import {
   query,
   where,
   Timestamp,
-  DocumentData,
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
