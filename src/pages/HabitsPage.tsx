@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Flame } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +12,7 @@ import {
 import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
+import { showToast } from '@/components/Toast';
 
 export function HabitsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -105,33 +106,42 @@ export function HabitsPage() {
     }
   };
 
-  const handleToggleHabit = async (habitId: string, isCompletedToday: boolean) => {
+  const handleToggleHabit = useCallback(async (habitId: string, isCompletedToday: boolean) => {
     if (!user) return;
 
+    // Compute the optimistic completedDates
+    const habit = habits.find((h) => h.id === habitId);
+    if (!habit) return;
+
+    const previousDates = [...habit.completedDates];
+    const optimisticDates = isCompletedToday
+      ? habit.completedDates.filter((date) => date !== todayDate)
+      : [...habit.completedDates, todayDate];
+
+    // Optimistic update: instantly reflect the change in UI
+    setHabits((prev) =>
+      prev.map((h) =>
+        h.id === habitId ? { ...h, completedDates: optimisticDates } : h
+      )
+    );
+
     try {
-      setError(null);
       if (isCompletedToday) {
         await unmarkHabitCompletedDate(habitId, todayDate);
       } else {
         await markHabitCompletedToday(habitId);
       }
-
-      const updatedHabits = habits.map((habit) => {
-        if (habit.id === habitId) {
-          const completedDates = isCompletedToday
-            ? habit.completedDates.filter((date) => date !== todayDate)
-            : [...habit.completedDates, todayDate];
-          return { ...habit, completedDates };
-        }
-        return habit;
-      });
-
-      setHabits(updatedHabits);
     } catch (err) {
-      setError('Failed to update habit. Please try again.');
+      // Revert to previous state on failure
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === habitId ? { ...h, completedDates: previousDates } : h
+        )
+      );
+      showToast('Failed to update habit. Please try again.', 'error');
       console.error('Error toggling habit:', err);
     }
-  };
+  }, [habits, todayDate, user]);
 
   const handleEditHabit = (habitId: string, title: string, days: number[]) => {
     setEditingHabitId(habitId);

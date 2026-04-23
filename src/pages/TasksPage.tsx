@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CalendarDays, CheckSquare } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task } from '@/types';
@@ -13,6 +13,7 @@ import {
   getUserCategories,
 } from '@/services/categoryService';
 import { formatToDateString } from '@/utils/dateUtils';
+import { showToast } from '@/components/Toast';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -201,19 +202,29 @@ export function TasksPage() {
     }
   };
 
-  const handleToggleCompletion = async (taskId: string, currentStatus: boolean) => {
+  const handleToggleCompletion = useCallback(async (taskId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+
+    // Optimistic update: instantly reflect the change in UI
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, isCompleted: newStatus } : t
+      )
+    );
+
     try {
-      await updateTask(taskId, { isCompleted: !currentStatus });
-      setTasks(
-        tasks.map((t) =>
-          t.id === taskId ? { ...t, isCompleted: !currentStatus } : t
+      await updateTask(taskId, { isCompleted: newStatus });
+    } catch (err) {
+      // Revert to previous state on failure
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, isCompleted: currentStatus } : t
         )
       );
-    } catch (err) {
-      setError('Failed to update task. Please try again.');
+      showToast('Failed to update task. Please try again.', 'error');
       console.error('Error updating task:', err);
     }
-  };
+  }, []);
 
   const handleEditTask = (task: Task) => {
     const matchedCategory = findCategoryByTaskValue(categories, task.category);
