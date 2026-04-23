@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BarChart2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getUserDailyHabits, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation } from '@/services/habitService';
 import { DailyHabit } from '@/types';
@@ -44,7 +45,9 @@ export function AnalyticsPage() {
     return (
       <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
         <div className="bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 p-8 md:p-12 text-center">
-          <div className="text-purple-300 text-5xl mb-4">📊</div>
+          <div className="flex justify-center mb-4">
+            <BarChart2 className="h-12 w-12 text-purple-400" />
+          </div>
           <h3 className="text-xl font-semibold text-gray-800 mb-2">No habits yet</h3>
           <p className="text-gray-600">
             Create a habit first to see analytics!
@@ -56,9 +59,12 @@ export function AnalyticsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
-      <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 md:mb-8">
-        📊 Habit Analytics
-      </h1>
+      <div className="mb-6 md:mb-8 flex items-center gap-3">
+        <BarChart2 className="h-7 w-7 md:h-8 md:w-8 text-purple-500" />
+        <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
+          Habit Analytics
+        </h1>
+      </div>
 
       <div className="space-y-4 md:space-y-6">
         {habits.map((habit) => {
@@ -81,7 +87,7 @@ export function AnalyticsPage() {
               {/* Stats Row */}
               <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
                 {/* Current Streak */}
-                <div className="bg-white/45 backdrop-blur-md border border-white/40 rounded-2xl shadow-lg shadow-purple-500/10 p-4 md:p-5">
+                <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Current Streak</p>
                   <p className="text-2xl md:text-3xl font-bold text-orange-600 mt-1">
                     🔥 {streak}
@@ -92,7 +98,7 @@ export function AnalyticsPage() {
                 </div>
 
                 {/* Total Completions */}
-                <div className="bg-white/45 backdrop-blur-md border border-white/40 rounded-2xl shadow-lg shadow-purple-500/10 p-4 md:p-5">
+                <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Total Completions</p>
                   <p className="text-2xl md:text-3xl font-bold text-purple-600 mt-1">
                     ✨ {totalCompletions}
@@ -104,7 +110,7 @@ export function AnalyticsPage() {
               </div>
 
               {/* 7-Day Visual Calendar */}
-              <div className="bg-white/45 backdrop-blur-md border border-white/40 rounded-2xl shadow-lg shadow-purple-500/10 p-4 md:p-5">
+              <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
                 <p className="text-gray-600 text-xs md:text-sm font-medium mb-3">Last 7 Days</p>
                 <div className="flex gap-2 md:gap-3 justify-between">
                   {past7Days.map((day, index) => {
@@ -139,7 +145,7 @@ export function AnalyticsPage() {
               </div>
 
               {/* Completion Rate */}
-              <div className="mt-4 md:mt-6 bg-white/45 backdrop-blur-md border border-white/40 rounded-2xl shadow-lg shadow-purple-500/10 p-4 md:p-5">
+              <div className="mt-4 md:mt-6 bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
                 <div className="flex items-center justify-between">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Overall Consistency</p>
                   <span className="text-sm md:text-base font-semibold text-blue-600">

@@ -187,24 +187,26 @@ export function AuthPage() {
       <div className="w-full max-w-md">
         {/* Logo / Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-indigo-600 mb-2">TaskTracker</h1>
-          <p className="text-gray-600">Your minimal task and habit companion</p>
+          <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500 mb-2">
+            TaskTracker
+          </h1>
+          <p className="text-purple-900/60 font-medium">Your minimal task and habit companion</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white/40 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl p-8 md:p-10">
           {/* Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex gap-2 p-1.5 bg-white/30 rounded-full">
             <button
               onClick={() => {
                 setMode('login');
                 setError(null);
                 setLoginData({ email: '', password: '' });
               }}
-              className={`flex-1 py-4 font-semibold text-center transition-colors ${
+              className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-center transition-all ${
                 mode === 'login'
-                  ? 'bg-indigo-50 text-indigo-600 border-b-2 border-indigo-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white/60 text-purple-700 shadow-md'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
               }`}
             >
               Sign In
@@ -217,28 +219,28 @@ export function AuthPage() {
                   email: '',
                   password: '',
                   confirmPassword: '',
-                  displayName: '',
-                });
-              }}
-              className={`flex-1 py-4 font-semibold text-center transition-colors ${
-                mode === 'signup'
-                  ? 'bg-indigo-50 text-indigo-600 border-b-2 border-indigo-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
+                    displayName: '',
+                  });
+                }}
+               className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-center transition-all ${
+                 mode === 'signup'
+                   ? 'bg-white/60 text-purple-700 shadow-md'
+                   : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
+               }`}
+             >
+               Sign Up
+             </button>
+           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mt-6 p-4 bg-red-50/90 border border-red-200 rounded-xl text-red-700 text-sm">
               {error}
             </div>
           )}
 
           {/* Form Content */}
-          <div className="px-6 py-8">
+          <div className="pt-8">
             {mode === 'login' ? (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
@@ -253,7 +255,7 @@ export function AuthPage() {
                     onChange={handleLoginChange}
                     placeholder="you@example.com"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50"
+                    className="w-full px-4 py-3 bg-white/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:bg-white/35"
                   />
                 </div>
 
@@ -269,14 +271,14 @@ export function AuthPage() {
                     onChange={handleLoginChange}
                     placeholder="••••••••"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50"
+                    className="w-full px-4 py-3 bg-white/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:bg-white/35"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -295,7 +297,7 @@ export function AuthPage() {
                     onChange={handleSignupChange}
                     placeholder="John Doe"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50"
+                    className="w-full px-4 py-3 bg-white/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:bg-white/35"
                   />
                 </div>
 
@@ -311,7 +313,7 @@ export function AuthPage() {
                     onChange={handleSignupChange}
                     placeholder="you@example.com"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50"
+                    className="w-full px-4 py-3 bg-white/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:bg-white/35"
                   />
                 </div>
 
@@ -327,7 +329,7 @@ export function AuthPage() {
                     onChange={handleSignupChange}
                     placeholder="••••••••"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50"
+                    className="w-full px-4 py-3 bg-white/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:bg-white/35"
                   />
                 </div>
 
@@ -343,14 +345,14 @@ export function AuthPage() {
                     onChange={handleSignupChange}
                     placeholder="••••••••"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50"
+                    className="w-full px-4 py-3 bg-white/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:bg-white/35"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Creating account...' : 'Create Account'}
                 </button>
@@ -369,7 +371,7 @@ export function AuthPage() {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isSubmitting}
-              className="w-full mt-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full mt-4 py-3 bg-white/60 border border-white/60 text-gray-700 font-semibold rounded-xl hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path

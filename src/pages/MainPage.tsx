@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BarChart2, CheckSquare, Flame } from 'lucide-react';
 import { TasksPage } from '@/pages/TasksPage';
 import { HabitsPage } from '@/pages/HabitsPage';
 import { AnalyticsPage } from '@/pages/AnalyticsPage';
@@ -22,7 +23,10 @@ export function MainPage() {
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              📋 Tasks
+              <span className="inline-flex items-center gap-1.5">
+                <CheckSquare className="h-4 w-4 md:h-5 md:w-5 text-fuchsia-500" />
+                Tasks
+              </span>
               {currentPage === 'tasks' && (
                 <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-purple-500" />
               )}
@@ -35,7 +39,10 @@ export function MainPage() {
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              🔥 Daily Habits
+              <span className="inline-flex items-center gap-1.5">
+                <Flame className="h-4 w-4 md:h-5 md:w-5 text-pink-500" />
+                Daily Habits
+              </span>
               {currentPage === 'habits' && (
                 <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-purple-500" />
               )}
@@ -48,7 +55,10 @@ export function MainPage() {
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              📊 Analytics
+              <span className="inline-flex items-center gap-1.5">
+                <BarChart2 className="h-4 w-4 md:h-5 md:w-5 text-purple-500" />
+                Analytics
+              </span>
               {currentPage === 'analytics' && (
                 <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-purple-500" />
               )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CheckSquare } from 'lucide-react';
 import { Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -226,8 +227,13 @@ export function TasksPage() {
       <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
         {/* Header */}
         <div className="mb-8 md:mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Tasks</h1>
-          <p className="text-sm md:text-base text-gray-600">
+          <div className="mb-2 flex items-center gap-3">
+            <CheckSquare className="h-7 w-7 md:h-8 md:w-8 text-fuchsia-500" />
+            <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
+              Tasks
+            </h1>
+          </div>
+          <p className="text-sm md:text-base font-medium text-purple-900/60">
             Welcome, {user.displayName || user.email}
           </p>
         </div>
@@ -242,7 +248,7 @@ export function TasksPage() {
         {/* Add Task Form Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto sm:max-h-none">
+            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-xl shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto sm:max-h-none">
               <form onSubmit={handleSubmit} className="space-y-4 p-4 md:p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
@@ -402,7 +408,7 @@ export function TasksPage() {
         {/* Edit Task Modal */}
         {editingTaskId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 max-w-md w-full p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Task</h2>
               <form onSubmit={handleSaveEdit} className="space-y-4">
                 {/* Title Input */}
@@ -484,7 +490,7 @@ export function TasksPage() {
         {/* Delete Confirmation Modal */}
         {deletingTaskId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
+            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 max-w-sm w-full p-6">
               <div className="mb-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
                   <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -581,7 +587,7 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
     <div
       className={`group bg-white/50 backdrop-blur-md rounded-3xl border border-white/40 ${
         task.isCompleted ? 'opacity-80' : ''
-      } ${getDueDateBgColor()} shadow-xl shadow-purple-500/10 p-6 transition-all duration-200 hover:shadow-2xl`}
+      } ${getDueDateBgColor()} shadow-xl shadow-purple-500/10 p-6 md:p-7 transition-all duration-200 hover:shadow-2xl`}
     >
       <div className="flex items-start gap-2 md:gap-4">
         <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
