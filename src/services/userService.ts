@@ -7,6 +7,7 @@ import {
 import { User as FirebaseUser } from 'firebase/auth';
 import { db } from '@/utils/firebase';
 import { UserProfile } from '@/types';
+import { ensureDefaultCategories } from '@/services/categoryService';
 
 const USERS_COLLECTION = 'users';
 
@@ -175,9 +176,19 @@ export const uploadProfilePhoto = async (
 export const ensureUserProfile = async (
   firebaseUser: FirebaseUser
 ): Promise<UserProfile> => {
+  const syncDefaultCategories = async () => {
+    try {
+      await ensureDefaultCategories(firebaseUser.uid);
+    } catch (error) {
+      // Categories should not block sign-in/profile initialization.
+      console.error('Error syncing default categories:', error);
+    }
+  };
+
   try {
     const existing = await getUserProfile(firebaseUser.uid);
     if (existing) {
+      await syncDefaultCategories();
       return existing;
     }
 
@@ -191,6 +202,8 @@ export const ensureUserProfile = async (
       displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
       photoURL,
     });
+
+    await syncDefaultCategories();
 
     return profile;
   } catch (error) {

@@ -10,6 +10,15 @@ export interface Task {
   updatedAt: Date;
 }
 
+export interface Category {
+  id: string;
+  userId: string;
+  name: string;
+  color: string; // Hex color code, e.g. '#A78BFA'
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface DailyHabit {
   id: string;
   userId: string;

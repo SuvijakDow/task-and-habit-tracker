@@ -281,11 +281,10 @@ export function HabitsPage() {
         <div className="mb-8 md:mb-10">
           <div className="flex items-center gap-3">
             <Flame className="h-6 w-6 md:h-7 md:w-7 text-pink-500" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
+            <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
               Daily Habits
             </h1>
           </div>
-          <p className="text-sm font-medium text-purple-900/60 mt-1.5">Build better routines</p>
         </div>
 
         {/* Error Message */}

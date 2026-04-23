@@ -58,6 +58,18 @@ src/
 }
 ```
 
+### categories Collection
+```typescript
+{
+  id: string;
+  userId: string;
+  name: string;
+  color: string; // Hex code
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ## Setup Instructions
 
 ### 1. Prerequisites
@@ -115,6 +127,11 @@ service cloud.firestore {
     }
     
     match /dailyHabits/{document=**} {
+      allow read, write: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
+
+    match /categories/{document=**} {
       allow read, write: if request.auth.uid == resource.data.userId;
       allow create: if request.auth.uid == request.resource.data.userId;
     }

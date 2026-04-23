@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, CheckSquare } from 'lucide-react';
-import { Task } from '@/types';
+import { FirebaseError } from 'firebase/app';
+import { Category, Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   createTask,
@@ -8,29 +9,70 @@ import {
   updateTask,
   deleteTask,
 } from '@/services/taskService';
+import {
+  getUserCategories,
+} from '@/services/categoryService';
 import { formatToDateString } from '@/utils/dateUtils';
 
-const TASK_CATEGORIES = ['Academic', 'Personal', 'Health', 'Work'] as const;
-const DEFAULT_TASK_CATEGORY = 'Personal';
+const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
+const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
+const COLOR_HEX_REGEX = /^#[0-9A-F]{6}$/i;
 
-const getCategoryBadgeClass = (category: string) => {
-  switch (category) {
-    case 'Academic':
-      return 'bg-blue-100/70 text-blue-700';
-    case 'Personal':
-      return 'bg-fuchsia-100/70 text-fuchsia-700';
-    case 'Health':
-      return 'bg-emerald-100/70 text-emerald-700';
-    case 'Work':
-      return 'bg-amber-100/70 text-amber-700';
-    default:
-      return 'bg-purple-100/70 text-purple-700';
+const isValidHexColor = (value: string): boolean => COLOR_HEX_REGEX.test(value);
+
+const hexToRgba = (hex: string, alpha: number): string => {
+  if (!isValidHexColor(hex)) {
+    return `rgba(196, 181, 253, ${alpha})`;
   }
+
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const getReadableCategoryTextColor = (hex: string): string => {
+  if (!isValidHexColor(hex)) {
+    return '#374151';
+  }
+
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  const darken = (channel: number) => Math.max(28, Math.round(channel * 0.45));
+  return `rgb(${darken(r)}, ${darken(g)}, ${darken(b)})`;
+};
+
+const findCategoryByTaskValue = (
+  categories: Category[],
+  taskCategory: string
+): Category | undefined => {
+  return categories.find((category) => category.id === taskCategory || category.name === taskCategory);
+};
+
+const getCategoryErrorMessage = (error: unknown): string => {
+  if (error instanceof FirebaseError) {
+    if (error.code === 'permission-denied') {
+      return 'Cannot access categories yet. Add Firestore rules for /categories so users can read/write their own documents.';
+    }
+
+    if (error.code === 'failed-precondition') {
+      return 'Categories query is missing a Firestore index. Create the suggested index in Firebase Console.';
+    }
+
+    if (error.code === 'unauthenticated') {
+      return 'Please sign in again to load categories.';
+    }
+  }
+
+  return 'Failed to load categories. Please try again.';
 };
 
 export function TasksPage() {
   const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -38,7 +80,7 @@ export function TasksPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: DEFAULT_TASK_CATEGORY,
+    category: DEFAULT_TASK_CATEGORY_NAME,
     dueDate: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +91,7 @@ export function TasksPage() {
   const [editFormData, setEditFormData] = useState({
     title: '',
     description: '',
-    category: DEFAULT_TASK_CATEGORY,
+    category: DEFAULT_TASK_CATEGORY_NAME,
     dueDate: '',
   });
 
@@ -60,12 +102,25 @@ export function TasksPage() {
   useEffect(() => {
     if (!user) {
       setTasks([]);
+      setCategories([]);
       setLoading(false);
       return;
     }
 
-    loadTasks();
+    const loadData = async () => {
+      await Promise.all([loadTasks(), loadCategories()]);
+    };
+
+    loadData();
   }, [user]);
+
+  const getDefaultCategoryValue = (categoryList: Category[] = categories): string => {
+    const defaultCategory =
+      categoryList.find((category) => category.name === DEFAULT_TASK_CATEGORY_NAME) ||
+      categoryList[0];
+
+    return defaultCategory?.id || DEFAULT_TASK_CATEGORY_NAME;
+  };
 
   const loadTasks = async () => {
     if (!user) return;
@@ -82,6 +137,33 @@ export function TasksPage() {
     }
   };
 
+  const loadCategories = async () => {
+    if (!user) return;
+
+    try {
+      const userCategories = await getUserCategories(user.uid);
+      setCategories(userCategories);
+
+      if (userCategories.length > 0) {
+        const validValues = new Set(userCategories.flatMap((category) => [category.id, category.name]));
+        const defaultCategoryValue = getDefaultCategoryValue(userCategories);
+
+        setFormData((prev) => ({
+          ...prev,
+          category: validValues.has(prev.category) ? prev.category : defaultCategoryValue,
+        }));
+
+        setEditFormData((prev) => ({
+          ...prev,
+          category: validValues.has(prev.category) ? prev.category : defaultCategoryValue,
+        }));
+      }
+    } catch (err) {
+      setError(getCategoryErrorMessage(err));
+      console.error('Error loading categories:', err);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -95,16 +177,18 @@ export function TasksPage() {
       setIsSubmitting(true);
       setError(null);
 
+      const selectedCategory = findCategoryByTaskValue(categories, formData.category);
+
       await createTask(user.uid, {
         title: formData.title,
         description: formData.description,
-        category: formData.category,
+        category: selectedCategory?.id || formData.category || getDefaultCategoryValue(),
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         isCompleted: false,
       });
 
       // Reset form and close modal
-      setFormData({ title: '', description: '', category: DEFAULT_TASK_CATEGORY, dueDate: '' });
+      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '' });
       setIsModalOpen(false);
 
       // Reload tasks
@@ -132,11 +216,12 @@ export function TasksPage() {
   };
 
   const handleEditTask = (task: Task) => {
+    const matchedCategory = findCategoryByTaskValue(categories, task.category);
     setEditingTaskId(task.id);
     setEditFormData({
       title: task.title,
       description: task.description,
-      category: task.category || DEFAULT_TASK_CATEGORY,
+      category: matchedCategory?.id || task.category || getDefaultCategoryValue(),
       dueDate: task.dueDate
         ? task.dueDate.toISOString().split('T')[0]
         : '',
@@ -156,10 +241,12 @@ export function TasksPage() {
       setIsSubmitting(true);
       setError(null);
 
+      const selectedCategory = findCategoryByTaskValue(categories, editFormData.category);
+
       await updateTask(editingTaskId, {
         title: editFormData.title,
         description: editFormData.description,
-        category: editFormData.category,
+        category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
       });
 
@@ -170,7 +257,7 @@ export function TasksPage() {
                 ...t,
                 title: editFormData.title,
                 description: editFormData.description,
-                category: editFormData.category,
+                category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
                 dueDate: editFormData.dueDate
                   ? new Date(editFormData.dueDate)
                   : null,
@@ -190,7 +277,7 @@ export function TasksPage() {
 
   const handleCancelEdit = () => {
     setEditingTaskId(null);
-    setEditFormData({ title: '', description: '', category: DEFAULT_TASK_CATEGORY, dueDate: '' });
+    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '' });
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -245,6 +332,12 @@ export function TasksPage() {
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
   const completedTasks = tasks.filter((t) => t.isCompleted);
+  const isEditCategoryMissing =
+    !!editFormData.category &&
+    !categories.some(
+      (category) =>
+        category.id === editFormData.category || category.name === editFormData.category
+    );
 
   return (
     <div className="min-h-screen">
@@ -257,9 +350,6 @@ export function TasksPage() {
               Tasks
             </h1>
           </div>
-          <p className="text-sm md:text-base font-medium text-purple-900/60">
-            Welcome, {user.displayName || user.email}
-          </p>
         </div>
 
         {/* Error Message */}
@@ -301,7 +391,7 @@ export function TasksPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     disabled={isSubmitting}
                     autoFocus
                   />
@@ -320,7 +410,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -336,14 +426,18 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
                     disabled={isSubmitting}
                   >
-                    {TASK_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
+                    {categories.length === 0 ? (
+                      <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
+                    ) : (
+                      categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -359,7 +453,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -389,7 +483,15 @@ export function TasksPage() {
 
         {/* Floating Action Button */}
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setFormData({
+              title: '',
+              description: '',
+              category: getDefaultCategoryValue(),
+              dueDate: '',
+            });
+            setIsModalOpen(true);
+          }}
           className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center"
           title="Add new task"
         >
@@ -420,6 +522,7 @@ export function TasksPage() {
                     <TaskItem
                       key={task.id}
                       task={task}
+                      categories={categories}
                       onToggleCompletion={handleToggleCompletion}
                       onEdit={handleEditTask}
                       onDelete={handleDeleteTask}
@@ -440,6 +543,7 @@ export function TasksPage() {
                     <TaskItem
                       key={task.id}
                       task={task}
+                      categories={categories}
                       onToggleCompletion={handleToggleCompletion}
                       onEdit={handleEditTask}
                       onDelete={handleDeleteTask}
@@ -453,8 +557,8 @@ export function TasksPage() {
 
         {/* Edit Task Modal */}
         {editingTaskId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 max-w-md w-full p-6">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
+            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-xl shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto p-4 md:p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Task</h2>
               <form onSubmit={handleSaveEdit} className="space-y-4">
                 {/* Title Input */}
@@ -467,10 +571,10 @@ export function TasksPage() {
                     type="text"
                     value={editFormData.title}
                     onChange={(e) =>
-                      setEditFormData({ ...editFormData, title: e.target.value })
+                     setEditFormData({ ...editFormData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -488,7 +592,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -504,14 +608,21 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, category: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
                     disabled={isSubmitting}
                   >
-                    {TASK_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
+                    {isEditCategoryMissing && (
+                      <option value={editFormData.category}>{editFormData.category}</option>
+                    )}
+                    {categories.length === 0 ? (
+                      <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
+                    ) : (
+                      categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -527,7 +638,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, dueDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -595,12 +706,20 @@ export function TasksPage() {
 // Task Item Component
 interface TaskItemProps {
   task: Task;
+  categories: Category[];
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
 }
 
-function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps) {
+function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: TaskItemProps) {
+  const matchedCategory = findCategoryByTaskValue(categories, task.category);
+  const categoryName = matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
+  const categoryColor = isValidHexColor(matchedCategory?.color || '')
+    ? (matchedCategory?.color as string)
+    : DEFAULT_TASK_CATEGORY_COLOR;
+  const categoryTextColor = getReadableCategoryTextColor(categoryColor);
+
   const getDueDateColor = () => {
     if (!task.dueDate) return 'text-gray-600';
 
@@ -679,7 +798,7 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
 
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <span
-            className={`truncate font-medium text-base md:text-lg ${
+            className={`truncate font-medium text-sm md:text-base ${
               task.isCompleted
                 ? 'line-through text-gray-500'
                 : 'text-gray-900'
@@ -688,18 +807,23 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
             {task.title}
           </span>
 
-          <div className="flex flex-row items-center gap-2 sm:gap-3 text-xs sm:text-sm mt-1 overflow-hidden">
+          <div className="flex flex-row flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs mt-1">
             <span
-              className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${getCategoryBadgeClass(task.category)}`}
+              className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border"
+              style={{
+                backgroundColor: hexToRgba(categoryColor, 0.3),
+                color: categoryTextColor,
+                borderColor: hexToRgba(categoryColor, 0.65),
+              }}
             >
-              {task.category}
+              {categoryName}
             </span>
 
             {task.dueDate && (
-              <p className="inline-flex items-center gap-1.5 text-xs md:text-sm font-medium text-purple-900/60">
+              <p className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-medium text-purple-900/60">
                 <span>Due:</span>
-                <CalendarDays className={`h-3.5 w-3.5 md:h-4 md:w-4 ${getDueDateColor()}`} />
-                <span className={`${getDueDateColor()} whitespace-nowrap`}>{formatDueDate(task.dueDate)}</span>
+                <CalendarDays className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${getDueDateColor()}`} />
+                <span className={`${getDueDateColor()} sm:whitespace-nowrap`}>{formatDueDate(task.dueDate)}</span>
               </p>
             )}
           </div>
