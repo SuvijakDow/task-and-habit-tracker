@@ -280,7 +280,7 @@ export function CategoriesPage() {
 
       <form
         onSubmit={handleCreateCategory}
-        className="bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 p-5 md:p-6 mb-6 space-y-4"
+        className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-5 md:p-6 mb-6 space-y-4"
       >
         <h2 className="text-lg md:text-xl font-semibold text-gray-900">Add Category</h2>
         <input
@@ -322,7 +322,7 @@ export function CategoriesPage() {
         {categories.map((category) => (
           <div
             key={category.id}
-            className="bg-white/55 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 px-4 py-3"
+            className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 px-4 py-3"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -410,7 +410,7 @@ export function CategoriesPage() {
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 max-w-sm w-full p-6">
+          <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-sm w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Delete Category?</h3>
             <p className="text-gray-600 text-sm text-center mb-6">
               Delete "{deleteTarget.category.name}" and move its tasks to "{deleteTarget.fallback.name}"?

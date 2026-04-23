@@ -362,7 +362,7 @@ export function TasksPage() {
         {/* Add Task Form Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-xl shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto sm:max-h-none">
+            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto sm:max-h-none">
               <form onSubmit={handleSubmit} className="space-y-4 p-4 md:p-6">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
@@ -492,7 +492,7 @@ export function TasksPage() {
             });
             setIsModalOpen(true);
           }}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center"
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center"
           title="Add new task"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -513,7 +513,7 @@ export function TasksPage() {
                 Pending Tasks ({incompleteTasks.length})
               </h2>
               {incompleteTasks.length === 0 ? (
-                <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 p-8 text-center text-gray-600">
+                <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-8 text-center text-gray-600">
                   <p>No pending tasks. Great job! 🎉</p>
                 </div>
               ) : (
@@ -558,7 +558,7 @@ export function TasksPage() {
         {/* Edit Task Modal */}
         {editingTaskId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-xl shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto p-4 md:p-6">
+            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto p-4 md:p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Task</h2>
               <form onSubmit={handleSaveEdit} className="space-y-4">
                 {/* Title Input */}
@@ -669,7 +669,7 @@ export function TasksPage() {
         {/* Delete Confirmation Modal */}
         {deletingTaskId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white/85 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 max-w-sm w-full p-6">
+            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-sm w-full p-6">
               <div className="mb-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
                   <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -772,9 +772,9 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
 
   return (
     <div
-      className={`group bg-white/50 backdrop-blur-md rounded-3xl border border-white/40 ${
+      className={`group bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md rounded-3xl border border-white/40 ${
         task.isCompleted ? 'opacity-80' : ''
-      } ${getDueDateBgColor()} shadow-xl shadow-purple-500/10 transition-all duration-200 hover:shadow-2xl`}
+      } ${getDueDateBgColor()} shadow-sm sm:shadow-xl sm:shadow-purple-500/10 transition-all duration-200 hover:shadow-md sm:hover:shadow-2xl`}
     >
       <div className="flex flex-row items-start sm:items-center gap-3 py-4 px-4 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">

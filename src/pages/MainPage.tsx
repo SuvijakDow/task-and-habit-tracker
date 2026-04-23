@@ -34,7 +34,7 @@ export function MainPage() {
   return (
     <div>
       {/* Navigation Tabs */}
-      <div className="bg-white/40 backdrop-blur-sm border-b border-white/70 sticky top-0 z-10">
+      <div className="bg-white/70 sm:bg-white/40 backdrop-blur-none sm:backdrop-blur-sm border-b border-white/70 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="md:hidden relative py-2">
             <button
@@ -49,7 +49,7 @@ export function MainPage() {
             </button>
 
             {isMobileNavOpen && (
-              <div className="absolute left-0 right-0 mt-2 rounded-xl border border-white/70 bg-white/95 backdrop-blur-md shadow-lg overflow-hidden">
+              <div className="absolute left-0 right-0 mt-2 rounded-xl border border-white/70 bg-white/95 backdrop-blur-none sm:backdrop-blur-md shadow-sm sm:shadow-lg overflow-hidden">
                 {navItems.map((item) => (
                   <button
                     key={item.key}

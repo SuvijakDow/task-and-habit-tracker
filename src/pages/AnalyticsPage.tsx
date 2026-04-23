@@ -44,7 +44,7 @@ export function AnalyticsPage() {
   if (habits.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
-        <div className="bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 p-8 md:p-12 text-center">
+        <div className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-8 md:p-12 text-center">
           <div className="flex justify-center mb-4">
             <BarChart2 className="h-12 w-12 text-purple-400" />
           </div>
@@ -77,7 +77,7 @@ export function AnalyticsPage() {
           return (
             <div
               key={habit.id}
-              className="bg-white/55 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 p-6 md:p-8 hover:shadow-2xl transition-shadow"
+              className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6 md:p-8 hover:shadow-md sm:hover:shadow-2xl transition-shadow"
             >
               {/* Habit Title */}
               <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 truncate">
@@ -87,7 +87,7 @@ export function AnalyticsPage() {
               {/* Stats Row */}
               <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
                 {/* Current Streak */}
-                <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
+                <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Current Streak</p>
                   <p className="text-2xl md:text-3xl font-bold text-orange-600 mt-1">
                     🔥 {streak}
@@ -98,7 +98,7 @@ export function AnalyticsPage() {
                 </div>
 
                 {/* Total Completions */}
-                <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
+                <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Total Completions</p>
                   <p className="text-2xl md:text-3xl font-bold text-purple-600 mt-1">
                     ✨ {totalCompletions}
@@ -110,7 +110,7 @@ export function AnalyticsPage() {
               </div>
 
               {/* 7-Day Visual Calendar */}
-              <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
+              <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
                 <p className="text-gray-600 text-xs md:text-sm font-medium mb-3">Last 7 Days</p>
                 <div className="flex gap-2 md:gap-3 justify-between">
                   {past7Days.map((day, index) => {
@@ -145,7 +145,7 @@ export function AnalyticsPage() {
               </div>
 
               {/* Completion Rate */}
-              <div className="mt-4 md:mt-6 bg-white/50 backdrop-blur-md border border-white/40 rounded-2xl shadow-xl shadow-purple-500/10 p-6">
+              <div className="mt-4 md:mt-6 bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
                 <div className="flex items-center justify-between">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Overall Consistency</p>
                   <span className="text-sm md:text-base font-semibold text-blue-600">

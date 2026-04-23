@@ -60,7 +60,7 @@ export function AuthPage() {
     return (
       <div className="min-h-screen">
         {/* Profile header with logout */}
-        <div className="bg-white/60 backdrop-blur-md border-b border-white/70 shadow-lg">
+        <div className="bg-white/75 sm:bg-white/60 backdrop-blur-none sm:backdrop-blur-md border-b border-white/70 shadow-sm sm:shadow-lg">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex items-center gap-3">
@@ -222,7 +222,7 @@ export function AuthPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white/40 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl p-8 md:p-10">
+        <div className="bg-white/70 sm:bg-white/40 backdrop-blur-none sm:backdrop-blur-xl border border-white/50 rounded-3xl shadow-md sm:shadow-2xl p-8 md:p-10">
           {/* Tabs */}
           <div className="flex gap-2 p-1.5 bg-white/30 rounded-full">
             <button

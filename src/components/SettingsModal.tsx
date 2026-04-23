@@ -105,9 +105,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const busy = isSaving || isUploading;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-none sm:backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div
-        className="bg-white/85 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl shadow-purple-500/15 max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-xl border border-white/40 rounded-3xl shadow-md sm:shadow-2xl sm:shadow-purple-500/15 max-w-md w-full max-h-[90vh] overflow-y-auto"
         style={{
           animation: 'fadeInScale 0.2s ease-out',
         }}
