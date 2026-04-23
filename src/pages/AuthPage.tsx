@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
+import { Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { signIn, signUp, signOut, signInWithGoogle } from '@/services/authService';
 import { MainPage } from './MainPage';
+import { SettingsModal } from '@/components/SettingsModal';
 
 type AuthMode = 'login' | 'signup' | 'profile';
 
 export function AuthPage() {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -50,6 +53,10 @@ export function AuthPage() {
   }
 
   if (user) {
+    // Use Firestore profile data, fall back to Auth data while loading
+    const profileName = userProfile?.displayName || user.displayName || user.email;
+    const profilePhoto = userProfile?.photoURL || user.photoURL || '';
+
     return (
       <div className="min-h-screen">
         {/* Profile header with logout */}
@@ -57,27 +64,48 @@ export function AuthPage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex items-center gap-3">
-                <div className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0" />
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt={profileName || 'Profile'}
+                    className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0 object-cover bg-white/55"
+                  />
+                ) : (
+                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0" />
+                )}
                 <div className="min-w-0">
                   <h1 className="text-base md:text-lg font-semibold text-gray-800 truncate">
-                    {user.displayName || user.email}
+                    {profileName}
                   </h1>
                   <p className="text-gray-600 text-xs mt-0.5 truncate">{user.email}</p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                disabled={isSubmitting}
-                className="px-3 py-1.5 bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-xs flex-shrink-0 whitespace-nowrap"
-              >
-                {isSubmitting ? 'Signing out...' : 'Sign Out'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="h-8 w-8 rounded-lg bg-white/60 hover:bg-white/90 text-gray-500 hover:text-purple-600 transition-all flex items-center justify-center flex-shrink-0"
+                  title="Settings"
+                  aria-label="Open settings"
+                >
+                  <Settings size={16} />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  disabled={isSubmitting}
+                  className="px-3 py-1.5 bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-xs flex-shrink-0 whitespace-nowrap"
+                >
+                  {isSubmitting ? 'Signing out...' : 'Sign Out'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Main app content */}
         <MainPage />
+
+        {/* Settings Modal */}
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       </div>
     );
   }

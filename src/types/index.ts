@@ -21,9 +21,11 @@ export interface DailyHabit {
   updatedAt: Date;
 }
 
-export interface User {
+export interface UserProfile {
   uid: string;
   email: string;
-  displayName?: string;
+  displayName: string;
+  photoURL: string;
   createdAt: Date;
+  updatedAt: Date;
 }

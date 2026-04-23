@@ -9,7 +9,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { auth } from '@/utils/firebase';
-import { User } from '@/types';
+import { UserProfile } from '@/types';
 
 /**
  * Sign up a new user
@@ -89,13 +89,15 @@ export const signInWithGoogle = async (): Promise<FirebaseUser> => {
 };
 
 /**
- * Convert Firebase user to app User type
+ * Convert Firebase user to app UserProfile type
  */
-export const convertFirebaseUserToAppUser = (firebaseUser: FirebaseUser): User => {
+export const convertFirebaseUserToAppUser = (firebaseUser: FirebaseUser): UserProfile => {
   return {
     uid: firebaseUser.uid,
     email: firebaseUser.email || '',
-    displayName: firebaseUser.displayName || undefined,
+    displayName: firebaseUser.displayName || '',
+    photoURL: firebaseUser.photoURL || '',
     createdAt: new Date(firebaseUser.metadata.creationTime || ''),
+    updatedAt: new Date(),
   };
 };
