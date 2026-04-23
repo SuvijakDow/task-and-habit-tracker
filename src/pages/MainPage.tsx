@@ -11,38 +11,47 @@ export function MainPage() {
   return (
     <div>
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white/40 backdrop-blur-sm border-b border-white/70 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-2 sm:gap-4 md:gap-8">
+          <div className="flex gap-2 sm:gap-3 md:gap-5">
             <button
               onClick={() => setCurrentPage('tasks')}
-              className={`py-2 md:py-4 px-2 font-semibold transition-colors border-b-2 text-xs sm:text-sm md:text-base ${
+              className={`relative py-2 md:py-4 px-2 text-xs sm:text-sm md:text-base font-medium transition-colors ${
                 currentPage === 'tasks'
-                  ? 'text-indigo-600 border-indigo-600'
-                  : 'text-gray-600 border-transparent hover:text-gray-800'
+                  ? 'text-purple-700'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               📋 Tasks
+              {currentPage === 'tasks' && (
+                <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-purple-500" />
+              )}
             </button>
             <button
               onClick={() => setCurrentPage('habits')}
-              className={`py-2 md:py-4 px-2 font-semibold transition-colors border-b-2 text-xs sm:text-sm md:text-base ${
+              className={`relative py-2 md:py-4 px-2 text-xs sm:text-sm md:text-base font-medium transition-colors ${
                 currentPage === 'habits'
-                  ? 'text-purple-600 border-purple-600'
-                  : 'text-gray-600 border-transparent hover:text-gray-800'
+                  ? 'text-purple-700'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               🔥 Daily Habits
+              {currentPage === 'habits' && (
+                <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-purple-500" />
+              )}
             </button>
             <button
               onClick={() => setCurrentPage('analytics')}
-              className={`py-2 md:py-4 px-2 font-semibold transition-colors border-b-2 text-xs sm:text-sm md:text-base ${
+              className={`relative py-2 md:py-4 px-2 text-xs sm:text-sm md:text-base font-medium transition-colors ${
                 currentPage === 'analytics'
-                  ? 'text-blue-600 border-blue-600'
-                  : 'text-gray-600 border-transparent hover:text-gray-800'
+                  ? 'text-purple-700'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               📊 Analytics
+              {currentPage === 'analytics' && (
+                <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-purple-500" />
+              )}
             </button>
           </div>
         </div>

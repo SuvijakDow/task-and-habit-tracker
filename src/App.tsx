@@ -1,5 +1,5 @@
 import { AuthProvider } from '@/context/AuthContext';
-import { AuthPage } from '@/pages/AuthPage';
+import AuthPage from '@/pages/AuthPage';
 
 export function App() {
   return (

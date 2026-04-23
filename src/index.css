@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,15 +11,7 @@
 @layer base {
   html, body {
     @apply font-sans;
-    font-family: 'Noto Sans Thai', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Noto Sans Thai', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
-  }
-
-  p, div, span, button, input, textarea, label {
-    font-family: 'Noto Sans Thai', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
+    font-family: 'Inter', 'Noto Sans Thai', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
   }
 }
 
@@ -28,5 +20,7 @@ html {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply text-gray-900;
+  background: linear-gradient(135deg, #F6D7E3 0%, #E8D3F1 52%, #D8E0F9 100%);
+  background-attachment: fixed;
 }

@@ -38,7 +38,7 @@ export function AuthPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="mb-4">
             <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
@@ -51,21 +51,24 @@ export function AuthPage() {
 
   if (user) {
     return (
-      <div>
+      <div className="min-h-screen">
         {/* Profile header with logout */}
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-6">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <h1 className="text-xl md:text-3xl font-bold truncate">
-                  {user.displayName || user.email}
-                </h1>
-                <p className="text-indigo-100 text-xs md:text-sm mt-0.5 md:mt-1 truncate">{user.email}</p>
+        <div className="bg-white/60 backdrop-blur-md border-b border-white/70 shadow-lg">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0" />
+                <div className="min-w-0">
+                  <h1 className="text-base md:text-lg font-semibold text-gray-800 truncate">
+                    {user.displayName || user.email}
+                  </h1>
+                  <p className="text-gray-600 text-xs mt-0.5 truncate">{user.email}</p>
+                </div>
               </div>
               <button
                 onClick={handleLogout}
                 disabled={isSubmitting}
-                className="px-3 md:px-6 py-1 md:py-2 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors disabled:opacity-50 text-xs md:text-sm flex-shrink-0 whitespace-nowrap"
+                className="px-3 py-1.5 bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-xs flex-shrink-0 whitespace-nowrap"
               >
                 {isSubmitting ? 'Signing out...' : 'Sign Out'}
               </button>
@@ -180,7 +183,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         {/* Logo / Title */}
         <div className="text-center mb-8">
@@ -406,3 +409,5 @@ export function AuthPage() {
     </div>
   );
 }
+
+export default AuthPage;

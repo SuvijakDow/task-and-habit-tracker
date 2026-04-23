@@ -222,11 +222,11 @@ export function TasksPage() {
   const completedTasks = tasks.filter((t) => t.isCompleted);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+    <div className="min-h-screen">
+      <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
         {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-1 md:mb-2">Tasks</h1>
+        <div className="mb-8 md:mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Tasks</h1>
           <p className="text-sm md:text-base text-gray-600">
             Welcome, {user.displayName || user.email}
           </p>
@@ -338,7 +338,7 @@ export function TasksPage() {
         {/* Floating Action Button */}
         <button
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 p-4 z-40 flex items-center justify-center"
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center"
           title="Add new task"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,16 +354,16 @@ export function TasksPage() {
         ) : (
           <>
             {/* Incomplete Tasks Section */}
-            <div className="mb-8">
+            <div className="mb-10">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 Pending Tasks ({incompleteTasks.length})
               </h2>
               {incompleteTasks.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-600">
+                <div className="bg-white/50 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-purple-500/10 p-8 text-center text-gray-600">
                   <p>No pending tasks. Great job! 🎉</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {incompleteTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -383,7 +383,7 @@ export function TasksPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
                   Completed Tasks ({completedTasks.length})
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {completedTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -556,8 +556,8 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
     const diffTime = dueDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return 'bg-red-50'; // Overdue
-    if (diffDays === 0) return 'bg-yellow-50'; // Due today
+    if (diffDays < 0) return 'ring-1 ring-red-200/80'; // Overdue
+    if (diffDays === 0) return 'ring-1 ring-amber-200/80'; // Due today
     return '';
   };
 
@@ -579,31 +579,32 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md p-2 md:p-4 border-l-4 ${
-        task.isCompleted
-          ? 'border-green-500 opacity-75'
-          : 'border-blue-500'
-      } ${getDueDateBgColor()} transition hover:shadow-lg`}
+      className={`group bg-white/50 backdrop-blur-md rounded-3xl border border-white/40 ${
+        task.isCompleted ? 'opacity-80' : ''
+      } ${getDueDateBgColor()} shadow-xl shadow-purple-500/10 p-6 transition-all duration-200 hover:shadow-2xl`}
     >
-      <div className="flex gap-2 md:gap-4 items-start">
-        {/* Checkbox */}
-        <div className="flex-shrink-0 mt-0.5">
-          <input
-            type="checkbox"
-            checked={task.isCompleted}
-            onChange={() =>
-              onToggleCompletion(task.id, task.isCompleted)
-            }
-            className="w-5 h-5 text-blue-600 cursor-pointer"
-          />
-        </div>
+      <div className="flex items-start gap-2 md:gap-4">
+        <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={task.isCompleted}
+            aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
+            onClick={() => onToggleCompletion(task.id, task.isCompleted)}
+            className={`mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+              task.isCompleted
+                ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
+                : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
 
-        {/* Content */}
-        <div className="flex-grow min-w-0">
-          {/* Title + Edit/Delete on same row */}
-          <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex-grow min-w-0">
             <h3
-              className={`text-sm md:text-lg font-semibold break-words flex-grow ${
+              className={`text-sm md:text-lg font-semibold break-words ${
                 task.isCompleted
                   ? 'line-through text-gray-500'
                   : 'text-gray-900'
@@ -611,35 +612,46 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
             >
               {task.title}
             </h3>
-            <div className="flex gap-2 flex-shrink-0 text-xs md:text-sm">
-              <button
-                onClick={() => onEdit(task)}
-                className="text-blue-500 hover:text-blue-700 font-medium transition whitespace-nowrap"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => onDelete(task.id)}
-                className="text-red-500 hover:text-red-700 font-medium transition whitespace-nowrap"
-              >
-                Delete
-              </button>
-            </div>
+
+            {task.description && (
+              <p className="text-gray-600 text-xs md:text-sm mt-1.5 line-clamp-2">
+                {task.description}
+              </p>
+            )}
+
+            {task.dueDate && (
+              <p className={`inline-flex items-center mt-2.5 text-xs md:text-sm font-medium px-2.5 py-1 rounded-full bg-white/65 ${getDueDateColor()}`}>
+                📅 {formatDueDate(task.dueDate)}
+              </p>
+            )}
           </div>
+        </div>
 
-          {/* Description Snippet */}
-          {task.description && (
-            <p className="text-gray-600 text-xs md:text-sm mb-1 line-clamp-2">
-              {task.description}
-            </p>
-          )}
-
-          {/* Due Date */}
-          {task.dueDate && (
-            <p className={`text-xs md:text-sm font-medium ${getDueDateColor()}`}>
-              📅 {formatDueDate(task.dueDate)}
-            </p>
-          )}
+        <div className="ml-1 flex items-start gap-1 flex-shrink-0 opacity-65 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onEdit(task)}
+            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
+            title="Edit task"
+            aria-label={`Edit ${task.title}`}
+          >
+            <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onDelete(task.id)}
+            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
+            title="Delete task"
+            aria-label={`Delete ${task.title}`}
+          >
+            <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
