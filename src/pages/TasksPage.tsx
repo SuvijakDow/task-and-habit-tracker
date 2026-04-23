@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare } from 'lucide-react';
+import { CalendarDays, CheckSquare } from 'lucide-react';
 import { Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -9,6 +9,24 @@ import {
   deleteTask,
 } from '@/services/taskService';
 import { formatToDateString } from '@/utils/dateUtils';
+
+const TASK_CATEGORIES = ['Academic', 'Personal', 'Health', 'Work'] as const;
+const DEFAULT_TASK_CATEGORY = 'Personal';
+
+const getCategoryBadgeClass = (category: string) => {
+  switch (category) {
+    case 'Academic':
+      return 'bg-blue-100/70 text-blue-700';
+    case 'Personal':
+      return 'bg-fuchsia-100/70 text-fuchsia-700';
+    case 'Health':
+      return 'bg-emerald-100/70 text-emerald-700';
+    case 'Work':
+      return 'bg-amber-100/70 text-amber-700';
+    default:
+      return 'bg-purple-100/70 text-purple-700';
+  }
+};
 
 export function TasksPage() {
   const { user, loading: authLoading } = useAuth();
@@ -20,6 +38,7 @@ export function TasksPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: DEFAULT_TASK_CATEGORY,
     dueDate: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +49,7 @@ export function TasksPage() {
   const [editFormData, setEditFormData] = useState({
     title: '',
     description: '',
+    category: DEFAULT_TASK_CATEGORY,
     dueDate: '',
   });
 
@@ -78,12 +98,13 @@ export function TasksPage() {
       await createTask(user.uid, {
         title: formData.title,
         description: formData.description,
+        category: formData.category,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         isCompleted: false,
       });
 
       // Reset form and close modal
-      setFormData({ title: '', description: '', dueDate: '' });
+      setFormData({ title: '', description: '', category: DEFAULT_TASK_CATEGORY, dueDate: '' });
       setIsModalOpen(false);
 
       // Reload tasks
@@ -115,6 +136,7 @@ export function TasksPage() {
     setEditFormData({
       title: task.title,
       description: task.description,
+      category: task.category || DEFAULT_TASK_CATEGORY,
       dueDate: task.dueDate
         ? task.dueDate.toISOString().split('T')[0]
         : '',
@@ -137,6 +159,7 @@ export function TasksPage() {
       await updateTask(editingTaskId, {
         title: editFormData.title,
         description: editFormData.description,
+        category: editFormData.category,
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
       });
 
@@ -147,6 +170,7 @@ export function TasksPage() {
                 ...t,
                 title: editFormData.title,
                 description: editFormData.description,
+                category: editFormData.category,
                 dueDate: editFormData.dueDate
                   ? new Date(editFormData.dueDate)
                   : null,
@@ -166,7 +190,7 @@ export function TasksPage() {
 
   const handleCancelEdit = () => {
     setEditingTaskId(null);
-    setEditFormData({ title: '', description: '', dueDate: '' });
+    setEditFormData({ title: '', description: '', category: DEFAULT_TASK_CATEGORY, dueDate: '' });
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -299,6 +323,28 @@ export function TasksPage() {
                     className="w-full px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
                     disabled={isSubmitting}
                   />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    disabled={isSubmitting}
+                  >
+                    {TASK_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Due Date */}
@@ -447,6 +493,28 @@ export function TasksPage() {
                   />
                 </div>
 
+                {/* Category */}
+                <div>
+                  <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="edit-category"
+                    value={editFormData.category}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, category: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    disabled={isSubmitting}
+                  >
+                    {TASK_CATEGORIES.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Due Date */}
                 <div>
                   <label htmlFor="edit-dueDate" className="block text-sm font-medium text-gray-700 mb-1">
@@ -587,17 +655,17 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
     <div
       className={`group bg-white/50 backdrop-blur-md rounded-3xl border border-white/40 ${
         task.isCompleted ? 'opacity-80' : ''
-      } ${getDueDateBgColor()} shadow-xl shadow-purple-500/10 p-6 md:p-7 transition-all duration-200 hover:shadow-2xl`}
+      } ${getDueDateBgColor()} shadow-xl shadow-purple-500/10 transition-all duration-200 hover:shadow-2xl`}
     >
-      <div className="flex items-start gap-2 md:gap-4">
-        <div className="flex items-start gap-2 md:gap-3 flex-1 min-w-0">
+      <div className="flex flex-row items-start sm:items-center gap-3 py-4 px-4 sm:px-6">
+        <div className="flex-shrink-0 mt-1 sm:mt-0">
           <button
             type="button"
             role="checkbox"
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            className={`mt-0.5 h-5 w-5 md:h-6 md:w-6 rounded-full border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+            className={`h-5 w-5 md:h-6 md:w-6 rounded-full border transition-all duration-200 flex items-center justify-center ${
               task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
@@ -607,33 +675,37 @@ function TaskItem({ task, onToggleCompletion, onDelete, onEdit }: TaskItemProps)
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </button>
+        </div>
 
-          <div className="flex-grow min-w-0">
-            <h3
-              className={`text-sm md:text-lg font-semibold break-words ${
-                task.isCompleted
-                  ? 'line-through text-gray-500'
-                  : 'text-gray-900'
-              }`}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <span
+            className={`truncate font-medium text-base md:text-lg ${
+              task.isCompleted
+                ? 'line-through text-gray-500'
+                : 'text-gray-900'
+            }`}
+          >
+            {task.title}
+          </span>
+
+          <div className="flex flex-row items-center gap-2 sm:gap-3 text-xs sm:text-sm mt-1 overflow-hidden">
+            <span
+              className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${getCategoryBadgeClass(task.category)}`}
             >
-              {task.title}
-            </h3>
-
-            {task.description && (
-              <p className="text-gray-600 text-xs md:text-sm mt-1.5 line-clamp-2">
-                {task.description}
-              </p>
-            )}
+              {task.category}
+            </span>
 
             {task.dueDate && (
-              <p className={`inline-flex items-center mt-2.5 text-xs md:text-sm font-medium px-2.5 py-1 rounded-full bg-white/65 ${getDueDateColor()}`}>
-                📅 {formatDueDate(task.dueDate)}
+              <p className="inline-flex items-center gap-1.5 text-xs md:text-sm font-medium text-purple-900/60">
+                <span>Due:</span>
+                <CalendarDays className={`h-3.5 w-3.5 md:h-4 md:w-4 ${getDueDateColor()}`} />
+                <span className={`${getDueDateColor()} whitespace-nowrap`}>{formatDueDate(task.dueDate)}</span>
               </p>
             )}
           </div>
         </div>
 
-        <div className="ml-1 flex items-start gap-1 flex-shrink-0 opacity-65 group-hover:opacity-100 transition-opacity">
+        <div className="flex-shrink-0 flex flex-row gap-1 sm:gap-2 opacity-65 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(task)}
             className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"

@@ -373,43 +373,29 @@ export function HabitsPage() {
                     onDragEnter={() => handleDragEnter(habit.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={() => handleDrop(habit.id)}
-                    className={`bg-white/50 backdrop-blur-md rounded-3xl border border-white/40 shadow-xl shadow-purple-500/10 p-6 md:p-7 flex items-start gap-2 sm:gap-2 md:gap-3 transition-all duration-200 cursor-move group ${
+                    className={`bg-white/50 backdrop-blur-md rounded-3xl border border-white/40 shadow-xl shadow-purple-500/10 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0 py-3 md:py-4 px-4 sm:px-6 transition-all duration-200 cursor-move group ${
                       isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
                     } ${isDragging ? 'opacity-50 scale-95' : 'hover:shadow-2xl'} ${
                       isOver ? 'ring-2 ring-purple-400 ring-opacity-50' : ''
                     }`}
                   >
-                    {/* Desktop Drag Handle */}
-                    <div className="flex-shrink-0 text-gray-300 group-hover:text-purple-400 transition-colors duration-200 hidden sm:block">
-                      <svg className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                      </svg>
-                      <svg className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 -mt-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                      </svg>
-                    </div>
+                    <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
+                      <div className="flex-shrink-0 text-gray-300 group-hover:text-purple-400 transition-colors duration-200">
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                        </svg>
+                        <svg className="w-4 h-4 md:w-5 md:h-5 -mt-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                        </svg>
+                      </div>
 
-                    {/* Mobile Drag Handle */}
-                    <div
-                      className="flex-shrink-0 text-gray-400 active:text-purple-400 transition-colors duration-200 sm:hidden"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                      </svg>
-                      <svg className="w-4 h-4 -mt-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                      </svg>
-                    </div>
-
-                    {/* Checkbox + Title */}
-                    <div className="flex items-start gap-2 sm:gap-2.5 flex-1 min-w-0">
                       <button
                         type="button"
                         role="checkbox"
                         aria-checked={isCompletedToday}
                         aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
                         onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
-                        className={`mt-0.5 h-4 w-4 sm:h-5 sm:w-5 rounded-full border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+                        className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
                           isCompletedToday
                             ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                             : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
@@ -420,23 +406,23 @@ export function HabitsPage() {
                         </svg>
                       </button>
 
-                      <div className="min-w-0 flex-1">
-                        <span
-                          className={`text-xs sm:text-sm md:text-sm font-medium transition-all truncate block ${
-                            isCompletedToday
-                              ? 'text-purple-700 line-through opacity-70'
-                              : 'text-gray-900'
-                          }`}
-                        >
-                          {habit.title}
-                        </span>
-                        <span className="inline-flex mt-2 text-xs sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap">
-                          🔥 {streak}
-                        </span>
-                      </div>
+                      <span
+                        className={`flex-1 truncate text-sm sm:text-base md:text-lg font-medium transition-all ${
+                          isCompletedToday
+                            ? 'text-purple-700 line-through opacity-70'
+                            : 'text-gray-900'
+                        }`}
+                      >
+                        {habit.title}
+                      </span>
                     </div>
 
-                    <div className="ml-1 flex items-start gap-1 flex-shrink-0 opacity-65 group-hover:opacity-100 transition-opacity">
+                    <div className="flex flex-row items-center self-end md:self-auto gap-3 opacity-65 group-hover:opacity-100 transition-opacity">
+                      <span className="inline-flex text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        🔥 {streak}
+                      </span>
+
+                      <div className="flex items-center gap-1 sm:gap-2">
                       <button
                         onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays)}
                         className="h-7 w-7 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
@@ -452,15 +438,16 @@ export function HabitsPage() {
                         className="h-7 w-7 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
                         title="Delete habit"
                         aria-label={`Delete ${habit.title}`}
-                      >
-                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
+                        >
+                          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

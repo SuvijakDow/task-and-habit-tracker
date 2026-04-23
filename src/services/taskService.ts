@@ -14,6 +14,11 @@ import { db } from '@/utils/firebase';
 import { Task } from '@/types';
 
 const TASKS_COLLECTION = 'tasks';
+const DEFAULT_TASK_CATEGORY = 'Personal';
+
+const normalizeTaskCategory = (value: unknown): string => {
+  return typeof value === 'string' && value.trim() ? value : DEFAULT_TASK_CATEGORY;
+};
 
 /**
  * Create a new task
@@ -26,6 +31,7 @@ export const createTask = async (
     const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
       userId,
       ...taskData,
+      category: normalizeTaskCategory(taskData.category),
       dueDate: taskData.dueDate ? Timestamp.fromDate(taskData.dueDate) : null,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -48,13 +54,17 @@ export const getUserTasks = async (userId: string): Promise<Task[]> => {
     );
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      dueDate: doc.data().dueDate?.toDate() || null,
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate(),
-    })) as Task[];
+    return querySnapshot.docs.map((doc) => {
+      const task = doc.data();
+      return {
+        id: doc.id,
+        ...task,
+        category: normalizeTaskCategory(task.category),
+        dueDate: task.dueDate?.toDate() || null,
+        createdAt: task.createdAt.toDate(),
+        updatedAt: task.updatedAt.toDate(),
+      };
+    }) as Task[];
   } catch (error) {
     console.error('Error getting user tasks:', error);
     throw error;
@@ -73,13 +83,17 @@ export const getCompletedTasks = async (userId: string): Promise<Task[]> => {
     );
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      dueDate: doc.data().dueDate?.toDate() || null,
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate(),
-    })) as Task[];
+    return querySnapshot.docs.map((doc) => {
+      const task = doc.data();
+      return {
+        id: doc.id,
+        ...task,
+        category: normalizeTaskCategory(task.category),
+        dueDate: task.dueDate?.toDate() || null,
+        createdAt: task.createdAt.toDate(),
+        updatedAt: task.updatedAt.toDate(),
+      };
+    }) as Task[];
   } catch (error) {
     console.error('Error getting completed tasks:', error);
     throw error;
@@ -98,13 +112,17 @@ export const getPendingTasks = async (userId: string): Promise<Task[]> => {
     );
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      dueDate: doc.data().dueDate?.toDate() || null,
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate(),
-    })) as Task[];
+    return querySnapshot.docs.map((doc) => {
+      const task = doc.data();
+      return {
+        id: doc.id,
+        ...task,
+        category: normalizeTaskCategory(task.category),
+        dueDate: task.dueDate?.toDate() || null,
+        createdAt: task.createdAt.toDate(),
+        updatedAt: task.updatedAt.toDate(),
+      };
+    }) as Task[];
   } catch (error) {
     console.error('Error getting pending tasks:', error);
     throw error;
@@ -123,12 +141,14 @@ export const getTaskById = async (taskId: string): Promise<Task | null> => {
       return null;
     }
     
+    const task = docSnap.data();
     return {
       id: docSnap.id,
-      ...docSnap.data(),
-      dueDate: docSnap.data().dueDate?.toDate() || null,
-      createdAt: docSnap.data().createdAt.toDate(),
-      updatedAt: docSnap.data().updatedAt.toDate(),
+      ...task,
+      category: normalizeTaskCategory(task.category),
+      dueDate: task.dueDate?.toDate() || null,
+      createdAt: task.createdAt.toDate(),
+      updatedAt: task.updatedAt.toDate(),
     } as Task;
   } catch (error) {
     console.error('Error getting task:', error);
@@ -154,6 +174,10 @@ export const updateTask = async (
       dataToUpdate.dueDate = updates.dueDate
         ? Timestamp.fromDate(updates.dueDate)
         : null;
+    }
+
+    if (updates.category !== undefined) {
+      dataToUpdate.category = normalizeTaskCategory(updates.category);
     }
     
     await updateDoc(docRef, dataToUpdate);
