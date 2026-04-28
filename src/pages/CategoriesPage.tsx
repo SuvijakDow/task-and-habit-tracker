@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FirebaseError } from 'firebase/app';
-import { FolderTree, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Category, Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { getUserTasks } from '@/services/taskService';
@@ -33,7 +33,7 @@ const getCategoryErrorMessage = (error: unknown): string => {
 };
 
 export function CategoriesPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +54,7 @@ export function CategoriesPage() {
     name: '',
     color: PASTEL_CATEGORY_COLORS[0],
   });
+  const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
 
   useEffect(() => {
     if (!user) {
@@ -264,12 +265,12 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
-      <div className="mb-6 md:mb-8 flex items-center gap-3">
-        <FolderTree className="h-7 w-7 md:h-8 md:w-8 text-indigo-500" />
-        <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
-          Categories
+    <div className="max-w-3xl mx-auto px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+          Hello, {userDisplayName}
         </h1>
+        <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Organize tasks into clear color groups.</p>
       </div>
 
       {error && (
@@ -280,7 +281,7 @@ export function CategoriesPage() {
 
       <form
         onSubmit={handleCreateCategory}
-        className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-5 md:p-6 mb-6 space-y-4"
+        className="glass-card p-5 md:p-6 mb-6 space-y-4"
       >
         <h2 className="text-lg md:text-xl font-semibold text-gray-900">Add Category</h2>
         <input
@@ -322,7 +323,7 @@ export function CategoriesPage() {
         {categories.map((category) => (
           <div
             key={category.id}
-            className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 px-4 py-3"
+            className="glass-card px-4 py-3"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -409,8 +410,8 @@ export function CategoriesPage() {
       </div>
 
       {deleteTarget && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-sm w-full p-6">
+        <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+          <div className="glass-card max-w-sm w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Delete Category?</h3>
             <p className="text-gray-600 text-sm text-center mb-6">
               Delete "{deleteTarget.category.name}" and move its tasks to "{deleteTarget.fallback.name}"?

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, CheckSquare } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -12,7 +12,6 @@ import {
 import {
   getUserCategories,
 } from '@/services/categoryService';
-import { formatToDateString } from '@/utils/dateUtils';
 import { showToast } from '@/components/Toast';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
@@ -71,7 +70,7 @@ const getCategoryErrorMessage = (error: unknown): string => {
 };
 
 export function TasksPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -331,6 +330,7 @@ export function TasksPage() {
       </div>
     );
   }
+  const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
   const incompleteTasks = tasks
     .filter((t) => !t.isCompleted)
@@ -352,15 +352,13 @@ export function TasksPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-3xl mx-auto px-6 py-8 md:py-12">
-        {/* Header */}
-        <div className="mb-8 md:mb-10">
-          <div className="mb-2 flex items-center gap-3">
-            <CheckSquare className="h-7 w-7 md:h-8 md:w-8 text-fuchsia-500" />
-            <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
-              Tasks
-            </h1>
-          </div>
+      <div className="max-w-3xl mx-auto px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+        {/* Hero Greeting */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+            Hello, {userDisplayName}
+          </h1>
+          <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
         </div>
 
         {/* Error Message */}
@@ -524,8 +522,8 @@ export function TasksPage() {
                 Pending Tasks ({incompleteTasks.length})
               </h2>
               {incompleteTasks.length === 0 ? (
-                <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-8 text-center text-gray-600">
-                  <p>No pending tasks. Great job! 🎉</p>
+                <div className="glass-card p-8 text-center text-gray-600">
+                  <p>No pending tasks. Great job!</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -679,8 +677,8 @@ export function TasksPage() {
 
         {/* Delete Confirmation Modal */}
         {deletingTaskId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-sm w-full p-6">
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+            <div className="glass-card max-w-sm w-full p-6">
               <div className="mb-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
                   <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -731,23 +729,6 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
     : DEFAULT_TASK_CATEGORY_COLOR;
   const categoryTextColor = getReadableCategoryTextColor(categoryColor);
 
-  const getDueDateColor = () => {
-    if (!task.dueDate) return 'text-gray-600';
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = new Date(task.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return 'text-red-600'; // Overdue
-    if (diffDays === 0) return 'text-yellow-600'; // Due today
-    return 'text-gray-600'; // Future
-  };
-
   const getDueDateBgColor = () => {
     if (!task.dueDate) return '';
 
@@ -766,26 +747,17 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
   };
 
   const formatDueDate = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = new Date(date);
-    dueDate.setHours(0, 0, 0, 0);
-
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
-    if (diffDays === 0) return 'Due today';
-    if (diffDays === 1) return 'Due tomorrow';
-    return formatToDateString(date);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   return (
     <div
-      className={`group bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md rounded-3xl border border-white/40 ${
+      className={`group glass-card ${
         task.isCompleted ? 'opacity-80' : ''
-      } ${getDueDateBgColor()} shadow-sm sm:shadow-xl sm:shadow-purple-500/10 transition-all duration-200 hover:shadow-md sm:hover:shadow-2xl`}
+      } ${getDueDateBgColor()} transition-all duration-200 hover:shadow-2xl`}
     >
       <div className="flex flex-row items-start sm:items-center gap-3 py-4 px-4 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">
@@ -795,7 +767,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            className={`h-5 w-5 md:h-6 md:w-6 rounded-full border transition-all duration-200 flex items-center justify-center ${
+            className={`h-5 w-5 md:h-6 md:w-6 aspect-square rounded-full border transition-all duration-200 flex items-center justify-center shrink-0 ${
               task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
@@ -809,7 +781,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
 
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <span
-            className={`truncate font-medium text-sm md:text-base ${
+            className={`truncate font-medium text-base md:text-lg ${
               task.isCompleted
                 ? 'line-through text-gray-500'
                 : 'text-gray-900'
@@ -818,7 +790,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             {task.title}
           </span>
 
-          <div className="flex flex-row flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs mt-1">
+          <div className="flex flex-row flex-wrap items-center gap-3 mt-1 text-xs sm:text-sm text-purple-900/60">
             <span
               className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border"
               style={{
@@ -831,10 +803,9 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             </span>
 
             {task.dueDate && (
-              <p className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-medium text-purple-900/60">
-                <span>Due:</span>
-                <CalendarDays className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${getDueDateColor()}`} />
-                <span className={`${getDueDateColor()} sm:whitespace-nowrap`}>{formatDueDate(task.dueDate)}</span>
+              <p className="inline-flex items-center gap-1 font-medium">
+                <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
+                <span className="sm:whitespace-nowrap">{formatDueDate(task.dueDate)}</span>
               </p>
             )}
           </div>
@@ -843,21 +814,21 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
         <div className="flex-shrink-0 flex flex-row gap-1 sm:gap-2 opacity-65 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(task)}
-            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
+            className="h-6 w-6 md:h-7 md:w-7 rounded-full bg-transparent hover:bg-white/70 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
             title="Edit task"
             aria-label={`Edit ${task.title}`}
           >
-            <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-3 h-3 md:w-3.5 md:h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
             </svg>
           </button>
           <button
             onClick={() => onDelete(task.id)}
-            className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
+            className="h-6 w-6 md:h-7 md:w-7 rounded-full bg-transparent hover:bg-white/70 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
             title="Delete task"
             aria-label={`Delete ${task.title}`}
           >
-            <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-3 h-3 md:w-3.5 md:h-3.5" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
                 d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"

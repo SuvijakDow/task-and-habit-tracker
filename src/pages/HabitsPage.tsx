@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Flame } from 'lucide-react';
+import { Activity, Flame } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -15,7 +15,7 @@ import { db } from '@/utils/firebase';
 import { showToast } from '@/components/Toast';
 
 export function HabitsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -283,18 +283,17 @@ export function HabitsPage() {
       </div>
     );
   }
+  const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
   return (
-    <div className="min-h-screen py-8 md:py-12">
+    <div className="min-h-screen pt-4 md:pt-6 pb-8 md:pb-12">
       <div className="max-w-3xl mx-auto px-6">
-        {/* Header */}
-        <div className="mb-8 md:mb-10">
-          <div className="flex items-center gap-3">
-            <Flame className="h-6 w-6 md:h-7 md:w-7 text-pink-500" />
-            <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
-              Daily Habits
-            </h1>
-          </div>
+        {/* Hero Greeting */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+            Hello, {userDisplayName}
+          </h1>
+          <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Build better routines, one check at a time.</p>
         </div>
 
         {/* Error Message */}
@@ -305,7 +304,7 @@ export function HabitsPage() {
         )}
 
         {/* Add Habit Form */}
-        <div className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md rounded-3xl border border-white/40 shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6 md:p-8 mb-8 md:mb-10">
+        <div className="glass-card p-6 md:p-8 mb-8 md:mb-10">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Add New Habit</h2>
           <form onSubmit={handleAddHabit} className="space-y-4">
             <div>
@@ -324,7 +323,7 @@ export function HabitsPage() {
             </div>
 
             {/* Days Selection */}
-            <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
+            <div className="glass-card p-6">
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule (select days):</p>
               <div className="flex flex-wrap gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
@@ -359,8 +358,10 @@ export function HabitsPage() {
 
         {/* Habits List */}
         {!loading && habits.length === 0 ? (
-          <div className="bg-white/75 sm:bg-white/55 backdrop-blur-none sm:backdrop-blur-md rounded-3xl border border-white/40 shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-8 md:p-12 text-center">
-            <div className="text-purple-300 text-4xl md:text-5xl mb-4">✨</div>
+          <div className="glass-card p-8 md:p-12 text-center">
+            <div className="mb-4 flex justify-center">
+              <Activity className="h-10 w-10 md:h-12 md:w-12 text-purple-300" />
+            </div>
             <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">No habits yet</h3>
             <p className="text-xs sm:text-sm text-gray-600">Start building better habits by adding one above!</p>
           </div>
@@ -382,7 +383,7 @@ export function HabitsPage() {
                     onDragEnter={() => handleDragEnter(habit.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={() => handleDrop(habit.id)}
-                    className={`bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md rounded-3xl border border-white/40 shadow-sm sm:shadow-xl sm:shadow-purple-500/10 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0 py-3 md:py-4 px-4 sm:px-6 transition-all duration-200 cursor-move group ${
+                    className={`glass-card flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0 py-3 md:py-4 px-4 sm:px-6 transition-all duration-200 cursor-move group ${
                       isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
                     } ${isDragging ? 'opacity-50 scale-95' : 'hover:shadow-md sm:hover:shadow-2xl'} ${
                       isOver ? 'ring-2 ring-purple-400 ring-opacity-50' : ''
@@ -427,8 +428,9 @@ export function HabitsPage() {
                     </div>
 
                     <div className="flex flex-row items-center self-end md:self-auto gap-3 opacity-65 group-hover:opacity-100 transition-opacity">
-                      <span className="inline-flex text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-full whitespace-nowrap">
-                        🔥 {streak}
+                      <span className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <Flame className="h-3.5 w-3.5 text-pink-500" />
+                        {streak}
                       </span>
 
                       <div className="flex items-center gap-1 sm:gap-2">
@@ -534,8 +536,8 @@ export function HabitsPage() {
 
         {/* Delete Confirmation Modal */}
         {deletingHabitId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-sm w-full p-6">
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+            <div className="glass-card max-w-sm w-full p-6">
               <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z" />

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,7 +11,7 @@
 @layer base {
   html, body {
     @apply font-sans;
-    font-family: 'Outfit', 'Noto Sans Thai', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
+    font-family: 'Manrope', 'Noto Sans Thai', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
   }
 }
 
@@ -21,8 +21,22 @@ html {
 
 body {
   @apply text-gray-900;
-  background: linear-gradient(135deg, #F6D7E3 0%, #E8D3F1 52%, #D8E0F9 100%);
+  background:
+    radial-gradient(120% 110% at 10% 0%, rgba(255, 233, 244, 0.85) 0%, rgba(255, 233, 244, 0) 56%),
+    radial-gradient(120% 120% at 90% 8%, rgba(235, 224, 255, 0.82) 0%, rgba(235, 224, 255, 0) 58%),
+    radial-gradient(100% 100% at 50% 100%, rgba(216, 238, 255, 0.68) 0%, rgba(216, 238, 255, 0) 54%),
+    linear-gradient(142deg, #f8dfea 0%, #efddf5 45%, #dfebff 100%);
   background-attachment: fixed;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/75 sm:bg-white/55 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-purple-500/10;
+  }
+
+  .glass-header {
+    @apply bg-white/70 backdrop-blur-xl border border-white/50 rounded-3xl shadow-xl shadow-purple-500/10;
+  }
 }
 
 @keyframes consistency-gradient-shift {
