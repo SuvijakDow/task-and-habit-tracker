@@ -109,27 +109,32 @@ export function AnalyticsPage() {
                 </div>
               </div>
 
-              {/* 7-Day Visual Calendar */}
+              {/* 7-Day Mini Bar Chart */}
               <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
                 <p className="text-gray-600 text-xs md:text-sm font-medium mb-3">Last 7 Days</p>
-                <div className="flex gap-2 md:gap-3 justify-between">
+                <div className="flex gap-2 md:gap-3 justify-between items-end">
                   {past7Days.map((day, index) => {
                     const dayOfWeek = new Date(day.date).getDay();
                     const isScheduled = (habit as any).scheduledDays?.includes(dayOfWeek) ?? true;
+                    const barHeightClass = day.completed
+                      ? 'h-12 md:h-14'
+                      : isScheduled
+                      ? 'h-4 md:h-5'
+                      : 'h-3 md:h-4';
+                    const barColorClass = day.completed
+                      ? 'bg-gradient-to-t from-purple-600 via-fuchsia-500 to-pink-400 shadow-[0_6px_14px_rgba(167,139,250,0.4)]'
+                      : isScheduled
+                      ? 'bg-gradient-to-t from-slate-400 to-slate-200 opacity-90'
+                      : 'bg-gradient-to-t from-slate-300 to-slate-100 opacity-50';
 
                     return (
-                      <div key={index} className="flex flex-col items-center gap-1 flex-1 min-w-0">
-                        {/* Colored Dot */}
+                      <div key={index} className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
                         <div
-                          className={`w-6 h-6 md:w-7 md:h-7 rounded-full transition-all ${
-                            day.completed
-                              ? 'bg-green-400 shadow-md'
-                              : !isScheduled
-                              ? 'bg-gray-200 opacity-50'
-                              : 'bg-gray-300'
-                          }`}
+                          className="w-full max-w-[32px] h-14 md:h-16 rounded-xl border border-purple-100/70 bg-white/75 p-1 flex items-end"
                           title={`${day.date}: ${day.completed ? 'Completed' : !isScheduled ? 'Not scheduled' : 'Missed'}`}
-                        />
+                        >
+                          <div className={`w-full rounded-lg transition-all duration-300 ${barHeightClass} ${barColorClass}`} />
+                        </div>
                         {/* Day Label */}
                         <span className="text-gray-600 text-xs md:text-sm font-medium">
                           {getDayAbbreviation(day.date)}
@@ -148,14 +153,14 @@ export function AnalyticsPage() {
               <div className="mt-4 md:mt-6 bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
                 <div className="flex items-center justify-between">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Overall Consistency</p>
-                  <span className="text-sm md:text-base font-semibold text-blue-600">
+                  <span className="text-sm md:text-base font-semibold text-purple-700">
                     {consistency}%
                   </span>
                 </div>
                 {/* Progress Bar */}
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                <div className="mt-3 w-full h-4 md:h-5 rounded-full bg-gradient-to-r from-purple-100/90 via-pink-100/90 to-indigo-100/90 p-1 shadow-inner">
                   <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    className="consistency-gradient-animated h-full rounded-full transition-[width] duration-700 ease-out"
                     style={{
                       width: `${consistency}%`,
                     }}
