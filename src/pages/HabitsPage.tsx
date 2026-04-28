@@ -467,10 +467,10 @@ export function HabitsPage() {
 
         {/* Edit Habit Modal */}
         {editingHabitId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-md w-full p-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Edit Habit</h2>
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4">
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
+                <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
                 <div>
                   <label htmlFor="edit-habit-title" className="block text-sm font-medium text-gray-700 mb-1">
                     Habit Name *
@@ -480,16 +480,16 @@ export function HabitsPage() {
                     type="text"
                     value={editHabitTitle}
                     onChange={(e) => setEditHabitTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
 
-                <div className="bg-white/70 sm:bg-white/50 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-2xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 p-6">
+                <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-2xl shadow-sm p-4 sm:p-5">
                   <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <label key={index} className="flex items-center gap-2 cursor-pointer">
+                      <label key={index} className="cursor-pointer">
                         <input
                           type="checkbox"
                           checked={editScheduledDays.includes(index)}
@@ -500,19 +500,21 @@ export function HabitsPage() {
                               setEditScheduledDays((prev) => prev.filter((d) => d !== index));
                             }
                           }}
-                          className="w-4 h-4 rounded border-gray-300 text-purple-600 cursor-pointer"
+                          className="peer sr-only"
                         />
-                        <span className="text-xs sm:text-sm text-gray-700">{day}</span>
+                        <span className="flex h-9 items-center justify-center rounded-xl border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                          {day}
+                        </span>
                       </label>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -520,7 +522,7 @@ export function HabitsPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm"
+                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm"
                   >
                     Cancel
                   </button>

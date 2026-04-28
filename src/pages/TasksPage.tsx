@@ -372,16 +372,16 @@ export function TasksPage() {
 
         {/* Add Task Form Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto sm:max-h-none">
-              <form onSubmit={handleSubmit} className="space-y-4 p-4 md:p-6">
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg md:text-xl font-semibold text-gray-900">Add New Task</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Add New Task</h2>
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="text-gray-400 hover:text-gray-600 transition"
+                    className="h-9 w-9 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -402,7 +402,7 @@ export function TasksPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                     autoFocus
                   />
@@ -421,7 +421,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -437,7 +437,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {categories.length === 0 ? (
@@ -464,17 +464,17 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-3 pt-4">
+                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Adding...' : 'Add Task'}
                   </button>
@@ -482,7 +482,7 @@ export function TasksPage() {
                     type="button"
                     onClick={() => setIsModalOpen(false)}
                     disabled={isSubmitting}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-xl transition duration-200"
                   >
                     Cancel
                   </button>
@@ -568,10 +568,10 @@ export function TasksPage() {
 
         {/* Edit Task Modal */}
         {editingTaskId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white/90 sm:bg-white/85 backdrop-blur-none sm:backdrop-blur-md border border-white/40 rounded-t-2xl sm:rounded-3xl shadow-sm sm:shadow-xl sm:shadow-purple-500/10 max-w-md w-full max-h-[90vh] overflow-y-auto p-4 md:p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Task</h2>
-              <form onSubmit={handleSaveEdit} className="space-y-4">
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+              <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
+                <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
                 {/* Title Input */}
                 <div>
                   <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -585,7 +585,7 @@ export function TasksPage() {
                      setEditFormData({ ...editFormData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -603,7 +603,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -619,7 +619,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, category: e.target.value })
                     }
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {isEditCategoryMissing && (
@@ -649,17 +649,17 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, dueDate: e.target.value })
                     }
-                    className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-3 pt-4">
+                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -667,7 +667,7 @@ export function TasksPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 disabled:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-xl transition duration-200"
                   >
                     Cancel
                   </button>
