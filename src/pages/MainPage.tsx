@@ -30,15 +30,23 @@ export function MainPage() {
   ];
 
   const currentNavItem = navItems.find((item) => item.key === currentPage) || navItems[0];
+  const currentPageContent = (
+    <>
+      {currentPage === 'tasks' && <TasksPage />}
+      {currentPage === 'habits' && <HabitsPage />}
+      {currentPage === 'categories' && <CategoriesPage />}
+      {currentPage === 'analytics' && <AnalyticsPage />}
+    </>
+  );
 
   return (
     <div>
       {/* Navigation Tabs */}
-      <div className="sticky top-0 z-20 border-y border-white/60 bg-white/68 backdrop-blur-xl shadow-[0_10px_28px_rgba(124,58,237,0.12)]">
+      <div className="sticky top-0 z-20 border-y border-white/60 bg-white/68 backdrop-blur-xl shadow-[0_10px_28px_rgba(124,58,237,0.12)] nav-animated">
         <div className="md:hidden relative px-3 py-2.5">
           <button
             onClick={() => setIsMobileNavOpen((prev) => !prev)}
-            className="w-full inline-flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3.5 py-2.5 text-xs font-semibold text-purple-700 shadow-sm"
+            className="w-full inline-flex items-center justify-between rounded-2xl border border-white/75 bg-white/80 px-3.5 py-2.5 text-xs font-semibold text-purple-700 shadow-sm nav-item-motion"
           >
             <span className="inline-flex items-center gap-1.5">
               <currentNavItem.icon className={`h-4 w-4 ${currentNavItem.iconClass}`} />
@@ -48,7 +56,7 @@ export function MainPage() {
           </button>
 
           {isMobileNavOpen && (
-            <div className="glass-card absolute left-3 right-3 mt-2 overflow-hidden rounded-2xl border border-white/70 bg-white/92 shadow-[0_16px_38px_rgba(124,58,237,0.18)]">
+            <div className="glass-card modal-enter absolute left-3 right-3 mt-2 overflow-hidden rounded-2xl border border-white/70 bg-white/92 shadow-[0_16px_38px_rgba(124,58,237,0.18)]">
               {navItems.map((item) => (
                 <button
                   key={item.key}
@@ -75,9 +83,9 @@ export function MainPage() {
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm lg:text-base font-semibold transition-all ${
+              className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm lg:text-base font-semibold transition-all nav-item-motion ${
                 currentPage === item.key
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.3)]'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.3)] scale-[1.01]'
                   : 'bg-white/72 text-purple-900/70 hover:bg-white hover:text-purple-700 border border-white/70'
               }`}
             >
@@ -89,10 +97,9 @@ export function MainPage() {
       </div>
 
       {/* Page Content */}
-      {currentPage === 'tasks' && <TasksPage />}
-      {currentPage === 'habits' && <HabitsPage />}
-      {currentPage === 'categories' && <CategoriesPage />}
-      {currentPage === 'analytics' && <AnalyticsPage />}
+      <div key={currentPage} className="page-enter pt-3 md:pt-4">
+        {currentPageContent}
+      </div>
     </div>
   );
 }

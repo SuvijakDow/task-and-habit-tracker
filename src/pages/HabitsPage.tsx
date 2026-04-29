@@ -369,7 +369,7 @@ function HabitsPage() {
             <p className="text-xs sm:text-sm text-gray-600">Start building better habits by adding one above!</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 list-stagger">
             {habits.map((habit) => {
               const isCompletedToday = habit.completedDates.includes(todayDate);
               const streak = habit.completedDates.length;
@@ -473,7 +473,7 @@ function HabitsPage() {
         {/* Edit Habit Modal */}
         {editingHabitId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
                 <div>
@@ -540,7 +540,7 @@ function HabitsPage() {
         {/* Delete Confirmation Modal */}
         {deletingHabitId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+            <div className="modal-enter max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
               <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
                 <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z" />

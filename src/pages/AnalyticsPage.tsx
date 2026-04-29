@@ -67,7 +67,7 @@ export function AnalyticsPage() {
         <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Track consistency and momentum over time.</p>
       </div>
 
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-4 md:space-y-6 list-stagger">
         {habits.map((habit) => {
           const scheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
           const streak = calculateStreak(habit.completedDates, scheduledDays);
@@ -78,7 +78,7 @@ export function AnalyticsPage() {
           return (
             <div
               key={habit.id}
-              className="glass-card p-6 md:p-8 hover:shadow-2xl transition-shadow"
+              className="glass-card p-6 md:p-8 hover:shadow-2xl hover:-translate-y-0.5 transition-all"
             >
               {/* Habit Title */}
               <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 truncate">

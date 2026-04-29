@@ -113,12 +113,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-      <div
-        className="glass-card max-w-md w-full max-h-[90vh] overflow-y-auto"
-        style={{
-          animation: 'fadeInScale 0.2s ease-out',
-        }}
-      >
+      <div className="modal-enter w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">

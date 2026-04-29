@@ -371,7 +371,7 @@ export function TasksPage() {
         {/* Add Task Form Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
@@ -501,7 +501,7 @@ export function TasksPage() {
             });
             setIsModalOpen(true);
           }}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center"
+          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
           title="Add new task"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -526,7 +526,7 @@ export function TasksPage() {
                   <p>No pending tasks. Great job!</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 list-stagger">
                   {incompleteTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -547,7 +547,7 @@ export function TasksPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
                   Completed Tasks ({completedTasks.length})
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-4 list-stagger">
                   {completedTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -567,7 +567,7 @@ export function TasksPage() {
         {/* Edit Task Modal */}
         {editingTaskId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
                 {/* Title Input */}
@@ -678,7 +678,7 @@ export function TasksPage() {
         {/* Delete Confirmation Modal */}
         {deletingTaskId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+            <div className="modal-enter max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
               <div className="mb-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
                   <svg className="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

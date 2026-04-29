@@ -319,7 +319,7 @@ export function CategoriesPage() {
         </button>
       </form>
 
-      <div className="space-y-3">
+      <div className="space-y-3 list-stagger">
         {categories.map((category) => (
           <div
             key={category.id}
@@ -411,7 +411,7 @@ export function CategoriesPage() {
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+          <div className="modal-enter max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
               <svg className="h-6 w-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-7.938 4h15.856C21.07 19 22 18.07 22 16.928V7.072C22 5.93 21.07 5 19.928 5H4.072A1.93 1.93 0 002.144 6.928v9.856C2.144 18.07 3.074 19 4.216 19z" />
