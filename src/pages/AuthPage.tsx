@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { signIn, signUp, signOut, signInWithGoogle } from '@/services/authService';
+import { normalizeProfilePhotoURL } from '@/services/userService';
 import { MainPage } from './MainPage';
 import { SettingsModal } from '@/components/SettingsModal';
 
@@ -55,7 +56,7 @@ export function AuthPage() {
   if (user) {
     // Use Firestore profile data, fall back to Auth data while loading
     const profileName = userProfile?.displayName || user.displayName || user.email;
-    const profilePhoto = userProfile?.photoURL || user.photoURL || '';
+    const profilePhoto = normalizeProfilePhotoURL(userProfile?.photoURL || user.photoURL || '');
 
     return (
       <div className="min-h-screen">
@@ -69,6 +70,7 @@ export function AuthPage() {
                     src={profilePhoto}
                     alt={profileName || 'Profile'}
                     className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0 object-cover bg-white/55"
+                    referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0" />

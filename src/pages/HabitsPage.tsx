@@ -14,7 +14,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { showToast } from '@/components/Toast';
 
-export function HabitsPage() {
+function HabitsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,9 +304,10 @@ export function HabitsPage() {
         )}
 
         {/* Add Habit Form */}
-        <div className="glass-card p-6 md:p-8 mb-8 md:mb-10">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Add New Habit</h2>
-          <form onSubmit={handleAddHabit} className="space-y-4">
+        <div className="glass-card p-6 md:p-8 mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
+          <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1">Add New Habit</h2>
+          <p className="text-xs sm:text-sm text-gray-600 mb-5">Create your next routine and choose the days you want it to appear.</p>
+          <form onSubmit={handleAddHabit} className="space-y-4 sm:space-y-5">
             <div>
               <label htmlFor="habit-title" className="block text-sm font-medium text-gray-700 mb-1">
                 Habit Name *
@@ -317,17 +318,17 @@ export function HabitsPage() {
                 value={habitTitle}
                 onChange={(e) => setHabitTitle(e.target.value)}
                 placeholder="e.g., Morning Exercise, Read 30 mins"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
                 disabled={isSubmitting}
               />
             </div>
 
             {/* Days Selection */}
-            <div className="glass-card p-6">
-              <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule (select days):</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-2xl shadow-sm p-4 sm:p-5">
+              <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                  <label key={index} className="flex items-center gap-2 cursor-pointer">
+                  <label key={index} className="cursor-pointer">
                     <input
                       type="checkbox"
                       checked={scheduledDays.includes(index)}
@@ -338,9 +339,11 @@ export function HabitsPage() {
                           setScheduledDays((prev) => prev.filter((d) => d !== index));
                         }
                       }}
-                      className="w-4 h-4 rounded border-gray-300 text-purple-600 cursor-pointer"
+                      className="peer sr-only"
                     />
-                    <span className="text-xs sm:text-sm text-gray-700">{day}</span>
+                    <span className="flex h-9 items-center justify-center rounded-xl border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                      {day}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -349,7 +352,7 @@ export function HabitsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
             >
               {isSubmitting ? 'Adding...' : 'Add Habit'}
             </button>
@@ -537,26 +540,26 @@ export function HabitsPage() {
         {/* Delete Confirmation Modal */}
         {deletingHabitId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="glass-card max-w-sm w-full p-6">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
+                <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z" />
                 </svg>
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 text-center mb-2">Delete Habit?</h3>
-              <p className="text-xs sm:text-sm text-gray-600 text-center mb-6">
+              <p className="text-xs sm:text-sm text-gray-700 text-center mb-6">
                 This action cannot be undone. All habit data will be permanently deleted.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeletingHabitId(null)}
-                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm"
+                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteHabit}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm"
+                  className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
                 >
                   Delete
                 </button>
@@ -568,3 +571,6 @@ export function HabitsPage() {
     </div>
   );
 }
+
+export { HabitsPage };
+export default HabitsPage;

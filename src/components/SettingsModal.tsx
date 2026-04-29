@@ -1,7 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Settings, X, Upload, ImagePlus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { updateUserProfile, uploadProfilePhoto, DEFAULT_AVATARS } from '@/services/userService';
+import {
+  updateUserProfile,
+  uploadProfilePhoto,
+  DEFAULT_AVATARS,
+  normalizeProfilePhotoURL,
+} from '@/services/userService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,6 +25,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   // Build the avatar options: 8 defaults + Google photo if available
   const googlePhotoURL = user?.photoURL || null;
+  const normalizedGooglePhotoURL = normalizeProfilePhotoURL(googlePhotoURL);
+  const normalizedSelectedAvatar = normalizeProfilePhotoURL(selectedAvatar);
   const avatarOptions = [
     ...DEFAULT_AVATARS,
     ...(googlePhotoURL && !DEFAULT_AVATARS.includes(googlePhotoURL)
@@ -30,7 +37,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   // Check if current avatar is a custom upload (not a default or Google photo)
   const isCustomUpload = selectedAvatar
     && !DEFAULT_AVATARS.includes(selectedAvatar)
-    && selectedAvatar !== googlePhotoURL;
+    && normalizedSelectedAvatar !== normalizedGooglePhotoURL;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,7 +76,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
       await updateUserProfile(user.uid, {
         displayName: displayName.trim(),
-        photoURL: selectedAvatar,
+        photoURL: normalizeProfilePhotoURL(selectedAvatar),
       });
 
       await refreshUserProfile();
@@ -171,11 +178,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             {/* Current preview + Upload button */}
             <div className="flex items-center gap-4 mb-4">
               <div className="h-16 w-16 rounded-2xl border-2 border-purple-300 overflow-hidden shadow-lg flex-shrink-0 bg-white/70">
-                {selectedAvatar ? (
+                {normalizedSelectedAvatar ? (
                   <img
-                    src={selectedAvatar}
+                    src={normalizedSelectedAvatar}
                     alt="Current avatar"
                     className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
@@ -209,8 +217,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <p className="text-xs font-medium text-gray-500 mb-2">Or choose a default avatar:</p>
             <div className="grid grid-cols-4 gap-3">
               {avatarOptions.map((avatarURL, index) => {
-                const isSelected = selectedAvatar === avatarURL;
-                const isGooglePhoto = avatarURL === googlePhotoURL && !DEFAULT_AVATARS.includes(avatarURL);
+                const normalizedAvatarURL = normalizeProfilePhotoURL(avatarURL);
+                const isSelected = normalizedSelectedAvatar === normalizedAvatarURL;
+                const isGooglePhoto = normalizedAvatarURL === normalizedGooglePhotoURL && !DEFAULT_AVATARS.includes(avatarURL);
 
                 return (
                   <button
@@ -224,12 +233,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       }`}
                     aria-label={isGooglePhoto ? 'Your Google photo' : `Avatar option ${index + 1}`}
                     title={isGooglePhoto ? 'Your Google photo' : `Avatar ${index + 1}`}
-                  >
+                    >
                     <img
-                      src={avatarURL}
+                      src={normalizedAvatarURL}
                       alt={isGooglePhoto ? 'Google profile photo' : `Avatar ${index + 1}`}
                       className="w-full h-full object-cover bg-white/70"
                       loading="lazy"
+                      referrerPolicy="no-referrer"
                     />
 
                     {/* Selected checkmark */}

@@ -29,6 +29,29 @@ export const DEFAULT_AVATARS = [
 ];
 
 /**
+ * Normalize avatar URL so provider images (especially Google) are more reliable.
+ */
+export const normalizeProfilePhotoURL = (photoURL?: string | null): string => {
+  if (!photoURL) return '';
+
+  const trimmed = photoURL.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('data:image/')) {
+    return trimmed;
+  }
+
+  // Google profile URLs often include =s96-c; request a larger stable size.
+  if (trimmed.includes('googleusercontent.com')) {
+    return trimmed
+      .replace(/^http:\/\//i, 'https://')
+      .replace(/=s\d+(-c)?$/i, '=s256-c');
+  }
+
+  return trimmed.replace(/^http:\/\//i, 'https://');
+};
+
+/**
  * Get a user profile from Firestore
  */
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
