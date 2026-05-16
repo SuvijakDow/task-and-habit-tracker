@@ -54,19 +54,19 @@ const findCategoryByTaskValue = (
 const getCategoryErrorMessage = (error: unknown): string => {
   if (error instanceof FirebaseError) {
     if (error.code === 'permission-denied') {
-      return 'Cannot access categories yet. Add Firestore rules for /categories so users can read/write their own documents.';
+      return 'You do not have access to categories yet. Update Firestore rules for /categories, then refresh.';
     }
 
     if (error.code === 'failed-precondition') {
-      return 'Categories query is missing a Firestore index. Create the suggested index in Firebase Console.';
+      return 'Category lookup needs a Firestore index. Create the suggested index in Firebase Console.';
     }
 
     if (error.code === 'unauthenticated') {
-      return 'Please sign in again to load categories.';
+      return 'Your session expired. Sign in again to load categories.';
     }
   }
 
-  return 'Failed to load categories. Please try again.';
+  return 'Could not load categories. Refresh and try again.';
 };
 
 export function TasksPage() {
@@ -74,6 +74,7 @@ export function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   // Form state
@@ -103,6 +104,7 @@ export function TasksPage() {
     if (!user) {
       setTasks([]);
       setCategories([]);
+      setLoadError(null);
       setLoading(false);
       return;
     }
@@ -126,11 +128,14 @@ export function TasksPage() {
     if (!user) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const userTasks = await getUserTasks(user.uid);
       setTasks(userTasks);
       setError(null);
     } catch (err) {
-      setError('Failed to load tasks. Please try again.');
+      const message = 'Could not load tasks. Refresh and try again.';
+      setLoadError(message);
+      setError(message);
       console.error('Error loading tasks:', err);
     } finally {
       setLoading(false);
@@ -164,12 +169,16 @@ export function TasksPage() {
     }
   };
 
+  const retryLoadData = async () => {
+    await Promise.all([loadTasks(), loadCategories()]);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     if (!formData.title.trim()) {
-      setError('Task title is required');
+      setError('Add a task title.');
       return;
     }
 
@@ -194,7 +203,7 @@ export function TasksPage() {
       // Reload tasks
       await loadTasks();
     } catch (err) {
-      setError('Failed to create task. Please try again.');
+      setError('Could not create the task. Check your connection and try again.');
       console.error('Error creating task:', err);
     } finally {
       setIsSubmitting(false);
@@ -220,7 +229,7 @@ export function TasksPage() {
           t.id === taskId ? { ...t, isCompleted: currentStatus } : t
         )
       );
-      showToast('Failed to update task. Please try again.', 'error');
+      showToast('Task update failed. Please try again.', 'error');
       console.error('Error updating task:', err);
     }
   }, []);
@@ -243,7 +252,7 @@ export function TasksPage() {
     if (!editingTaskId) return;
 
     if (!editFormData.title.trim()) {
-      setError('Task title is required');
+      setError('Add a task title.');
       return;
     }
 
@@ -278,7 +287,7 @@ export function TasksPage() {
 
       setEditingTaskId(null);
     } catch (err) {
-      setError('Failed to update task. Please try again.');
+      setError('Could not save task changes. Please try again.');
       console.error('Error updating task:', err);
     } finally {
       setIsSubmitting(false);
@@ -302,7 +311,7 @@ export function TasksPage() {
       setTasks(tasks.filter((t) => t.id !== deletingTaskId));
       setDeletingTaskId(null);
     } catch (err) {
-      setError('Failed to delete task. Please try again.');
+      setError('Could not delete this task. Please try again.');
       console.error('Error deleting task:', err);
       setDeletingTaskId(null);
     }
@@ -314,8 +323,13 @@ export function TasksPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-gray-600">Loading...</div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+        <div className="glass-card p-8 md:p-12 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-600">Loading your account...</p>
+        </div>
       </div>
     );
   }
@@ -352,7 +366,7 @@ export function TasksPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-3xl mx-auto px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
         {/* Hero Greeting */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
@@ -362,7 +376,7 @@ export function TasksPage() {
         </div>
 
         {/* Error Message */}
-        {error && (
+        {error && !(loadError && tasks.length === 0) && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
             {error}
           </div>
@@ -379,7 +393,7 @@ export function TasksPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="h-9 w-9 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
+                    className="h-11 w-11 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -400,7 +414,7 @@ export function TasksPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                     autoFocus
                   />
@@ -419,7 +433,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -435,7 +449,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {categories.length === 0 ? (
@@ -462,7 +476,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -472,7 +486,7 @@ export function TasksPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Adding...' : 'Add Task'}
                   </button>
@@ -480,7 +494,7 @@ export function TasksPage() {
                     type="button"
                     onClick={() => setIsModalOpen(false)}
                     disabled={isSubmitting}
-                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-xl transition duration-200"
+                    className="flex-1 min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200"
                   >
                     Cancel
                   </button>
@@ -501,7 +515,7 @@ export function TasksPage() {
             });
             setIsModalOpen(true);
           }}
-          className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
+          className="fixed bottom-24 right-5 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
           title="Add new task"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -511,8 +525,43 @@ export function TasksPage() {
 
         {/* Tasks Sections */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-gray-600">Loading tasks...</div>
+          <div className="glass-card p-8 md:p-12 text-center">
+            <div className="flex justify-center mb-3">
+              <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+            </div>
+            <p className="text-gray-600">Loading your tasks...</p>
+          </div>
+        ) : loadError && tasks.length === 0 ? (
+          <div className="glass-card p-8 md:p-12 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Tasks unavailable</h2>
+            <p className="text-gray-600 mb-5">{loadError}</p>
+            <button
+              type="button"
+              onClick={retryLoadData}
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold hover:from-purple-700 hover:to-pink-600 transition"
+            >
+              Retry
+            </button>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="glass-card p-8 md:p-12 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">No tasks yet</h2>
+            <p className="text-gray-600 mb-5">Add your first task to start planning your week.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  title: '',
+                  description: '',
+                  category: getDefaultCategoryValue(),
+                  dueDate: '',
+                });
+                setIsModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
+            >
+              Add first task
+            </button>
           </div>
         ) : (
           <>
@@ -523,7 +572,7 @@ export function TasksPage() {
               </h2>
               {incompleteTasks.length === 0 ? (
                 <div className="glass-card p-8 text-center text-gray-600">
-                  <p>No pending tasks. Great job!</p>
+                  <p>No pending tasks. Great job, everything is complete.</p>
                 </div>
               ) : (
                 <div className="space-y-4 list-stagger">
@@ -583,7 +632,7 @@ export function TasksPage() {
                      setEditFormData({ ...editFormData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -601,7 +650,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -617,7 +666,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, category: e.target.value })
                     }
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {isEditCategoryMissing && (
@@ -647,7 +696,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, dueDate: e.target.value })
                     }
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -657,7 +706,7 @@ export function TasksPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -665,7 +714,7 @@ export function TasksPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-xl transition duration-200"
+                    className="flex-1 min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200"
                   >
                     Cancel
                   </button>

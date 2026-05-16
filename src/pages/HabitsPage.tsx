@@ -14,10 +14,11 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { showToast } from '@/components/Toast';
 
-function HabitsPage() {
+export function HabitsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [habitTitle, setHabitTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +42,7 @@ function HabitsPage() {
   useEffect(() => {
     if (!user) {
       setHabits([]);
+      setLoadError(null);
       setLoading(false);
       return;
     }
@@ -52,11 +54,14 @@ function HabitsPage() {
     if (!user) return;
     try {
       setLoading(true);
+      setLoadError(null);
       const userHabits = await getUserDailyHabits(user.uid);
       setHabits(userHabits.sort((a, b) => (a.order || 0) - (b.order || 0)));
       setError(null);
     } catch (err) {
-      setError('Failed to load habits. Please try again.');
+      const message = 'Could not load habits. Refresh and try again.';
+      setLoadError(message);
+      setError(message);
       console.error('Error loading habits:', err);
     } finally {
       setLoading(false);
@@ -270,7 +275,16 @@ function HabitsPage() {
   // };
 
   if (authLoading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+        <div className="glass-card p-8 md:p-12 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-600">Loading your account...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -287,7 +301,7 @@ function HabitsPage() {
 
   return (
     <div className="min-h-screen pt-4 md:pt-6 pb-8 md:pb-12">
-      <div className="max-w-3xl mx-auto px-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         {/* Hero Greeting */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
@@ -297,7 +311,7 @@ function HabitsPage() {
         </div>
 
         {/* Error Message */}
-        {error && (
+        {error && !(loadError && habits.length === 0) && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-xs sm:text-sm rounded-lg">
             {error}
           </div>
@@ -318,7 +332,7 @@ function HabitsPage() {
                 value={habitTitle}
                 onChange={(e) => setHabitTitle(e.target.value)}
                 placeholder="e.g., Morning Exercise, Read 30 mins"
-                className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                 disabled={isSubmitting}
               />
             </div>
@@ -341,7 +355,7 @@ function HabitsPage() {
                       }}
                       className="peer sr-only"
                     />
-                    <span className="flex h-9 items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                    <span className="flex min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                       {day}
                     </span>
                   </label>
@@ -352,7 +366,7 @@ function HabitsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+              className="w-full min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
             >
               {isSubmitting ? 'Adding...' : 'Add Habit'}
             </button>
@@ -360,7 +374,26 @@ function HabitsPage() {
         </div>
 
         {/* Habits List */}
-        {!loading && habits.length === 0 ? (
+        {loading ? (
+          <div className="glass-card p-8 md:p-12 text-center">
+            <div className="flex justify-center mb-3">
+              <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+            </div>
+            <p className="text-gray-600">Loading your habits...</p>
+          </div>
+        ) : loadError && habits.length === 0 ? (
+          <div className="glass-card p-8 md:p-12 text-center">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">Habits unavailable</h2>
+            <p className="text-gray-600 mb-5">{loadError}</p>
+            <button
+              type="button"
+              onClick={loadHabits}
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold hover:from-purple-700 hover:to-pink-600 transition"
+            >
+              Retry
+            </button>
+          </div>
+        ) : habits.length === 0 ? (
           <div className="glass-card p-8 md:p-12 text-center">
             <div className="mb-4 flex justify-center">
               <Activity className="h-10 w-10 md:h-12 md:w-12 text-purple-300" />
@@ -485,7 +518,7 @@ function HabitsPage() {
                     type="text"
                     value={editHabitTitle}
                     onChange={(e) => setEditHabitTitle(e.target.value)}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -507,7 +540,7 @@ function HabitsPage() {
                           }}
                           className="peer sr-only"
                         />
-                        <span className="flex h-9 items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                        <span className="flex min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                           {day}
                         </span>
                       </label>
@@ -519,7 +552,7 @@ function HabitsPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -527,7 +560,7 @@ function HabitsPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm"
+                    className="flex-1 min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-base font-semibold py-2.5 px-4 rounded-lg transition duration-200"
                   >
                     Cancel
                   </button>
@@ -571,6 +604,3 @@ function HabitsPage() {
     </div>
   );
 }
-
-export { HabitsPage };
-export default HabitsPage;

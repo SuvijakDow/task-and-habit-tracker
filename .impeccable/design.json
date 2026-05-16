@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-16T06:00:00Z",
+  "title": "Design System: Task & Habit Tracker",
+  "extensions": {
+    "colorMeta": {
+      "primary-violet": {
+        "role": "primary",
+        "displayName": "Momentum Violet",
+        "canonical": "#7C3AED",
+        "tonalRamp": [
+          "#1E1130",
+          "#2D1A46",
+          "#45266B",
+          "#5D3390",
+          "#7C3AED",
+          "#9A6BF1",
+          "#BC9BF6",
+          "#E9DDFE"
+        ]
+      },
+      "primary-pink": {
+        "role": "primary",
+        "displayName": "Pulse Pink",
+        "canonical": "#EC4899",
+        "tonalRamp": [
+          "#300D22",
+          "#4A1433",
+          "#6E1E4E",
+          "#9B2C6D",
+          "#EC4899",
+          "#F27AB5",
+          "#F8ABD1",
+          "#FDE3F1"
+        ]
+      },
+      "secondary-indigo": {
+        "role": "secondary",
+        "displayName": "Lifted Indigo",
+        "canonical": "#8B5CF6",
+        "tonalRamp": [
+          "#1F1335",
+          "#2E1C4E",
+          "#442975",
+          "#5F3AA3",
+          "#8B5CF6",
+          "#AA85F8",
+          "#C7AEFB",
+          "#ECE3FE"
+        ]
+      },
+      "tertiary-sky": {
+        "role": "tertiary",
+        "displayName": "Sky Signal",
+        "canonical": "#93C5FD",
+        "tonalRamp": [
+          "#152534",
+          "#1F374E",
+          "#2D5175",
+          "#3E73A5",
+          "#93C5FD",
+          "#AED3FD",
+          "#CAE2FE",
+          "#E8F3FF"
+        ]
+      },
+      "neutral-blush": {
+        "role": "neutral",
+        "displayName": "Petal Blush",
+        "canonical": "#F8DFEA",
+        "tonalRamp": [
+          "#2B2428",
+          "#44373E",
+          "#65525C",
+          "#8D7380",
+          "#BE9EAA",
+          "#D5BCC6",
+          "#EAD5DD",
+          "#F8DFEA"
+        ]
+      },
+      "neutral-lilac": {
+        "role": "neutral",
+        "displayName": "Mist Lilac",
+        "canonical": "#EFDDF5",
+        "tonalRamp": [
+          "#28242B",
+          "#3E3843",
+          "#5B5263",
+          "#80738B",
+          "#AA9CB4",
+          "#C7BDD0",
+          "#E0D8E7",
+          "#EFDDF5"
+        ]
+      },
+      "neutral-sky": {
+        "role": "neutral",
+        "displayName": "Soft Sky",
+        "canonical": "#DFEBFF",
+        "tonalRamp": [
+          "#222830",
+          "#353F4A",
+          "#4E5D6D",
+          "#6E8296",
+          "#98AEC2",
+          "#B8CBDB",
+          "#D3E1EE",
+          "#DFEBFF"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero and page-level heading moments."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section-level anchor text."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and module headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default app copy and labels with longer phrasing."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Compact controls, metadata, and helper text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "surface-lift",
+        "value": "0 10px 28px rgba(124,58,237,0.12)",
+        "purpose": "Sticky navigation and elevated persistent controls."
+      },
+      {
+        "name": "modal-focus",
+        "value": "0 24px 56px rgba(120,87,255,0.26)",
+        "purpose": "Modal and high-focus overlays."
+      },
+      {
+        "name": "action-glow",
+        "value": "0 10px 24px rgba(168,85,247,0.3)",
+        "purpose": "High-importance active controls."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-momentum-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Primary entrance and transition easing."
+      },
+      {
+        "name": "duration-fast",
+        "value": "220ms",
+        "purpose": "Micro-interaction hover and state changes."
+      },
+      {
+        "name": "duration-medium",
+        "value": "420ms",
+        "purpose": "Page and modal enter transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main commit action for sign-in, save, and create flows.",
+      "html": "<button class=\"ds-btn-primary\">Save Changes</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(90deg, #7C3AED 0%, #EC4899 100%); color: #FFFFFF; border: 0; border-radius: 8px; padding: 12px 16px; font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.4; letter-spacing: 0.01em; box-shadow: 0 10px 24px rgba(168,85,247,0.3); transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), filter 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1); cursor: pointer; } .ds-btn-primary:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 14px 28px rgba(168,85,247,0.32); } .ds-btn-primary:focus-visible { outline: 2px solid #8B5CF6; outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(0); filter: brightness(0.98); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Lower-priority action with frosted neutral treatment.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { background: rgba(255,255,255,0.78); color: #6D28D9; border: 1px solid rgba(255,255,255,0.64); border-radius: 8px; padding: 12px 16px; font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.4; letter-spacing: 0.01em; transition: background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1); cursor: pointer; } .ds-btn-secondary:hover { background: rgba(255,255,255,0.92); border-color: rgba(139,92,246,0.35); transform: translateY(-1px); } .ds-btn-secondary:focus-visible { outline: 2px solid #8B5CF6; outline-offset: 2px; } .ds-btn-secondary:active { transform: translateY(0); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Core text field style used across auth, categories, and settings.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Email Address</span><input class=\"ds-input\" type=\"email\" placeholder=\"you@example.com\" /></label>",
+      "css": ".ds-field { display: grid; gap: 6px; max-width: 360px; } .ds-field-label { font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.4; color: #374151; } .ds-input { width: 100%; background: rgba(255,255,255,0.78); color: #1F2937; border: 1px solid rgba(209,213,219,0.95); border-radius: 8px; padding: 12px 16px; font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 500; line-height: 1.5; transition: border-color 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-input:hover { background: rgba(255,255,255,0.9); } .ds-input:focus-visible { outline: none; border-color: #8B5CF6; box-shadow: 0 0 0 2px rgba(139,92,246,0.28); background: #FFFFFF; } .ds-input:active { border-color: #7C3AED; }"
+    },
+    {
+      "name": "Glass Card",
+      "kind": "card",
+      "refersTo": "card-glass",
+      "description": "Default content container for modules, forms, and analytics sections.",
+      "html": "<section class=\"ds-card\"><h3 class=\"ds-card-title\">Current Streak</h3><p class=\"ds-card-copy\">Track consistency and momentum over time.</p></section>",
+      "css": ".ds-card { background: rgba(255,255,255,0.8); color: #1F2937; border: 1px solid rgba(255,255,255,0.6); border-radius: 12px; padding: 24px; box-shadow: 0 10px 28px rgba(124,58,237,0.12); backdrop-filter: blur(12px); transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1); } .ds-card:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(124,58,237,0.18); } .ds-card:focus-visible { outline: 2px solid #8B5CF6; outline-offset: 2px; } .ds-card-title { margin: 0 0 8px; font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 20px; font-weight: 600; line-height: 1.35; } .ds-card-copy { margin: 0; font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 500; line-height: 1.6; color: #6B7280; }"
+    },
+    {
+      "name": "Top Navigation Tab",
+      "kind": "nav",
+      "refersTo": "nav-tab-active",
+      "description": "Segmented tab-style navigation for primary app sections.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item ds-nav-item--active\">Tasks</button><button class=\"ds-nav-item\">Daily Habits</button><button class=\"ds-nav-item\">Analytics</button></nav>",
+      "css": ".ds-nav { display: flex; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,0.6); border-radius: 12px; background: linear-gradient(115deg, rgba(255,255,255,0.72), rgba(255,255,255,0.58), rgba(245,232,255,0.58), rgba(255,255,255,0.72)); } .ds-nav-item { border: 1px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.72); color: rgba(88,28,135,0.72); border-radius: 8px; padding: 12px 16px; font-family: Poppins, 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; line-height: 1.4; transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms cubic-bezier(0.22, 1, 0.36, 1); cursor: pointer; } .ds-nav-item:hover { transform: translateY(-1px); background: #FFFFFF; color: #7C3AED; } .ds-nav-item:focus-visible { outline: 2px solid #8B5CF6; outline-offset: 2px; } .ds-nav-item:active { transform: translateY(0); } .ds-nav-item--active { border: 0; background: linear-gradient(90deg, #7C3AED 0%, #EC4899 100%); color: #FFFFFF; box-shadow: 0 10px 24px rgba(168,85,247,0.3); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Momentum Glass",
+    "overview": "The interface should feel like a lightweight personal command surface that stays beautiful under daily repetition. Visual polish exists to reduce friction and preserve momentum, not to perform as decoration. Core actions should read instantly, feel direct, and respond with calm confidence.\n\nThe system blends soft glass layering with vivid lilac-pink accents so habit completion and task updates feel rewarding without turning noisy. It explicitly rejects cluttered dashboard interfaces, crowded card stacks, and decorative patterns that slow interaction. It also rejects heavy or distracting motion that competes with core actions.",
+    "keyCharacteristics": [
+      "Soft translucent surfaces with clear hierarchy.",
+      "High-clarity action states in violet and pink.",
+      "Compact spacing tuned for fast daily check-ins.",
+      "Motion used for confirmation and orientation only."
+    ],
+    "rules": [
+      {
+        "name": "The Momentum Accent Rule",
+        "body": "Accent colors exist to reveal action and progress, never as generic decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Soft Surface Rule",
+        "body": "Surface contrast should come from tinted layers and subtle borders, not stark black-white blocks.",
+        "section": "colors"
+      },
+      {
+        "name": "The One-Glance Rule",
+        "body": "Any daily action screen must be readable in one quick scan, so weights and sizes must keep hierarchy obvious at a glance.",
+        "section": "typography"
+      },
+      {
+        "name": "The Response-Only Depth Rule",
+        "body": "Depth intensifies only when user intent or focus changes, never as idle ornament.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep primary actions visually obvious with violet/pink emphasis and clear hover/focus response.",
+      "Do preserve compact, fast interaction paths for daily habit check-offs and task capture.",
+      "Do use translucent surfaces, soft borders, and ambient shadows to separate layers gently.",
+      "Do keep motion short and purposeful, especially for confirmation, orientation, and feedback."
+    ],
+    "donts": [
+      "Don't create cluttered dashboard interfaces.",
+      "Don't use crowded card stacks.",
+      "Don't add decorative patterns that slow interaction.",
+      "Don't use heavy or distracting motion that competes with core actions.",
+      "Don't use side-stripe borders or gradient text as decorative shortcuts."
+    ]
+  }
+}

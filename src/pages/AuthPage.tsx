@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { signIn, signUp, signOut, signInWithGoogle } from '@/services/authService';
 import { normalizeProfilePhotoURL } from '@/services/userService';
 import { MainPage } from './MainPage';
-import { SettingsModal } from '@/components/SettingsModal';
+import SettingsModal from '@/components/SettingsModal';
 
 type AuthMode = 'login' | 'signup' | 'profile';
 
@@ -34,7 +34,7 @@ export function AuthPage() {
       setIsSubmitting(true);
       await signOut();
     } catch (err) {
-      setError('Failed to sign out');
+      setError('Could not sign out. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -42,7 +42,7 @@ export function AuthPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen" aria-live="polite">
         <div className="text-center">
           <div className="mb-4">
             <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
@@ -85,7 +85,7 @@ export function AuthPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsSettingsOpen(true)}
-                  className="h-8 w-8 rounded-lg bg-white/60 hover:bg-white/90 text-gray-500 hover:text-purple-600 transition-all flex items-center justify-center flex-shrink-0"
+                  className="h-11 w-11 rounded-lg bg-white/60 hover:bg-white/90 text-gray-500 hover:text-purple-600 transition-all flex items-center justify-center flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                   title="Settings"
                   aria-label="Open settings"
                 >
@@ -94,7 +94,7 @@ export function AuthPage() {
                 <button
                   onClick={handleLogout}
                   disabled={isSubmitting}
-                  className="px-3 py-1.5 bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-xs flex-shrink-0 whitespace-nowrap"
+                  className="px-3 py-2 min-h-[44px] bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-sm flex-shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 >
                   {isSubmitting ? 'Signing out...' : 'Sign Out'}
                 </button>
@@ -127,7 +127,7 @@ export function AuthPage() {
     setError(null);
 
     if (!loginData.email || !loginData.password) {
-      setError('Please fill in all fields');
+      setError('Enter both email and password.');
       return;
     }
 
@@ -137,13 +137,17 @@ export function AuthPage() {
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to sign in';
       if (errorMessage.includes('user-not-found')) {
-        setError('No account found with this email');
+        setError('No account found for this email. Check the address or create an account.');
       } else if (errorMessage.includes('wrong-password')) {
-        setError('Incorrect password');
+        setError('Incorrect password. Try again.');
       } else if (errorMessage.includes('invalid-email')) {
-        setError('Invalid email address');
+        setError('Enter a valid email address, like name@example.com.');
+      } else if (errorMessage.includes('too-many-requests')) {
+        setError('Too many attempts. Wait a moment, then try again.');
+      } else if (errorMessage.includes('network-request-failed')) {
+        setError('Network issue. Check your connection and try again.');
       } else {
-        setError(errorMessage);
+        setError('Could not sign in right now. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -155,22 +159,22 @@ export function AuthPage() {
     setError(null);
 
     if (!signupData.email || !signupData.password || !signupData.confirmPassword) {
-      setError('Please fill in all fields');
+      setError('Complete all required fields.');
       return;
     }
 
     if (signupData.password !== signupData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match. Re-enter both fields.');
       return;
     }
 
     if (signupData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Use at least 6 characters for your password.');
       return;
     }
 
     if (signupData.displayName.trim().length === 0) {
-      setError('Display name is required');
+      setError('Enter a display name.');
       return;
     }
 
@@ -180,13 +184,15 @@ export function AuthPage() {
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to sign up';
       if (errorMessage.includes('email-already-in-use')) {
-        setError('Email already in use');
+        setError('This email is already in use. Sign in or use a different email.');
       } else if (errorMessage.includes('weak-password')) {
-        setError('Password is too weak');
+        setError('Use at least 6 characters for your password.');
       } else if (errorMessage.includes('invalid-email')) {
-        setError('Invalid email address');
+        setError('Enter a valid email address, like name@example.com.');
+      } else if (errorMessage.includes('network-request-failed')) {
+        setError('Network issue. Check your connection and try again.');
       } else {
-        setError(errorMessage);
+        setError('Could not create your account right now. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -201,11 +207,13 @@ export function AuthPage() {
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to sign in with Google';
       if (errorMessage.includes('popup-closed-by-user')) {
-        setError('Sign in cancelled');
+        setError('Google sign-in was cancelled.');
       } else if (errorMessage.includes('popup-blocked')) {
-        setError('Pop-up was blocked. Please allow pop-ups and try again');
+        setError('Pop-up was blocked. Allow pop-ups for this site, then try again.');
+      } else if (errorMessage.includes('network-request-failed')) {
+        setError('Network issue. Check your connection and try again.');
       } else {
-        setError(errorMessage);
+        setError('Google sign-in failed. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -213,18 +221,18 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-4 sm:py-8">
       <div className="w-full max-w-md">
         {/* Logo / Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500 mb-2">
+          <h1 className="text-4xl font-extrabold text-purple-800 mb-2 tracking-tight">
             TaskTracker
           </h1>
           <p className="text-purple-900/60 font-medium">Your minimal task and habit companion</p>
         </div>
 
         {/* Card */}
-        <div className="glass-card p-8 md:p-10">
+        <div className="glass-card p-6 sm:p-8 md:p-10">
           {/* Tabs */}
           <div className="flex gap-2 p-1.5 bg-white/30 rounded-full">
             <button
@@ -233,7 +241,7 @@ export function AuthPage() {
                 setError(null);
                 setLoginData({ email: '', password: '' });
               }}
-              className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-center transition-all ${
+              className={`flex-1 min-h-[44px] py-2.5 px-4 rounded-full text-base font-semibold text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
                 mode === 'login'
                   ? 'bg-white/60 text-purple-700 shadow-md'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
@@ -252,7 +260,7 @@ export function AuthPage() {
                     displayName: '',
                   });
                 }}
-               className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-center transition-all ${
+              className={`flex-1 min-h-[44px] py-2.5 px-4 rounded-full text-base font-semibold text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
                  mode === 'signup'
                    ? 'bg-white/60 text-purple-700 shadow-md'
                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
@@ -264,13 +272,13 @@ export function AuthPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mt-6 p-4 bg-red-50/90 border border-red-200 rounded-xl text-red-700 text-sm">
+            <div role="alert" className="mt-6 p-4 bg-red-50/90 border border-red-200 rounded-xl text-red-700 text-sm">
               {error}
             </div>
           )}
 
           {/* Form Content */}
-          <div className="pt-8">
+          <div className="pt-6 sm:pt-8">
             {mode === 'login' ? (
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
@@ -284,8 +292,9 @@ export function AuthPage() {
                     value={loginData.email}
                     onChange={handleLoginChange}
                     placeholder="you@example.com"
+                    autoComplete="email"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
+                    className="w-full min-h-[44px] px-4 py-2.5 bg-white/70 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
                   />
                 </div>
 
@@ -300,15 +309,16 @@ export function AuthPage() {
                     value={loginData.password}
                     onChange={handleLoginChange}
                     placeholder="••••••••"
+                    autoComplete="current-password"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
+                    className="w-full min-h-[44px] px-4 py-2.5 bg-white/70 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-6 min-h-[44px] py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 >
                   {isSubmitting ? 'Signing in...' : 'Sign In'}
                 </button>
@@ -326,8 +336,9 @@ export function AuthPage() {
                     value={signupData.displayName}
                     onChange={handleSignupChange}
                     placeholder="John Doe"
+                    autoComplete="name"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
+                    className="w-full min-h-[44px] px-4 py-2.5 bg-white/70 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
                   />
                 </div>
 
@@ -342,8 +353,9 @@ export function AuthPage() {
                     value={signupData.email}
                     onChange={handleSignupChange}
                     placeholder="you@example.com"
+                    autoComplete="email"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
+                    className="w-full min-h-[44px] px-4 py-2.5 bg-white/70 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
                   />
                 </div>
 
@@ -358,8 +370,9 @@ export function AuthPage() {
                     value={signupData.password}
                     onChange={handleSignupChange}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
+                    className="w-full min-h-[44px] px-4 py-2.5 bg-white/70 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
                   />
                 </div>
 
@@ -374,15 +387,16 @@ export function AuthPage() {
                     value={signupData.confirmPassword}
                     onChange={handleSignupChange}
                     placeholder="••••••••"
+                    autoComplete="new-password"
                     disabled={isSubmitting}
-                    className="w-full px-4 py-3 bg-white/70 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
+                    className="w-full min-h-[44px] px-4 py-2.5 bg-white/70 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-white/35 transition-all"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-6 min-h-[44px] py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-semibold rounded-lg shadow-md hover:shadow-lg hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 >
                   {isSubmitting ? 'Creating account...' : 'Create Account'}
                 </button>
@@ -401,7 +415,7 @@ export function AuthPage() {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isSubmitting}
-              className="w-full mt-4 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full mt-4 min-h-[44px] py-2.5 bg-white border border-gray-200 text-gray-700 text-base font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path

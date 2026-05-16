@@ -8,43 +8,89 @@ export function AnalyticsPage() {
   const { user, userProfile } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
 
-  useEffect(() => {
+  const loadAnalytics = async () => {
     if (!user) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedHabits = await getUserDailyHabits(user.uid);
+      // Sort habits by order field to match Habits page
+      const sortedHabits = fetchedHabits.sort((a, b) => {
+        const orderA = (a as any).order ?? Infinity;
+        const orderB = (b as any).order ?? Infinity;
+        return orderA - orderB;
+      });
+      setHabits(sortedHabits);
+    } catch (loadError) {
+      setError('Could not load analytics. Refresh and try again.');
+      console.error('Error fetching habits:', loadError);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const fetchHabits = async () => {
-      try {
-        setLoading(true);
-        const fetchedHabits = await getUserDailyHabits(user.uid);
-        // Sort habits by order field to match Habits page
-        const sortedHabits = fetchedHabits.sort((a, b) => {
-          const orderA = (a as any).order ?? Infinity;
-          const orderB = (b as any).order ?? Infinity;
-          return orderA - orderB;
-        });
-        setHabits(sortedHabits);
-      } catch (error) {
-        console.error('Error fetching habits:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
+    if (!user) {
+      setHabits([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
-    fetchHabits();
+    loadAnalytics();
   }, [user]);
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Please Sign In</h2>
+          <p className="text-gray-600">Sign in to view your analytics.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+        <div className="glass-card p-8 md:p-12 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-600">Loading your analytics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && habits.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+        <div className="glass-card p-8 md:p-12 text-center">
+          <div className="flex justify-center mb-4">
+            <TrendingUp className="h-12 w-12 text-rose-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Analytics unavailable</h3>
+          <p className="text-gray-600 mb-5">{error}</p>
+          <button
+            type="button"
+            onClick={loadAnalytics}
+            className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold hover:from-purple-700 hover:to-pink-600 transition"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   if (habits.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
         <div className="glass-card p-8 md:p-12 text-center">
           <div className="flex justify-center mb-4">
             <TrendingUp className="h-12 w-12 text-purple-400" />
@@ -59,13 +105,19 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
           Hello, {userDisplayName}
         </h1>
         <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Track consistency and momentum over time.</p>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm md:text-base">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-4 md:space-y-6 list-stagger">
         {habits.map((habit) => {

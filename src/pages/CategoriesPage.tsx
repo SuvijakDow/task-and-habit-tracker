@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FirebaseError } from 'firebase/app';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Category, Task } from '@/types';
@@ -17,19 +17,19 @@ const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const getCategoryErrorMessage = (error: unknown): string => {
   if (error instanceof FirebaseError) {
     if (error.code === 'permission-denied') {
-      return 'Cannot access categories. Check Firestore rules for /categories.';
+      return 'You do not have access to categories yet. Update Firestore rules for /categories, then refresh.';
     }
 
     if (error.code === 'failed-precondition') {
-      return 'Categories query is missing a Firestore index. Create it in Firebase Console.';
+      return 'Category lookup needs a Firestore index. Create the suggested index in Firebase Console.';
     }
 
     if (error.code === 'unauthenticated') {
-      return 'Please sign in again to manage categories.';
+      return 'Your session expired. Sign in again to manage categories.';
     }
   }
 
-  return 'Failed to manage categories. Please try again.';
+  return 'Could not load categories. Refresh and try again.';
 };
 
 export function CategoriesPage() {
@@ -37,6 +37,7 @@ export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
@@ -54,33 +55,39 @@ export function CategoriesPage() {
     name: '',
     color: PASTEL_CATEGORY_COLORS[0],
   });
+  const categoryNameInputRef = useRef<HTMLInputElement>(null);
   const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
+
+  const loadData = async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const [userCategories, userTasks] = await Promise.all([
+        getUserCategories(user.uid),
+        getUserTasks(user.uid),
+      ]);
+      setCategories(userCategories);
+      setTasks(userTasks);
+      setError(null);
+    } catch (err) {
+      const message = getCategoryErrorMessage(err);
+      setLoadError(message);
+      setError(message);
+      console.error('Error loading category manager data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
       setCategories([]);
       setTasks([]);
+      setLoadError(null);
       setLoading(false);
       return;
     }
-
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [userCategories, userTasks] = await Promise.all([
-          getUserCategories(user.uid),
-          getUserTasks(user.uid),
-        ]);
-        setCategories(userCategories);
-        setTasks(userTasks);
-        setError(null);
-      } catch (err) {
-        setError(getCategoryErrorMessage(err));
-        console.error('Error loading category manager data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     loadData();
   }, [user]);
@@ -103,13 +110,13 @@ export function CategoriesPage() {
 
     const name = formData.name.trim();
     if (!name) {
-      setError('Category name is required.');
+      setError('Enter a category name.');
       return;
     }
 
     const duplicate = categories.some((category) => category.name.toLowerCase() === name.toLowerCase());
     if (duplicate) {
-      setError('Category already exists.');
+      setError('A category with this name already exists.');
       return;
     }
 
@@ -134,7 +141,7 @@ export function CategoriesPage() {
 
   const handleDeleteCategory = (categoryToDelete: Category) => {
     if (categories.length <= 1) {
-      setError('You must keep at least one category.');
+      setError('Keep at least one category.');
       return;
     }
 
@@ -146,7 +153,7 @@ export function CategoriesPage() {
       ) || categories.find((category) => category.id !== categoryToDelete.id);
 
     if (!fallbackCategory) {
-      setError('No fallback category available.');
+      setError('No fallback category is available. Create another category and try again.');
       return;
     }
 
@@ -205,7 +212,7 @@ export function CategoriesPage() {
 
     const name = editFormData.name.trim();
     if (!name) {
-      setError('Category name is required.');
+      setError('Enter a category name.');
       return;
     }
 
@@ -214,7 +221,7 @@ export function CategoriesPage() {
         item.id !== category.id && item.name.toLowerCase() === name.toLowerCase()
     );
     if (duplicate) {
-      setError('Category name already exists.');
+      setError('A category with this name already exists.');
       return;
     }
 
@@ -258,14 +265,19 @@ export function CategoriesPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+        <div className="glass-card p-8 md:p-12 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          </div>
+          <p className="text-gray-600">Loading your categories...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
           Hello, {userDisplayName}
@@ -273,9 +285,23 @@ export function CategoriesPage() {
         <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Organize tasks into clear color groups.</p>
       </div>
 
-      {error && (
+      {error && !(loadError && categories.length === 0) && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
           {error}
+        </div>
+      )}
+
+      {loadError && categories.length === 0 && (
+        <div className="glass-card p-8 md:p-10 mb-6 text-center">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">Could not load categories</h2>
+          <p className="text-gray-600 mb-5">{loadError}</p>
+          <button
+            type="button"
+            onClick={loadData}
+            className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold hover:from-purple-700 hover:to-pink-600 transition"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -284,12 +310,17 @@ export function CategoriesPage() {
         className="glass-card p-5 md:p-6 mb-6 space-y-4"
       >
         <h2 className="text-lg md:text-xl font-semibold text-gray-900">Add Category</h2>
+        <label htmlFor="new-category-name" className="block text-sm font-medium text-gray-700">
+          Category Name
+        </label>
         <input
+          id="new-category-name"
+          ref={categoryNameInputRef}
           type="text"
           value={formData.name}
           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
           placeholder="Category name"
-          className="w-full px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+          className="w-full min-h-[44px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
           disabled={isSubmitting || !!deletingCategoryId}
         />
         <div className="flex flex-wrap gap-2">
@@ -298,7 +329,7 @@ export function CategoriesPage() {
               key={color}
               type="button"
               onClick={() => setFormData((prev) => ({ ...prev, color }))}
-              className={`h-8 w-8 rounded-full border-2 transition ${
+              className={`h-11 w-11 rounded-full border-2 transition ${
                 formData.color === color
                   ? 'border-purple-500 scale-110'
                   : 'border-transparent hover:scale-105'
@@ -312,102 +343,116 @@ export function CategoriesPage() {
         <button
           type="submit"
           disabled={isSubmitting || !!deletingCategoryId}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm md:text-base rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition"
+          className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-base rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition"
         >
           <Plus className="h-4 w-4" />
           {isSubmitting ? 'Adding...' : 'Add Category'}
         </button>
       </form>
 
-      <div className="space-y-3 list-stagger">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="glass-card px-4 py-3"
+      {categories.length === 0 ? (
+        <div className="glass-card p-8 md:p-10 text-center">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">No categories yet</h2>
+          <p className="text-gray-600 mb-5">Create your first category to organize tasks by topic.</p>
+          <button
+            type="button"
+            onClick={() => categoryNameInputRef.current?.focus()}
+            className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <span
-                  className="h-4 w-4 rounded-full border border-white/70 flex-shrink-0"
-                  style={{ backgroundColor: category.color }}
-                />
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm md:text-base text-gray-900 truncate">{category.name}</p>
-                  <p className="text-xs text-gray-500">{getTaskCount(category)} task(s)</p>
+            Add first category
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3 list-stagger">
+          {categories.map((category) => (
+            <div
+              key={category.id}
+              className="glass-card px-4 py-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className="h-4 w-4 rounded-full border border-white/70 flex-shrink-0"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm md:text-base text-gray-900 truncate">{category.name}</p>
+                    <p className="text-xs text-gray-500">{getTaskCount(category)} task(s)</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleStartEdit(category)}
-                  disabled={!!deletingCategoryId || isSubmitting || !!savingCategoryId}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-60 transition"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Edit
-                </button>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleDeleteCategory(category)}
-                    disabled={categories.length <= 1 || !!deletingCategoryId || isSubmitting || !!savingCategoryId}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-60 transition"
+                    onClick={() => handleStartEdit(category)}
+                    disabled={!!deletingCategoryId || isSubmitting || !!savingCategoryId}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-60 transition"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {deletingCategoryId === category.id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
-            </div>
-
-            {editingCategoryId === category.id && (
-              <div className="mt-3 p-3 rounded-lg border border-indigo-100 bg-indigo-50/70 space-y-3">
-                <input
-                  type="text"
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Category name"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition bg-white"
-                  disabled={!!savingCategoryId}
-                />
-                <div className="flex flex-wrap gap-2">
-                  {PASTEL_CATEGORY_COLORS.map((color) => (
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit
+                  </button>
                     <button
-                      key={color}
                       type="button"
-                      onClick={() => setEditFormData((prev) => ({ ...prev, color }))}
-                      className={`h-7 w-7 rounded-full border-2 transition ${
-                        editFormData.color === color
-                          ? 'border-indigo-500 scale-110'
-                          : 'border-transparent hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      aria-label={`Select color ${color}`}
-                      disabled={!!savingCategoryId}
-                    />
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSaveEdit(category)}
-                    disabled={!!savingCategoryId}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300 transition"
-                  >
-                    {savingCategoryId === category.id ? 'Saving...' : 'Save'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    disabled={!!savingCategoryId}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
-                  >
-                    Cancel
+                      onClick={() => handleDeleteCategory(category)}
+                      disabled={categories.length <= 1 || !!deletingCategoryId || isSubmitting || !!savingCategoryId}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-60 transition"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {deletingCategoryId === category.id ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+
+              {editingCategoryId === category.id && (
+                <div className="mt-3 p-3 rounded-lg border border-indigo-100 bg-indigo-50/70 space-y-3">
+                  <input
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="Category name"
+                    className="w-full min-h-[44px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition bg-white"
+                    disabled={!!savingCategoryId}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {PASTEL_CATEGORY_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setEditFormData((prev) => ({ ...prev, color }))}
+                        className={`h-10 w-10 rounded-full border-2 transition ${
+                          editFormData.color === color
+                            ? 'border-indigo-500 scale-110'
+                            : 'border-transparent hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color }}
+                        aria-label={`Select color ${color}`}
+                        disabled={!!savingCategoryId}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveEdit(category)}
+                      disabled={!!savingCategoryId}
+                      className="px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300 transition"
+                    >
+                      {savingCategoryId === category.id ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={!!savingCategoryId}
+                      className="px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
@@ -443,4 +488,3 @@ export function CategoriesPage() {
     </div>
   );
 }
-

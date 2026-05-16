@@ -112,10 +112,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const busy = isSaving || isUploading;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-      <div className="modal-enter w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="modal-enter w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-2">
+        <div className="flex items-center justify-between p-5 sm:p-6 pb-2">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
               <Settings className="text-white" size={18} />
@@ -125,14 +125,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <button
             onClick={onClose}
             disabled={busy}
-            className="h-8 w-8 rounded-lg bg-white/50 hover:bg-white/80 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center disabled:opacity-50"
+            className="h-11 w-11 rounded-lg bg-white/50 hover:bg-white/80 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center disabled:opacity-50"
             aria-label="Close settings"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="px-6 pb-6 pt-4 space-y-6">
+        <div className="px-5 sm:px-6 pb-6 pt-4 space-y-6">
           {/* Messages */}
           {error && (
             <div className="p-3 bg-red-50/90 border border-red-200 rounded-xl text-red-700 text-sm">
@@ -160,7 +160,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your name"
               disabled={busy}
-              className="w-full px-4 py-3 bg-white/60 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:opacity-50 transition-all text-gray-900 placeholder-gray-400"
+              className="w-full min-h-[44px] px-4 py-2.5 bg-white/60 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:opacity-50 transition-all text-base text-gray-900 placeholder-gray-400"
             />
           </div>
 
@@ -191,7 +191,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={busy}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/70 border border-purple-200 text-purple-700 font-semibold rounded-lg hover:bg-white hover:border-purple-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 bg-white/70 border border-purple-200 text-purple-700 font-semibold rounded-lg hover:bg-white hover:border-purple-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base"
                 >
                   <Upload size={15} />
                   {isUploading ? 'Uploading...' : 'Upload Photo'}
@@ -272,18 +272,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
             <button
               onClick={handleSave}
               disabled={busy}
-              className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 min-h-[44px] py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-semibold rounded-lg shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
             <button
               onClick={onClose}
               disabled={busy}
-              className="flex-1 py-3 bg-white/60 border border-white/40 text-gray-700 font-semibold rounded-lg hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 min-h-[44px] py-2.5 bg-white/60 border border-white/40 text-gray-700 text-base font-semibold rounded-lg hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
@@ -293,3 +293,5 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     </div>
   );
 }
+
+export default SettingsModal;
