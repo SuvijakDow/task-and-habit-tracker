@@ -113,11 +113,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-      <div className="modal-enter w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+      <div className="modal-enter w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
         {/* Header */}
         <div className="flex items-center justify-between p-6 pb-2">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
               <Settings className="text-white" size={18} />
             </div>
             <h2 className="text-xl font-bold text-gray-900">Settings</h2>
@@ -125,7 +125,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <button
             onClick={onClose}
             disabled={busy}
-            className="h-8 w-8 rounded-xl bg-white/50 hover:bg-white/80 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center disabled:opacity-50"
+            className="h-8 w-8 rounded-lg bg-white/50 hover:bg-white/80 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center disabled:opacity-50"
             aria-label="Close settings"
           >
             <X size={18} />
@@ -160,7 +160,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your name"
               disabled={busy}
-              className="w-full px-4 py-3 bg-white/60 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:opacity-50 transition-all text-gray-900 placeholder-gray-400"
+              className="w-full px-4 py-3 bg-white/60 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:opacity-50 transition-all text-gray-900 placeholder-gray-400"
             />
           </div>
 
@@ -172,7 +172,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {/* Current preview + Upload button */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-16 w-16 rounded-2xl border-2 border-purple-300 overflow-hidden shadow-lg flex-shrink-0 bg-white/70">
+              <div className="h-16 w-16 rounded-xl border-2 border-purple-300 overflow-hidden shadow-lg flex-shrink-0 bg-white/70">
                 {normalizedSelectedAvatar ? (
                   <img
                     src={normalizedSelectedAvatar}
@@ -191,7 +191,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={busy}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/70 border border-purple-200 text-purple-700 font-semibold rounded-xl hover:bg-white hover:border-purple-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/70 border border-purple-200 text-purple-700 font-semibold rounded-lg hover:bg-white hover:border-purple-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   <Upload size={15} />
                   {isUploading ? 'Uploading...' : 'Upload Photo'}
@@ -222,7 +222,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     type="button"
                     onClick={() => setSelectedAvatar(avatarURL)}
                     disabled={busy}
-                    className={`relative aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-200 hover:scale-105 disabled:opacity-50 ${isSelected
+                    className={`relative aspect-square rounded-xl border-2 overflow-hidden transition-all duration-200 hover:scale-105 disabled:opacity-50 ${isSelected
                         ? 'border-purple-500 ring-2 ring-purple-300 shadow-lg shadow-purple-500/25 scale-105'
                         : 'border-white/50 hover:border-purple-300 shadow-md'
                       }`}
@@ -276,14 +276,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <button
               onClick={handleSave}
               disabled={busy}
-              className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
             <button
               onClick={onClose}
               disabled={busy}
-              className="flex-1 py-3 bg-white/60 border border-white/40 text-gray-700 font-semibold rounded-xl hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-white/60 border border-white/40 text-gray-700 font-semibold rounded-lg hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

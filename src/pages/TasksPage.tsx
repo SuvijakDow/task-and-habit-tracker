@@ -371,7 +371,7 @@ export function TasksPage() {
         {/* Add Task Form Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
@@ -400,7 +400,7 @@ export function TasksPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                     autoFocus
                   />
@@ -419,7 +419,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -435,7 +435,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {categories.length === 0 ? (
@@ -462,7 +462,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -567,7 +567,7 @@ export function TasksPage() {
         {/* Edit Task Modal */}
         {editingTaskId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
                 {/* Title Input */}
@@ -583,7 +583,7 @@ export function TasksPage() {
                      setEditFormData({ ...editFormData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -601,7 +601,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -617,7 +617,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, category: e.target.value })
                     }
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {isEditCategoryMissing && (
@@ -647,7 +647,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, dueDate: e.target.value })
                     }
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -678,7 +678,7 @@ export function TasksPage() {
         {/* Delete Confirmation Modal */}
         {deletingTaskId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="modal-enter max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+            <div className="modal-enter max-w-sm w-full rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
               <div className="mb-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
                   <svg className="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -767,7 +767,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            className={`h-5 w-5 md:h-6 md:w-6 aspect-square rounded-full border transition-all duration-200 flex items-center justify-center shrink-0 ${
+            className={`h-5 w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${
               task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
@@ -792,7 +792,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
 
           <div className="flex flex-row flex-wrap items-center gap-3 mt-1 text-xs sm:text-sm text-purple-900/60">
             <span
-              className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border"
+              className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border"
               style={{
                 backgroundColor: hexToRgba(categoryColor, 0.3),
                 color: categoryTextColor,

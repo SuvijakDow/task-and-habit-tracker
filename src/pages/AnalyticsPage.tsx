@@ -133,10 +133,10 @@ export function AnalyticsPage() {
                     return (
                       <div key={index} className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
                         <div
-                          className="w-full max-w-[32px] h-14 md:h-16 rounded-xl border border-purple-100/70 bg-white/75 p-1 flex items-end"
+                          className="w-full max-w-[32px] h-14 md:h-16 rounded-lg border border-purple-200 bg-white/75 p-1 flex items-end"
                           title={`${day.date}: ${day.completed ? 'Completed' : !isScheduled ? 'Not scheduled' : 'Missed'}`}
                         >
-                          <div className={`w-full rounded-lg transition-all duration-300 ${barHeightClass} ${barColorClass}`} />
+                          <div className={`w-full rounded-md transition-all duration-300 ${barHeightClass} ${barColorClass}`} />
                         </div>
                         {/* Day Label */}
                         <span className="text-gray-600 text-xs md:text-sm font-medium">

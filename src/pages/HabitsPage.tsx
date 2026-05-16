@@ -318,13 +318,13 @@ function HabitsPage() {
                 value={habitTitle}
                 onChange={(e) => setHabitTitle(e.target.value)}
                 placeholder="e.g., Morning Exercise, Read 30 mins"
-                className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                 disabled={isSubmitting}
               />
             </div>
 
             {/* Days Selection */}
-            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-2xl shadow-sm p-4 sm:p-5">
+            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-4 sm:p-5">
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
               <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
@@ -341,7 +341,7 @@ function HabitsPage() {
                       }}
                       className="peer sr-only"
                     />
-                    <span className="flex h-9 items-center justify-center rounded-xl border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                    <span className="flex h-9 items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                       {day}
                     </span>
                   </label>
@@ -352,7 +352,7 @@ function HabitsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
             >
               {isSubmitting ? 'Adding...' : 'Add Habit'}
             </button>
@@ -408,7 +408,7 @@ function HabitsPage() {
                         aria-checked={isCompletedToday}
                         aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
                         onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
-                        className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+                        className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
                           isCompletedToday
                             ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                             : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
@@ -431,7 +431,7 @@ function HabitsPage() {
                     </div>
 
                     <div className="flex flex-row items-center self-end md:self-auto gap-3 opacity-65 group-hover:opacity-100 transition-opacity">
-                      <span className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-md whitespace-nowrap">
                         <Flame className="h-3.5 w-3.5 text-pink-500" />
                         {streak}
                       </span>
@@ -473,7 +473,7 @@ function HabitsPage() {
         {/* Edit Habit Modal */}
         {editingHabitId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-3xl sm:rounded-3xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
                 <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
                 <div>
@@ -485,12 +485,12 @@ function HabitsPage() {
                     type="text"
                     value={editHabitTitle}
                     onChange={(e) => setEditHabitTitle(e.target.value)}
-                    className="w-full rounded-xl border border-purple-100/80 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-sm md:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-2xl shadow-sm p-4 sm:p-5">
+                <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-4 sm:p-5">
                   <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
                   <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
@@ -507,7 +507,7 @@ function HabitsPage() {
                           }}
                           className="peer sr-only"
                         />
-                        <span className="flex h-9 items-center justify-center rounded-xl border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                        <span className="flex h-9 items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                           {day}
                         </span>
                       </label>
@@ -519,7 +519,7 @@ function HabitsPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -527,7 +527,7 @@ function HabitsPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm"
+                    className="flex-1 bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm"
                   >
                     Cancel
                   </button>
@@ -540,7 +540,7 @@ function HabitsPage() {
         {/* Delete Confirmation Modal */}
         {deletingHabitId && (
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="modal-enter max-w-sm w-full rounded-3xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+            <div className="modal-enter max-w-sm w-full rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
               <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
                 <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z" />
@@ -553,13 +553,13 @@ function HabitsPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeletingHabitId(null)}
-                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm"
+                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteHabit}
-                  className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2.5 px-4 rounded-xl transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
+                  className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
                 >
                   Delete
                 </button>
