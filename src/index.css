@@ -141,6 +141,37 @@ body {
 .list-stagger > *:nth-child(11) { animation-delay: 320ms; }
 .list-stagger > *:nth-child(12) { animation-delay: 350ms; }
 
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  body {
+    background-attachment: scroll;
+  }
+
+  .page-enter,
+  .modal-enter,
+  .fab-breathe,
+  .list-stagger > * {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .glass-card,
+  .glass-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .nav-item-motion {
+    transition:
+      background-color 180ms ease,
+      color 180ms ease,
+      border-color 180ms ease;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
   .modal-enter,

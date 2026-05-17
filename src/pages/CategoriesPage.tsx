@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FirebaseError } from 'firebase/app';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Category, Task } from '@/types';
@@ -277,9 +278,9 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+    <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
           Hello, {userDisplayName}
         </h1>
         <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Organize tasks into clear color groups.</p>
@@ -307,7 +308,7 @@ export function CategoriesPage() {
 
       <form
         onSubmit={handleCreateCategory}
-        className="glass-card p-5 md:p-6 mb-6 space-y-4"
+        className="glass-card p-4 sm:p-5 md:p-6 mb-6 space-y-3 sm:space-y-4"
       >
         <h2 className="text-lg md:text-xl font-semibold text-gray-900">Add Category</h2>
         <label htmlFor="new-category-name" className="block text-sm font-medium text-gray-700">
@@ -320,7 +321,7 @@ export function CategoriesPage() {
           value={formData.name}
           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
           placeholder="Category name"
-          className="w-full min-h-[44px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+          className="w-full min-h-[42px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
           disabled={isSubmitting || !!deletingCategoryId}
         />
         <div className="flex flex-wrap gap-2">
@@ -329,7 +330,7 @@ export function CategoriesPage() {
               key={color}
               type="button"
               onClick={() => setFormData((prev) => ({ ...prev, color }))}
-              className={`h-11 w-11 rounded-full border-2 transition ${
+              className={`h-10 w-10 sm:h-11 sm:w-11 rounded-full border-2 transition ${
                 formData.color === color
                   ? 'border-purple-500 scale-110'
                   : 'border-transparent hover:scale-105'
@@ -343,7 +344,7 @@ export function CategoriesPage() {
         <button
           type="submit"
           disabled={isSubmitting || !!deletingCategoryId}
-          className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 text-base rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition"
+          className="inline-flex items-center gap-1.5 min-h-[42px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition"
         >
           <Plus className="h-4 w-4" />
           {isSubmitting ? 'Adding...' : 'Add Category'}
@@ -363,11 +364,11 @@ export function CategoriesPage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3 list-stagger">
+        <div className="space-y-2.5 sm:space-y-3 list-stagger">
           {categories.map((category) => (
             <div
               key={category.id}
-              className="glass-card px-4 py-3"
+              className="glass-card px-3 sm:px-4 py-2.5 sm:py-3"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -376,7 +377,7 @@ export function CategoriesPage() {
                     style={{ backgroundColor: category.color }}
                   />
                   <div className="min-w-0">
-                    <p className="font-semibold text-sm md:text-base text-gray-900 truncate">{category.name}</p>
+                    <p className="font-semibold text-[13px] sm:text-sm md:text-base text-gray-900 truncate">{category.name}</p>
                     <p className="text-xs text-gray-500">{getTaskCount(category)} task(s)</p>
                   </div>
                 </div>
@@ -385,7 +386,7 @@ export function CategoriesPage() {
                     type="button"
                     onClick={() => handleStartEdit(category)}
                     disabled={!!deletingCategoryId || isSubmitting || !!savingCategoryId}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-60 transition"
+                    className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-60 transition"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                     Edit
@@ -394,7 +395,7 @@ export function CategoriesPage() {
                       type="button"
                       onClick={() => handleDeleteCategory(category)}
                       disabled={categories.length <= 1 || !!deletingCategoryId || isSubmitting || !!savingCategoryId}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-60 transition"
+                      className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-semibold rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 disabled:opacity-60 transition"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       {deletingCategoryId === category.id ? 'Deleting...' : 'Delete'}
@@ -409,7 +410,7 @@ export function CategoriesPage() {
                     value={editFormData.name}
                     onChange={(e) => setEditFormData((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="Category name"
-                    className="w-full min-h-[44px] px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition bg-white"
+                    className="w-full min-h-[42px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition bg-white"
                     disabled={!!savingCategoryId}
                   />
                   <div className="flex flex-wrap gap-2">
@@ -418,7 +419,7 @@ export function CategoriesPage() {
                         key={color}
                         type="button"
                         onClick={() => setEditFormData((prev) => ({ ...prev, color }))}
-                        className={`h-10 w-10 rounded-full border-2 transition ${
+                        className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full border-2 transition ${
                           editFormData.color === color
                             ? 'border-indigo-500 scale-110'
                             : 'border-transparent hover:scale-105'
@@ -434,7 +435,7 @@ export function CategoriesPage() {
                       type="button"
                       onClick={() => handleSaveEdit(category)}
                       disabled={!!savingCategoryId}
-                      className="px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300 transition"
+                      className="px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] text-xs sm:text-sm font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300 transition"
                     >
                       {savingCategoryId === category.id ? 'Saving...' : 'Save'}
                     </button>
@@ -442,7 +443,7 @@ export function CategoriesPage() {
                       type="button"
                       onClick={handleCancelEdit}
                       disabled={!!savingCategoryId}
-                      className="px-4 py-2.5 min-h-[44px] text-sm font-semibold rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                      className="px-3 sm:px-4 py-2 sm:py-2.5 min-h-[42px] sm:min-h-[44px] text-xs sm:text-sm font-semibold rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
                     >
                       Cancel
                     </button>
@@ -454,15 +455,15 @@ export function CategoriesPage() {
         </div>
       )}
 
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-          <div className="modal-enter max-w-sm w-full rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+      {deleteTarget && createPortal(
+        <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
+          <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-none sm:backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
               <svg className="h-6 w-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-7.938 4h15.856C21.07 19 22 18.07 22 16.928V7.072C22 5.93 21.07 5 19.928 5H4.072A1.93 1.93 0 002.144 6.928v9.856C2.144 18.07 3.074 19 4.216 19z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Delete Category?</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 text-center">Delete Category?</h3>
             <p className="text-gray-700 text-sm text-center mb-6">
               Delete "{deleteTarget.category.name}" and move its tasks to "{deleteTarget.fallback.name}"?
             </p>
@@ -470,20 +471,21 @@ export function CategoriesPage() {
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={!!deletingCategoryId}
-                className="flex-1 px-4 py-2.5 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-lg transition"
+                className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-lg transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDeleteCategory}
                 disabled={!!deletingCategoryId}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold rounded-lg transition disabled:from-rose-300 disabled:to-red-300 shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
+                className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold rounded-lg transition disabled:from-rose-300 disabled:to-red-300 shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
               >
                 {deletingCategoryId ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

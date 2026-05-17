@@ -56,8 +56,8 @@ export function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
-        <div className="glass-card p-8 md:p-12 text-center">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
+        <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
           <div className="flex justify-center mb-3">
             <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
           </div>
@@ -105,9 +105,9 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+    <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
           Hello, {userDisplayName}
         </h1>
         <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Track consistency and momentum over time.</p>
@@ -119,7 +119,7 @@ export function AnalyticsPage() {
         </div>
       )}
 
-      <div className="space-y-4 md:space-y-6 list-stagger">
+      <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
         {habits.map((habit) => {
           const scheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
           const streak = calculateStreak(habit.completedDates, scheduledDays);
@@ -130,20 +130,20 @@ export function AnalyticsPage() {
           return (
             <div
               key={habit.id}
-              className="glass-card p-6 md:p-8 hover:shadow-2xl hover:-translate-y-0.5 transition-all"
+              className="glass-card p-4 sm:p-6 md:p-8 md:hover:shadow-2xl md:hover:-translate-y-0.5 transition-all"
             >
               {/* Habit Title */}
-              <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 truncate">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 truncate">
                 {habit.title}
               </h2>
 
               {/* Stats Row */}
-              <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {/* Current Streak */}
-                <div className="glass-card p-6">
+                <div className="glass-card p-4 sm:p-6">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Current Streak</p>
-                  <p className="mt-1 inline-flex items-center gap-2 text-2xl md:text-3xl font-bold text-orange-600">
-                    <Activity className="h-6 w-6 md:h-7 md:w-7 text-pink-500" />
+                  <p className="mt-1 inline-flex items-center gap-1.5 sm:gap-2 text-xl sm:text-2xl md:text-3xl font-bold text-orange-600">
+                    <Activity className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-pink-500" />
                     <span>{streak}</span>
                   </p>
                   <p className="text-gray-500 text-xs md:text-sm mt-1">
@@ -152,10 +152,10 @@ export function AnalyticsPage() {
                 </div>
 
                 {/* Total Completions */}
-                <div className="glass-card p-6">
+                <div className="glass-card p-4 sm:p-6">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Total Completions</p>
-                  <p className="mt-1 inline-flex items-center gap-2 text-2xl md:text-3xl font-bold text-purple-600">
-                    <CheckCircle2 className="h-6 w-6 md:h-7 md:w-7 text-purple-500" />
+                  <p className="mt-1 inline-flex items-center gap-1.5 sm:gap-2 text-xl sm:text-2xl md:text-3xl font-bold text-purple-600">
+                    <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-purple-500" />
                     <span>{totalCompletions}</span>
                   </p>
                   <p className="text-gray-500 text-xs md:text-sm mt-1">
@@ -165,9 +165,9 @@ export function AnalyticsPage() {
               </div>
 
               {/* 7-Day Mini Bar Chart */}
-              <div className="glass-card p-6">
+              <div className="glass-card p-4 sm:p-6">
                 <p className="text-gray-600 text-xs md:text-sm font-medium mb-3">Last 7 Days</p>
-                <div className="flex gap-2 md:gap-3 justify-between items-end">
+                <div className="flex gap-1.5 sm:gap-2 md:gap-3 justify-between items-end">
                   {past7Days.map((day, index) => {
                     const dayOfWeek = new Date(day.date).getDay();
                     const isScheduled = (habit as any).scheduledDays?.includes(dayOfWeek) ?? true;
@@ -185,7 +185,7 @@ export function AnalyticsPage() {
                     return (
                       <div key={index} className="flex flex-col items-center gap-1.5 flex-1 min-w-0">
                         <div
-                          className="w-full max-w-[32px] h-14 md:h-16 rounded-lg border border-purple-200 bg-white/75 p-1 flex items-end"
+                          className="w-full max-w-[30px] sm:max-w-[32px] h-12 sm:h-14 md:h-16 rounded-lg border border-purple-200 bg-white/75 p-1 flex items-end"
                           title={`${day.date}: ${day.completed ? 'Completed' : !isScheduled ? 'Not scheduled' : 'Missed'}`}
                         >
                           <div className={`w-full rounded-md transition-all duration-300 ${barHeightClass} ${barColorClass}`} />
@@ -205,7 +205,7 @@ export function AnalyticsPage() {
               </div>
 
               {/* Completion Rate */}
-              <div className="glass-card mt-4 md:mt-6 p-6">
+              <div className="glass-card mt-3 sm:mt-4 md:mt-6 p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <p className="text-gray-600 text-xs md:text-sm font-medium">Overall Consistency</p>
                   <span className="text-sm md:text-base font-semibold text-purple-700">

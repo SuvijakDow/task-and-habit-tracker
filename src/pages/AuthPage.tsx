@@ -62,30 +62,30 @@ export function AuthPage() {
       <div className="min-h-screen">
         {/* Profile header with logout */}
         <div className="bg-white/75 sm:bg-white/60 backdrop-blur-none sm:backdrop-blur-md border-b border-white/70 shadow-sm sm:shadow-lg">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
+          <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-2 md:py-3.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex items-center gap-3">
                 {profilePhoto ? (
                   <img
                     src={profilePhoto}
                     alt={profileName || 'Profile'}
-                    className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0 object-cover bg-white/55"
+                    className="h-8 w-8 md:h-10 md:w-10 rounded-full border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0 object-cover bg-white/55"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0" />
+                  <div className="h-8 w-8 md:h-10 md:w-10 rounded-full border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex-shrink-0" />
                 )}
                 <div className="min-w-0">
-                  <h1 className="text-base md:text-lg font-semibold text-gray-800 truncate">
+                  <h1 className="text-sm md:text-lg font-semibold text-gray-800 truncate">
                     {profileName}
                   </h1>
-                  <p className="text-gray-600 text-xs mt-0.5 truncate">{user.email}</p>
+                  <p className="text-gray-600 text-[11px] md:text-xs mt-0.5 truncate">{user.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsSettingsOpen(true)}
-                  className="h-11 w-11 rounded-lg bg-white/60 hover:bg-white/90 text-gray-500 hover:text-purple-600 transition-all flex items-center justify-center flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                  className="h-10 w-10 rounded-lg bg-white/60 hover:bg-white/90 text-gray-500 hover:text-purple-600 transition-all flex items-center justify-center flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                   title="Settings"
                   aria-label="Open settings"
                 >
@@ -94,7 +94,7 @@ export function AuthPage() {
                 <button
                   onClick={handleLogout}
                   disabled={isSubmitting}
-                  className="px-3 py-2 min-h-[44px] bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-sm flex-shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                  className="px-2.5 py-1.5 min-h-[40px] bg-white/80 text-indigo-700 font-medium rounded-lg hover:bg-white transition-colors disabled:opacity-50 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 >
                   {isSubmitting ? 'Signing out...' : 'Sign Out'}
                 </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Activity, Flame } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -300,11 +301,11 @@ export function HabitsPage() {
   const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
   return (
-    <div className="min-h-screen pt-4 md:pt-6 pb-8 md:pb-12">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+    <div className="min-h-screen pt-3 md:pt-6 pb-6 md:pb-12">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6">
         {/* Hero Greeting */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
             Hello, {userDisplayName}
           </h1>
           <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Build better routines, one check at a time.</p>
@@ -318,9 +319,9 @@ export function HabitsPage() {
         )}
 
         {/* Add Habit Form */}
-        <div className="glass-card p-6 md:p-8 mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
-          <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1">Add New Habit</h2>
-          <p className="text-xs sm:text-sm text-gray-600 mb-5">Create your next routine and choose the days you want it to appear.</p>
+        <div className="glass-card p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
+          <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1">Add New Habit</h2>
+          <p className="text-[11px] sm:text-sm text-gray-600 mb-4 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
           <form onSubmit={handleAddHabit} className="space-y-4 sm:space-y-5">
             <div>
               <label htmlFor="habit-title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -332,13 +333,13 @@ export function HabitsPage() {
                 value={habitTitle}
                 onChange={(e) => setHabitTitle(e.target.value)}
                 placeholder="e.g., Morning Exercise, Read 30 mins"
-                className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                 disabled={isSubmitting}
               />
             </div>
 
             {/* Days Selection */}
-            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-4 sm:p-5">
+            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
               <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
               <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
@@ -355,7 +356,7 @@ export function HabitsPage() {
                       }}
                       className="peer sr-only"
                     />
-                    <span className="flex min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                    <span className="flex min-h-[40px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                       {day}
                     </span>
                   </label>
@@ -366,7 +367,7 @@ export function HabitsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+              className="w-full min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
             >
               {isSubmitting ? 'Adding...' : 'Add Habit'}
             </button>
@@ -375,14 +376,14 @@ export function HabitsPage() {
 
         {/* Habits List */}
         {loading ? (
-          <div className="glass-card p-8 md:p-12 text-center">
+          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <div className="flex justify-center mb-3">
               <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             </div>
             <p className="text-gray-600">Loading your habits...</p>
           </div>
         ) : loadError && habits.length === 0 ? (
-          <div className="glass-card p-8 md:p-12 text-center">
+          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">Habits unavailable</h2>
             <p className="text-gray-600 mb-5">{loadError}</p>
             <button
@@ -394,7 +395,7 @@ export function HabitsPage() {
             </button>
           </div>
         ) : habits.length === 0 ? (
-          <div className="glass-card p-8 md:p-12 text-center">
+          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <div className="mb-4 flex justify-center">
               <Activity className="h-10 w-10 md:h-12 md:w-12 text-purple-300" />
             </div>
@@ -402,7 +403,7 @@ export function HabitsPage() {
             <p className="text-xs sm:text-sm text-gray-600">Start building better habits by adding one above!</p>
           </div>
         ) : (
-          <div className="space-y-4 list-stagger">
+          <div className="space-y-3 sm:space-y-4 list-stagger">
             {habits.map((habit) => {
               const isCompletedToday = habit.completedDates.includes(todayDate);
               const streak = habit.completedDates.length;
@@ -419,7 +420,7 @@ export function HabitsPage() {
                     onDragEnter={() => handleDragEnter(habit.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={() => handleDrop(habit.id)}
-                    className={`glass-card flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-0 py-3 md:py-4 px-4 sm:px-6 transition-all duration-200 cursor-move group ${
+                    className={`glass-card flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-0 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 cursor-move group ${
                       isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
                     } ${isDragging ? 'opacity-50 scale-95' : 'hover:shadow-md sm:hover:shadow-2xl'} ${
                       isOver ? 'ring-2 ring-purple-400 ring-opacity-50' : ''
@@ -453,7 +454,7 @@ export function HabitsPage() {
                       </button>
 
                       <span
-                        className={`flex-1 truncate text-sm sm:text-base md:text-lg font-medium transition-all ${
+                        className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${
                           isCompletedToday
                             ? 'text-purple-700 line-through opacity-70'
                             : 'text-gray-900'
@@ -464,7 +465,7 @@ export function HabitsPage() {
                     </div>
 
                     <div className="flex flex-row items-center self-end md:self-auto gap-3 opacity-65 group-hover:opacity-100 transition-opacity">
-                      <span className="inline-flex items-center gap-1 text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-2 py-0.5 rounded-md whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
                         <Flame className="h-3.5 w-3.5 text-pink-500" />
                         {streak}
                       </span>
@@ -472,7 +473,7 @@ export function HabitsPage() {
                       <div className="flex items-center gap-1 sm:gap-2">
                       <button
                         onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays)}
-                        className="h-7 w-7 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
+                        className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
                         title="Edit habit"
                         aria-label={`Edit ${habit.title}`}
                       >
@@ -482,7 +483,7 @@ export function HabitsPage() {
                       </button>
                       <button
                         onClick={() => setDeletingHabitId(habit.id)}
-                        className="h-7 w-7 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
+                        className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
                         title="Delete habit"
                         aria-label={`Delete ${habit.title}`}
                         >
@@ -504,11 +505,11 @@ export function HabitsPage() {
         )}
 
         {/* Edit Habit Modal */}
-        {editingHabitId && (
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
-                <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
+        {editingHabitId && createPortal(
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
+                <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
                 <div>
                   <label htmlFor="edit-habit-title" className="block text-sm font-medium text-gray-700 mb-1">
                     Habit Name *
@@ -518,12 +519,12 @@ export function HabitsPage() {
                     type="text"
                     value={editHabitTitle}
                     onChange={(e) => setEditHabitTitle(e.target.value)}
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-4 sm:p-5">
+                <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
                   <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
                   <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
@@ -540,7 +541,7 @@ export function HabitsPage() {
                           }}
                           className="peer sr-only"
                         />
-                        <span className="flex min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                        <span className="flex min-h-[40px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                           {day}
                         </span>
                       </label>
@@ -552,7 +553,7 @@ export function HabitsPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -560,45 +561,47 @@ export function HabitsPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-base font-semibold py-2.5 px-4 rounded-lg transition duration-200"
+                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Delete Confirmation Modal */}
-        {deletingHabitId && (
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="modal-enter max-w-sm w-full rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+        {deletingHabitId && createPortal(
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
+            <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-none sm:backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
               <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
                 <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z" />
                 </svg>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 text-center mb-2">Delete Habit?</h3>
+              <h3 className="text-base sm:text-xl font-bold text-gray-900 text-center mb-2">Delete Habit?</h3>
               <p className="text-xs sm:text-sm text-gray-700 text-center mb-6">
                 This action cannot be undone. All habit data will be permanently deleted.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeletingHabitId(null)}
-                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm"
+                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteHabit}
-                  className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
+                  className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
                 >
                   Delete
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

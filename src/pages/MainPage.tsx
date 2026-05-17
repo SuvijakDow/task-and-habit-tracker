@@ -60,21 +60,21 @@ export function MainPage() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-white/65 bg-white/88 backdrop-blur-xl shadow-[0_-8px_28px_rgba(124,58,237,0.16)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+      <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-white/65 bg-white/88 backdrop-blur-sm shadow-[0_-6px_20px_rgba(124,58,237,0.14)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
         <div className="grid grid-cols-4 gap-1 px-2">
           {navItems.map((item) => (
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`min-h-[44px] rounded-xl px-1.5 py-2 text-[11px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+              className={`min-h-[40px] rounded-lg px-1 py-1.5 text-[10px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
                 currentPage === item.key
                   ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.3)]'
                   : 'bg-white/72 text-purple-900/70 border border-white/70'
               }`}
               aria-label={item.label}
             >
-              <span className="flex flex-col items-center justify-center gap-1">
-                <item.icon className={`h-4 w-4 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
+              <span className="flex flex-col items-center justify-center gap-0.5">
+                <item.icon className={`h-3.5 w-3.5 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
                 <span className="leading-none">{item.mobileLabel}</span>
               </span>
             </button>
@@ -83,7 +83,7 @@ export function MainPage() {
       </nav>
 
       {/* Page Content */}
-      <div key={currentPage} className="page-enter pt-3 pb-24 md:pb-0 md:pt-4">
+      <div key={currentPage} className="page-enter pt-2.5 pb-[5.5rem] md:pb-0 md:pt-4">
         {currentPageContent}
       </div>
     </div>

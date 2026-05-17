@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { CalendarDays } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task } from '@/types';
@@ -366,10 +367,10 @@ export function TasksPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 md:pt-6 pb-8 md:pb-12">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
         {/* Hero Greeting */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
             Hello, {userDisplayName}
           </h1>
           <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
@@ -377,23 +378,23 @@ export function TasksPage() {
 
         {/* Error Message */}
         {error && !(loadError && tasks.length === 0) && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
+          <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
             {error}
           </div>
         )}
 
         {/* Add Task Form Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
+        {isModalOpen && createPortal(
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Add New Task</h2>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Add New Task</h2>
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="h-11 w-11 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
+                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -414,7 +415,7 @@ export function TasksPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                     autoFocus
                   />
@@ -433,7 +434,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -449,7 +450,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {categories.length === 0 ? (
@@ -476,7 +477,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, dueDate: e.target.value })
                     }
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -486,7 +487,7 @@ export function TasksPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Adding...' : 'Add Task'}
                   </button>
@@ -494,14 +495,15 @@ export function TasksPage() {
                     type="button"
                     onClick={() => setIsModalOpen(false)}
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200"
+                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Floating Action Button */}
@@ -515,25 +517,25 @@ export function TasksPage() {
             });
             setIsModalOpen(true);
           }}
-          className="fixed bottom-24 right-5 md:bottom-8 md:right-8 h-14 w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
+          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
           title="Add new task"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>
 
         {/* Tasks Sections */}
         {loading ? (
-          <div className="glass-card p-8 md:p-12 text-center">
+          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <div className="flex justify-center mb-3">
               <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             </div>
             <p className="text-gray-600">Loading your tasks...</p>
           </div>
         ) : loadError && tasks.length === 0 ? (
-          <div className="glass-card p-8 md:p-12 text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">Tasks unavailable</h2>
+          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">Tasks unavailable</h2>
             <p className="text-gray-600 mb-5">{loadError}</p>
             <button
               type="button"
@@ -544,8 +546,8 @@ export function TasksPage() {
             </button>
           </div>
         ) : tasks.length === 0 ? (
-          <div className="glass-card p-8 md:p-12 text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">No tasks yet</h2>
+          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No tasks yet</h2>
             <p className="text-gray-600 mb-5">Add your first task to start planning your week.</p>
             <button
               type="button"
@@ -566,16 +568,16 @@ export function TasksPage() {
         ) : (
           <>
             {/* Incomplete Tasks Section */}
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="mb-8 sm:mb-10">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
                 Pending Tasks ({incompleteTasks.length})
               </h2>
               {incompleteTasks.length === 0 ? (
-                <div className="glass-card p-8 text-center text-gray-600">
+                <div className="glass-card p-6 sm:p-8 text-center text-gray-600">
                   <p>No pending tasks. Great job, everything is complete.</p>
                 </div>
               ) : (
-                <div className="space-y-4 list-stagger">
+                <div className="space-y-3 sm:space-y-4 list-stagger">
                   {incompleteTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -593,10 +595,10 @@ export function TasksPage() {
             {/* Completed Tasks Section */}
             {completedTasks.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
                   Completed Tasks ({completedTasks.length})
                 </h2>
-                <div className="space-y-4 list-stagger">
+                <div className="space-y-3 sm:space-y-4 list-stagger">
                   {completedTasks.map((task) => (
                     <TaskItem
                       key={task.id}
@@ -614,11 +616,11 @@ export function TasksPage() {
         )}
 
         {/* Edit Task Modal */}
-        {editingTaskId && (
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg max-h-[92dvh] sm:max-h-[88vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-              <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-5 sm:p-6 md:p-7">
-                <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
+        {editingTaskId && createPortal(
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+              <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
+                <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
                 {/* Title Input */}
                 <div>
                   <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -632,7 +634,7 @@ export function TasksPage() {
                      setEditFormData({ ...editFormData, title: e.target.value })
                     }
                     placeholder="Enter task title"
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -650,7 +652,7 @@ export function TasksPage() {
                     }
                     placeholder="Enter task description (optional)"
                     rows={3}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -666,7 +668,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, category: e.target.value })
                     }
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   >
                     {isEditCategoryMissing && (
@@ -696,7 +698,7 @@ export function TasksPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, dueDate: e.target.value })
                     }
-                    className="w-full min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-4 py-2.5 text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -706,7 +708,7 @@ export function TasksPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
                   >
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -714,20 +716,21 @@ export function TasksPage() {
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-base font-semibold py-2.5 px-4 rounded-xl transition duration-200"
+                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200"
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Delete Confirmation Modal */}
-        {deletingTaskId && (
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
-            <div className="modal-enter max-w-sm w-full rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+        {deletingTaskId && createPortal(
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
+            <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-none sm:backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
               <div className="mb-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
                   <svg className="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -735,26 +738,27 @@ export function TasksPage() {
                   </svg>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">Delete Task?</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 text-center">Delete Task?</h3>
               <p className="text-gray-700 text-sm text-center mb-6">
                 Are you sure you want to delete this task? This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={handleCancelDelete}
-                  className="flex-1 px-4 py-2.5 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-xl transition"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmDelete}
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold rounded-xl transition shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold rounded-xl transition shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
                 >
                   Delete
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
@@ -806,9 +810,9 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
     <div
       className={`group glass-card ${
         task.isCompleted ? 'opacity-80' : ''
-      } ${getDueDateBgColor()} transition-all duration-200 hover:shadow-2xl`}
+      } ${getDueDateBgColor()} transition-[box-shadow,transform,opacity] duration-200 sm:hover:shadow-2xl`}
     >
-      <div className="flex flex-row items-start sm:items-center gap-3 py-4 px-4 sm:px-6">
+      <div className="flex flex-row items-start sm:items-center gap-2.5 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">
           <button
             type="button"
@@ -816,7 +820,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            className={`h-5 w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${
+            className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${
               task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
@@ -830,7 +834,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
 
         <div className="flex-1 min-w-0 flex flex-col gap-1">
           <span
-            className={`truncate font-medium text-base md:text-lg ${
+            className={`truncate font-medium text-sm sm:text-base md:text-lg ${
               task.isCompleted
                 ? 'line-through text-gray-500'
                 : 'text-gray-900'
@@ -839,9 +843,9 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             {task.title}
           </span>
 
-          <div className="flex flex-row flex-wrap items-center gap-3 mt-1 text-xs sm:text-sm text-purple-900/60">
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3 mt-1 text-[11px] sm:text-sm text-purple-900/60">
             <span
-              className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border"
+              className="inline-flex items-center text-[9px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-md border"
               style={{
                 backgroundColor: hexToRgba(categoryColor, 0.3),
                 color: categoryTextColor,
@@ -863,7 +867,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
         <div className="flex-shrink-0 flex flex-row gap-1 sm:gap-2 opacity-65 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(task)}
-            className="h-6 w-6 md:h-7 md:w-7 rounded-full bg-transparent hover:bg-white/70 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
+            className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 rounded-full bg-transparent hover:bg-white/70 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
             title="Edit task"
             aria-label={`Edit ${task.title}`}
           >
@@ -873,7 +877,7 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
           </button>
           <button
             onClick={() => onDelete(task.id)}
-            className="h-6 w-6 md:h-7 md:w-7 rounded-full bg-transparent hover:bg-white/70 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
+            className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 rounded-full bg-transparent hover:bg-white/70 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
             title="Delete task"
             aria-label={`Delete ${task.title}`}
           >
