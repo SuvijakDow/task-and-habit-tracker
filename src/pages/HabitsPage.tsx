@@ -509,7 +509,7 @@ export function HabitsPage() {
                     onDragEnter={() => handleDragEnter(habit.id)}
                     onDragLeave={handleDragLeave}
                     onDrop={() => handleDrop(habit.id)}
-                    className={`glass-card flex flex-col md:flex-row md:items-center justify-between gap-2.5 md:gap-0 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 cursor-move group ${
+                    className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 cursor-move group ${
                       isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
                     } ${isDragging ? 'opacity-50 scale-95' : 'hover:shadow-md sm:hover:shadow-2xl'} ${
                       isOver ? 'ring-2 ring-purple-400 ring-opacity-50' : ''
@@ -553,19 +553,19 @@ export function HabitsPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-row items-center justify-between w-full md:w-auto gap-3">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap">
+                    <div className="flex flex-row items-center justify-between w-full gap-3">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-1 min-w-0">
+                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap flex-shrink-0">
                           {formatScheduledDays(habit.scheduledDays)}
                         </span>
 
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(habit.id)} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap`}>
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(habit.id)} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0`}>
                           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/70"></div>
                           <span>{habit.startTime} - {habit.endTime}</span>
                         </div>
                       </div>
 
-                      <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity">
+                      <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
                           <Flame className="h-3.5 w-3.5 text-pink-500" />
                           {streak}
