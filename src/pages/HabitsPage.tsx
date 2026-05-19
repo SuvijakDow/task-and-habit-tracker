@@ -326,12 +326,12 @@ export function HabitsPage() {
         )}
 
         {/* Add Habit Form */}
-        <div className="glass-card p-3 sm:p-6 md:p-8 mb-4 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
-          <h2 className="text-base sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1">Add New Habit</h2>
-          <p className="text-[10px] sm:text-sm text-gray-600 mb-3 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
-          <form onSubmit={handleAddHabit} className="space-y-3 sm:space-y-5">
+        <div className="glass-card p-2.5 sm:p-6 md:p-8 mb-3 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
+          <h2 className="text-sm sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1 sm:mb-2">Add New Habit</h2>
+          <p className="text-[9px] sm:text-sm text-gray-600 mb-2.5 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
+          <form onSubmit={handleAddHabit} className="space-y-2.5 sm:space-y-5">
             <div>
-              <label htmlFor="habit-title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="habit-title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
                 Habit Name *
               </label>
               <input
@@ -340,15 +340,15 @@ export function HabitsPage() {
                 value={habitTitle}
                 onChange={(e) => setHabitTitle(e.target.value)}
                 placeholder="e.g., Morning Exercise, Read 30 mins"
-                className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                 disabled={isSubmitting}
               />
             </div>
 
             {/* Days Selection */}
-            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
-              <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-5">
+              <p className="text-[11px] sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Schedule:</p>
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
                   <label key={index} className="cursor-pointer">
                     <input
@@ -363,7 +363,7 @@ export function HabitsPage() {
                       }}
                       className="peer sr-only"
                     />
-                    <span className="flex min-h-[40px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                    <span className="flex min-h-[32px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[10px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                       {day}
                     </span>
                   </label>
@@ -374,7 +374,7 @@ export function HabitsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+              className="w-full min-h-[36px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-xs sm:text-base font-semibold py-1.5 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
             >
               {isSubmitting ? 'Adding...' : 'Add Habit'}
             </button>
@@ -472,7 +472,7 @@ export function HabitsPage() {
                     </div>
 
                     <div className="flex flex-row items-center justify-between w-full md:w-auto gap-3">
-                      <span className="inline-flex items-center text-[10px] sm:text-xs font-medium text-gray-600 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap">
                         {formatScheduledDays(habit.scheduledDays)}
                       </span>
 
