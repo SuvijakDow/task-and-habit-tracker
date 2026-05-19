@@ -15,6 +15,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { showToast } from '@/components/Toast';
 import { HabitTimeline } from '@/components/HabitTimeline';
+import { TimePickerInput } from '@/components/TimePickerInput';
 
 export function HabitsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -425,32 +426,20 @@ export function HabitsPage() {
 
             {/* Time Selection */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <div>
-                <label htmlFor="start-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                  Start Time *
-                </label>
-                <input
-                  id="start-time"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div>
-                <label htmlFor="end-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                  End Time *
-                </label>
-                <input
-                  id="end-time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                  disabled={isSubmitting}
-                />
-              </div>
+              <TimePickerInput
+                value={startTime}
+                onChange={setStartTime}
+                label="Start Time"
+                required
+                disabled={isSubmitting}
+              />
+              <TimePickerInput
+                value={endTime}
+                onChange={setEndTime}
+                label="End Time"
+                required
+                disabled={isSubmitting}
+              />
             </div>
 
             <button
@@ -554,7 +543,7 @@ export function HabitsPage() {
                     </div>
 
                     <div className="flex flex-row items-center justify-between w-full gap-3">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-1 min-w-0">
+                      <div className="flex flex-row items-center gap-2 flex-wrap flex-1 min-w-0">
                         <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap flex-shrink-0">
                           {formatScheduledDays(habit.scheduledDays)}
                         </span>
@@ -673,32 +662,20 @@ export function HabitsPage() {
 
                 {/* Time Selection */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <div>
-                    <label htmlFor="edit-start-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                      Start Time *
-                    </label>
-                    <input
-                      id="edit-start-time"
-                      type="time"
-                      value={editStartTime}
-                      onChange={(e) => setEditStartTime(e.target.value)}
-                      className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="edit-end-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                      End Time *
-                    </label>
-                    <input
-                      id="edit-end-time"
-                      type="time"
-                      value={editEndTime}
-                      onChange={(e) => setEditEndTime(e.target.value)}
-                      className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                  <TimePickerInput
+                    value={editStartTime}
+                    onChange={setEditStartTime}
+                    label="Start Time"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <TimePickerInput
+                    value={editEndTime}
+                    onChange={setEditEndTime}
+                    label="End Time"
+                    required
+                    disabled={isSubmitting}
+                  />
                 </div>
 
                 <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
