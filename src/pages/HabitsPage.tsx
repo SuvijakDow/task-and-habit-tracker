@@ -270,6 +270,13 @@ export function HabitsPage() {
     setOverHabitId(null);
   };
 
+  const formatScheduledDays = (days: number[]): string => {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    if (days.length === 7) return 'Everyday';
+    if (days.length === 0) return 'No days';
+    return days.map(d => dayNames[d]).join(', ');
+  };
+
   // Touch handlers for mobile drag (for future implementation)
   // const handleTouchStart = (habitId: string, e: React.TouchEvent) => {
   //   setDraggedHabitId(habitId);
@@ -319,10 +326,10 @@ export function HabitsPage() {
         )}
 
         {/* Add Habit Form */}
-        <div className="glass-card p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
-          <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1">Add New Habit</h2>
-          <p className="text-[11px] sm:text-sm text-gray-600 mb-4 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
-          <form onSubmit={handleAddHabit} className="space-y-4 sm:space-y-5">
+        <div className="glass-card p-3 sm:p-6 md:p-8 mb-4 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
+          <h2 className="text-base sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1">Add New Habit</h2>
+          <p className="text-[10px] sm:text-sm text-gray-600 mb-3 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
+          <form onSubmit={handleAddHabit} className="space-y-3 sm:space-y-5">
             <div>
               <label htmlFor="habit-title" className="block text-sm font-medium text-gray-700 mb-1">
                 Habit Name *
@@ -464,37 +471,43 @@ export function HabitsPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-row items-center self-end md:self-auto gap-3 opacity-65 group-hover:opacity-100 transition-opacity">
-                      <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
-                        <Flame className="h-3.5 w-3.5 text-pink-500" />
-                        {streak}
+                    <div className="flex flex-row items-center justify-between w-full md:w-auto gap-3">
+                      <span className="inline-flex items-center text-[10px] sm:text-xs font-medium text-gray-600 whitespace-nowrap">
+                        {formatScheduledDays(habit.scheduledDays)}
                       </span>
 
-                      <div className="flex items-center gap-1 sm:gap-2">
-                      <button
-                        onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays)}
-                        className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
-                        title="Edit habit"
-                        aria-label={`Edit ${habit.title}`}
-                      >
-                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setDeletingHabitId(habit.id)}
-                        className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
-                        title="Delete habit"
-                        aria-label={`Delete ${habit.title}`}
+                      <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity">
+                        <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
+                          <Flame className="h-3.5 w-3.5 text-pink-500" />
+                          {streak}
+                        </span>
+
+                        <div className="flex items-center gap-1 sm:gap-2">
+                        <button
+                          onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays)}
+                          className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
+                          title="Edit habit"
+                          aria-label={`Edit ${habit.title}`}
                         >
                           <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                           </svg>
                         </button>
+                        <button
+                          onClick={() => setDeletingHabitId(habit.id)}
+                          className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
+                          title="Delete habit"
+                          aria-label={`Delete ${habit.title}`}
+                          >
+                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                fillRule="evenodd"
+                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
