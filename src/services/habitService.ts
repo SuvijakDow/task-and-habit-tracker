@@ -55,6 +55,8 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       id: doc.id,
       ...doc.data(),
       scheduledDays: doc.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
+      startTime: doc.data().startTime || '09:00',
+      endTime: doc.data().endTime || '10:00',
       createdAt: doc.data().createdAt.toDate(),
       updatedAt: doc.data().updatedAt.toDate(),
     })) as DailyHabit[];
@@ -80,6 +82,8 @@ export const getDailyHabitById = async (habitId: string): Promise<DailyHabit | n
       id: docSnap.id,
       ...docSnap.data(),
       scheduledDays: docSnap.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
+      startTime: docSnap.data().startTime || '09:00',
+      endTime: docSnap.data().endTime || '10:00',
       createdAt: docSnap.data().createdAt.toDate(),
       updatedAt: docSnap.data().updatedAt.toDate(),
     } as DailyHabit;
@@ -301,4 +305,44 @@ export const getDayAbbreviation = (dateStr: string): string => {
   const date = new Date(`${year}-${month}-${day}T00:00:00`);
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   return days[date.getDay()];
+};
+
+/**
+ * Time utilities for habit timeline
+ */
+export const timeToMinutes = (timeString: string): number => {
+  const [hours, minutes] = timeString.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+export const minutesToPercent = (minutes: number): number => {
+  return (minutes / (24 * 60)) * 100;
+};
+
+export const calculateHabitOverlaps = (
+  habits: DailyHabit[]
+): Map<string, number> => {
+  const overlapMap = new Map<string, number>();
+  
+  habits.forEach((habit, index) => {
+    const habitStartMin = timeToMinutes(habit.startTime);
+    const habitEndMin = timeToMinutes(habit.endTime);
+    
+    let overlapCount = 0;
+    habits.forEach((otherHabit, otherIndex) => {
+      if (index !== otherIndex) {
+        const otherStartMin = timeToMinutes(otherHabit.startTime);
+        const otherEndMin = timeToMinutes(otherHabit.endTime);
+        
+        // Check if times overlap
+        if (habitStartMin < otherEndMin && habitEndMin > otherStartMin) {
+          if (otherIndex < index) overlapCount++;
+        }
+      }
+    });
+    
+    overlapMap.set(habit.id, overlapCount);
+  });
+  
+  return overlapMap;
 };

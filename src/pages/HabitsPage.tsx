@@ -14,6 +14,7 @@ import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { showToast } from '@/components/Toast';
+import { HabitTimeline } from '@/components/HabitTimeline';
 
 export function HabitsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -32,6 +33,12 @@ export function HabitsPage() {
   // Scheduled days state
   const [scheduledDays, setScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editScheduledDays, setEditScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+
+  // Time state
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('10:00');
+  const [editStartTime, setEditStartTime] = useState('09:00');
+  const [editEndTime, setEditEndTime] = useState('10:00');
 
   // Delete confirmation state
   const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
@@ -78,6 +85,11 @@ export function HabitsPage() {
       return;
     }
 
+    if (endTime <= startTime) {
+      setError('End time must be after start time');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
@@ -86,6 +98,8 @@ export function HabitsPage() {
         title: habitTitle.trim(),
         completedDates: [],
         scheduledDays,
+        startTime,
+        endTime,
       });
 
       setHabits((prev) => [
@@ -96,6 +110,8 @@ export function HabitsPage() {
           title: habitTitle.trim(),
           completedDates: [],
           scheduledDays,
+          startTime,
+          endTime,
           createdAt: new Date(),
           updatedAt: new Date(),
           order: prev.length,
@@ -104,6 +120,8 @@ export function HabitsPage() {
 
       setHabitTitle('');
       setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+      setStartTime('09:00');
+      setEndTime('10:00');
     } catch (err) {
       setError('Failed to add habit. Please try again.');
       console.error('Error adding habit:', err);
@@ -149,10 +167,12 @@ export function HabitsPage() {
     }
   }, [habits, todayDate, user]);
 
-  const handleEditHabit = (habitId: string, title: string, days: number[]) => {
+  const handleEditHabit = (habitId: string, title: string, days: number[], start: string, end: string) => {
     setEditingHabitId(habitId);
     setEditHabitTitle(title);
     setEditScheduledDays(days);
+    setEditStartTime(start);
+    setEditEndTime(end);
   };
 
   const handleSaveEdit = async () => {
@@ -163,6 +183,11 @@ export function HabitsPage() {
       return;
     }
 
+    if (editEndTime <= editStartTime) {
+      setError('End time must be after start time');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setError(null);
@@ -170,6 +195,8 @@ export function HabitsPage() {
       await updateDoc(doc(db, 'dailyHabits', editingHabitId), {
         title: editHabitTitle.trim(),
         scheduledDays: editScheduledDays,
+        startTime: editStartTime,
+        endTime: editEndTime,
         updatedAt: new Date(),
       });
 
@@ -179,6 +206,8 @@ export function HabitsPage() {
               ...habit,
               title: editHabitTitle.trim(),
               scheduledDays: editScheduledDays,
+              startTime: editStartTime,
+              endTime: editEndTime,
               updatedAt: new Date(),
             }
           : habit
@@ -188,6 +217,8 @@ export function HabitsPage() {
       setEditingHabitId(null);
       setEditHabitTitle('');
       setEditScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+      setEditStartTime('09:00');
+      setEditEndTime('10:00');
     } catch (err) {
       setError('Failed to save habit. Please try again.');
       console.error('Error saving habit:', err);
@@ -200,6 +231,8 @@ export function HabitsPage() {
     setEditingHabitId(null);
     setEditHabitTitle('');
     setEditScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+    setEditStartTime('09:00');
+    setEditEndTime('10:00');
   };
 
   const handleDeleteHabit = async () => {
@@ -371,6 +404,36 @@ export function HabitsPage() {
               </div>
             </div>
 
+            {/* Time Selection */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div>
+                <label htmlFor="start-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                  Start Time *
+                </label>
+                <input
+                  id="start-time"
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div>
+                <label htmlFor="end-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                  End Time *
+                </label>
+                <input
+                  id="end-time"
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
@@ -484,7 +547,7 @@ export function HabitsPage() {
 
                         <div className="flex items-center gap-1 sm:gap-2">
                         <button
-                          onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays)}
+                          onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays, habit.startTime, habit.endTime)}
                           className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
                           title="Edit habit"
                           aria-label={`Edit ${habit.title}`}
@@ -515,6 +578,14 @@ export function HabitsPage() {
               );
             })}
           </div>
+        )}
+
+        {/* Habit Timeline */}
+        {habits.length > 0 && (
+          <HabitTimeline 
+            habits={habits} 
+            onEditHabit={handleEditHabit}
+          />
         )}
 
         {/* Edit Habit Modal */}
@@ -559,6 +630,36 @@ export function HabitsPage() {
                         </span>
                       </label>
                     ))}
+                  </div>
+                </div>
+
+                {/* Time Selection */}
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div>
+                    <label htmlFor="edit-start-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                      Start Time *
+                    </label>
+                    <input
+                      id="edit-start-time"
+                      type="time"
+                      value={editStartTime}
+                      onChange={(e) => setEditStartTime(e.target.value)}
+                      className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-end-time" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
+                      End Time *
+                    </label>
+                    <input
+                      id="edit-end-time"
+                      type="time"
+                      value={editEndTime}
+                      onChange={(e) => setEditEndTime(e.target.value)}
+                      className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
                   </div>
                 </div>
 

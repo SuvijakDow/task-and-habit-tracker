@@ -25,6 +25,8 @@ export interface DailyHabit {
   title: string;
   completedDates: string[]; // ISO format: 'YYYY-MM-DD'
   scheduledDays: number[]; // 0-6 (Sun-Sat), defaults to [0,1,2,3,4,5,6] if not set
+  startTime: string; // HH:MM format, e.g. '09:00'
+  endTime: string; // HH:MM format, e.g. '10:00'
   order?: number; // For drag-drop reordering
   createdAt: Date;
   updatedAt: Date;
