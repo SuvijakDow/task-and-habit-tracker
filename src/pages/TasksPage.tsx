@@ -376,13 +376,6 @@ export function TasksPage() {
           <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
         </div>
 
-        {/* Error Message */}
-        {error && !(loadError && tasks.length === 0) && (
-          <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
-            {error}
-          </div>
-        )}
-
         {/* Add Task Form Modal */}
         {isModalOpen && createPortal(
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
@@ -401,6 +394,13 @@ export function TasksPage() {
                     </svg>
                   </button>
                 </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
+                    {error}
+                  </div>
+                )}
 
                 {/* Title Input */}
                 <div>
@@ -517,7 +517,7 @@ export function TasksPage() {
             });
             setIsModalOpen(true);
           }}
-          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
+          className="fixed md:sticky bottom-24 right-4 md:bottom-auto md:right-auto md:mt-8 h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe md:w-full md:h-auto md:max-w-fit md:px-6 md:py-3 md:rounded-full md:mx-0"
           title="Add new task"
         >
           <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -621,6 +621,14 @@ export function TasksPage() {
             <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
                 <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
+                
+                {/* Error Message */}
+                {error && (
+                  <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
+                    {error}
+                  </div>
+                )}
+
                 {/* Title Input */}
                 <div>
                   <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-1">

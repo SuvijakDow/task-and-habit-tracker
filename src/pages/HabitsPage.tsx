@@ -598,7 +598,8 @@ export function HabitsPage() {
         {/* Habit Timeline */}
         {habits.length > 0 && (
           <HabitTimeline 
-            habits={habits} 
+            habits={habits}
+            getHabitColor={getHabitColor}
             onEditHabit={handleEditHabit}
           />
         )}

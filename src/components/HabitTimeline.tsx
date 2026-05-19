@@ -5,19 +5,9 @@ import { timeToMinutes } from '@/services/habitService';
 
 interface HabitTimelineProps {
   habits: DailyHabit[];
+  getHabitColor: (habitId: string) => string;
   onEditHabit?: (habitId: string, title: string, scheduledDays: number[], startTime: string, endTime: string) => void;
 }
-
-const HABIT_COLORS = [
-  'bg-red-400',
-  'bg-teal-400',
-  'bg-blue-400',
-  'bg-orange-400',
-  'bg-emerald-300',
-  'bg-yellow-400',
-  'bg-purple-400',
-  'bg-sky-400',
-];
 
 interface PositionedHabit extends DailyHabit {
   index: number;
@@ -27,6 +17,7 @@ interface PositionedHabit extends DailyHabit {
 
 export const HabitTimeline: React.FC<HabitTimelineProps> = ({
   habits,
+  getHabitColor,
   onEditHabit,
 }) => {
   const today = new Date();
@@ -131,10 +122,6 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
 
     return positioned;
   }, [sortedHabits]);
-
-  const getHabitColor = (index: number) => {
-    return HABIT_COLORS[index % HABIT_COLORS.length];
-  };
 
   const getHabitPosition = (habit: PositionedHabit) => {
     const { startHour, endHour } = timeRange;
@@ -242,7 +229,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
                 >
                   <div
                     className={`w-full h-full rounded-md p-2 flex flex-col justify-center border-l-4 border-slate-300 dark:border-slate-600 ${getHabitColor(
-                      habit.index
+                      habit.id
                     )}`}
                   >
                     <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">
