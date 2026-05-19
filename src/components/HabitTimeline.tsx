@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
 import { DailyHabit } from '@/types';
 import { formatToDateString } from '@/utils/dateUtils';
-import {
-  timeToMinutes,
-  minutesToPercent,
-  calculateHabitOverlaps,
-} from '@/services/habitService';
+import { timeToMinutes } from '@/services/habitService';
 
 interface HabitTimelineProps {
   habits: DailyHabit[];
@@ -22,6 +18,12 @@ const HABIT_COLORS = [
   'bg-purple-400',
   'bg-sky-400',
 ];
+
+interface PositionedHabit extends DailyHabit {
+  index: number;
+  column: number;
+  totalColumns: number;
+}
 
 export const HabitTimeline: React.FC<HabitTimelineProps> = ({
   habits,
@@ -43,14 +45,79 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
     );
   }, [todaysHabits]);
 
-  // Calculate overlaps for positioning
-  const overlapMap = useMemo(() => {
-    return calculateHabitOverlaps(sortedHabits);
+  // Calculate positions for overlapping habits
+  const positionedHabits = useMemo(() => {
+    const positioned: PositionedHabit[] = [];
+    const timeSlots: Map<string, number[]> = new Map();
+
+    // Group habits by time slot
+    sortedHabits.forEach((habit, index) => {
+      const startMin = timeToMinutes(habit.startTime);
+      const endMin = timeToMinutes(habit.endTime);
+      const key = `${startMin}-${endMin}`;
+
+      if (!timeSlots.has(key)) {
+        timeSlots.set(key, []);
+      }
+      timeSlots.get(key)!.push(index);
+    });
+
+    // Assign column positions
+    sortedHabits.forEach((habit, index) => {
+      const startMin = timeToMinutes(habit.startTime);
+      const endMin = timeToMinutes(habit.endTime);
+      
+      // Find overlapping habits
+      let maxColumn = 0;
+      sortedHabits.forEach((other, otherIndex) => {
+        if (index !== otherIndex) {
+          const otherStart = timeToMinutes(other.startTime);
+          const otherEnd = timeToMinutes(other.endTime);
+          
+          // Check overlap
+          if (startMin < otherEnd && endMin > otherStart) {
+            if (otherIndex < index) maxColumn++;
+          }
+        }
+      });
+
+      // Count total overlapping
+      let totalColumns = 1;
+      sortedHabits.forEach((other, otherIndex) => {
+        if (index !== otherIndex) {
+          const otherStart = timeToMinutes(other.startTime);
+          const otherEnd = timeToMinutes(other.endTime);
+          
+          if (startMin < otherEnd && endMin > otherStart) {
+            totalColumns = Math.max(totalColumns, 2);
+          }
+        }
+      });
+
+      positioned.push({
+        ...habit,
+        index,
+        column: maxColumn,
+        totalColumns,
+      });
+    });
+
+    return positioned;
   }, [sortedHabits]);
 
-  // Get category color for habit based on index
   const getHabitColor = (index: number) => {
     return HABIT_COLORS[index % HABIT_COLORS.length];
+  };
+
+  const getHabitPosition = (habit: PositionedHabit) => {
+    const startMin = timeToMinutes(habit.startTime);
+    const endMin = timeToMinutes(habit.endTime);
+    const topPercent = (startMin / (24 * 60)) * 100;
+    const heightPercent = ((endMin - startMin) / (24 * 60)) * 100;
+    const leftPercent = (habit.column / Math.max(habit.totalColumns, 1)) * 100;
+    const widthPercent = 100 / Math.max(habit.totalColumns, 1);
+
+    return { topPercent, heightPercent, leftPercent, widthPercent };
   };
 
   if (todaysHabits.length === 0) {
@@ -72,91 +139,86 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
         Today's Schedule
       </h3>
 
-      {/* Timeline container */}
-      <div className="overflow-x-auto">
-        <div className="min-w-full">
-          {/* Hour labels */}
-          <div className="flex mb-2 relative">
-            <div className="w-16 flex-shrink-0"></div>
-            <div className="flex-grow relative">
-              {Array.from({ length: 24 }).map((_, hour) => (
-                <div
-                  key={`hour-${hour}`}
-                  className="flex-grow text-center text-xs text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700 pl-1"
-                  style={{
-                    minWidth: '60px',
-                  }}
-                >
-                  {String(hour).padStart(2, '0')}:00
-                </div>
-              ))}
-            </div>
+      {/* Calendar Grid */}
+      <div className="relative overflow-x-auto">
+        <div className="flex min-w-full">
+          {/* Time labels sidebar */}
+          <div className="w-12 flex-shrink-0 pt-4">
+            {Array.from({ length: 24 }).map((_, hour) => (
+              <div
+                key={`label-${hour}`}
+                className="h-16 flex items-start justify-end pr-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
+              >
+                {String(hour).padStart(2, '0')}:00
+              </div>
+            ))}
           </div>
 
-          {/* Habit blocks */}
-          <div className="space-y-2">
-            {sortedHabits.map((habit, index) => {
-              const startMin = timeToMinutes(habit.startTime);
-              const endMin = timeToMinutes(habit.endTime);
-              const durationMin = endMin - startMin;
-              const startPercent = minutesToPercent(startMin);
-              const durationPercent = minutesToPercent(durationMin);
-              const overlapIndex = overlapMap.get(habit.id) || 0;
+          {/* Timeline grid */}
+          <div className="flex-grow relative min-h-[1536px] bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+            {/* Hour grid lines */}
+            {Array.from({ length: 24 }).map((_, hour) => (
+              <div
+                key={`line-${hour}`}
+                className="absolute left-0 right-0 border-b border-slate-200 dark:border-slate-700"
+                style={{ top: `${(hour / 24) * 100}%`, height: '64px' }}
+              />
+            ))}
+
+            {/* Habit blocks */}
+            {positionedHabits.map((habit) => {
+              const { topPercent, heightPercent, leftPercent, widthPercent } = getHabitPosition(habit);
               const isCompleted = habit.completedDates.includes(todayDateStr);
 
               return (
-                <div key={habit.id} className="flex items-center gap-2">
-                  {/* Time label */}
-                  <div className="w-16 flex-shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {habit.startTime}
-                  </div>
-
-                  {/* Timeline block */}
-                  <div className="flex-grow relative h-12 bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden">
-                    <div
-                      className={`absolute top-0 bottom-0 rounded-lg cursor-pointer transition-all hover:shadow-lg hover:scale-y-105 ${getHabitColor(
-                        index
-                      )} ${isCompleted ? 'opacity-60' : 'opacity-100'} border border-slate-300 dark:border-slate-600`}
-                      style={{
-                        left: `${startPercent}%`,
-                        width: `${Math.max(durationPercent, 2)}%`,
-                        marginLeft: `${overlapIndex * 4}%`,
-                        marginRight: `${overlapIndex * 2}%`,
-                      }}
-                      onClick={() => {
-                        if (onEditHabit) {
-                          onEditHabit(
-                            habit.id,
-                            habit.title,
-                            habit.scheduledDays,
-                            habit.startTime,
-                            habit.endTime
-                          );
-                        }
-                      }}
-                      title={`${habit.title} (${habit.startTime}-${habit.endTime})`}
-                    >
-                      <div className="p-1 h-full flex flex-col justify-center">
-                        <p className="text-xs font-semibold text-white truncate">
-                          {habit.title}
-                        </p>
-                        <p className="text-xs text-white opacity-90">
-                          {habit.startTime} - {habit.endTime}
-                        </p>
-                      </div>
-                    </div>
+                <div
+                  key={habit.id}
+                  className={`absolute cursor-pointer transition-all hover:shadow-lg hover:z-20 ${
+                    isCompleted ? 'opacity-60' : 'opacity-100'
+                  }`}
+                  style={{
+                    top: `${topPercent}%`,
+                    left: `${leftPercent}%`,
+                    width: `${widthPercent}%`,
+                    height: `${Math.max(heightPercent, 5)}%`,
+                    minHeight: '40px',
+                  }}
+                  onClick={() => {
+                    if (onEditHabit) {
+                      onEditHabit(
+                        habit.id,
+                        habit.title,
+                        habit.scheduledDays,
+                        habit.startTime,
+                        habit.endTime
+                      );
+                    }
+                  }}
+                  title={`${habit.title} (${habit.startTime}-${habit.endTime})`}
+                >
+                  <div
+                    className={`w-full h-full rounded-md p-2 flex flex-col justify-center border-l-4 border-slate-300 dark:border-slate-600 ${getHabitColor(
+                      habit.index
+                    )}`}
+                  >
+                    <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">
+                      {habit.title}
+                    </p>
+                    <p className="text-xs text-white/90 truncate leading-tight">
+                      {habit.startTime} - {habit.endTime}
+                    </p>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          {/* Time scale guide */}
-          <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span>●</span>
-            <span>Tap a block to edit time</span>
-          </div>
         </div>
+      </div>
+
+      {/* Help text */}
+      <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <span>●</span>
+        <span>Click a habit to edit time</span>
       </div>
     </div>
   );
