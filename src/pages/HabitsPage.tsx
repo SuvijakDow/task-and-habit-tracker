@@ -22,6 +22,7 @@ export function HabitsPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [habitTitle, setHabitTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayDate] = useState(getTodayDateString());
@@ -179,18 +180,18 @@ export function HabitsPage() {
     if (!user || !editingHabitId) return;
 
     if (!editHabitTitle.trim()) {
-      setError('Habit name is required');
+      setEditError('Habit name is required');
       return;
     }
 
     if (editEndTime <= editStartTime) {
-      setError('End time must be after start time');
+      setEditError('End time must be after start time');
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setError(null);
+      setEditError(null);
 
       await updateDoc(doc(db, 'dailyHabits', editingHabitId), {
         title: editHabitTitle.trim(),
@@ -219,8 +220,9 @@ export function HabitsPage() {
       setEditScheduledDays([0, 1, 2, 3, 4, 5, 6]);
       setEditStartTime('09:00');
       setEditEndTime('10:00');
+      setEditError(null);
     } catch (err) {
-      setError('Failed to save habit. Please try again.');
+      setEditError('Failed to save habit. Please try again.');
       console.error('Error saving habit:', err);
     } finally {
       setIsSubmitting(false);
@@ -233,6 +235,7 @@ export function HabitsPage() {
     setEditScheduledDays([0, 1, 2, 3, 4, 5, 6]);
     setEditStartTime('09:00');
     setEditEndTime('10:00');
+    setEditError(null);
   };
 
   const handleDeleteHabit = async () => {
@@ -308,6 +311,22 @@ export function HabitsPage() {
     if (days.length === 7) return 'Everyday';
     if (days.length === 0) return 'No days';
     return days.map(d => dayNames[d]).join(', ');
+  };
+
+  const HABIT_COLORS = [
+    'bg-red-400',
+    'bg-teal-400',
+    'bg-blue-400',
+    'bg-orange-400',
+    'bg-emerald-300',
+    'bg-yellow-400',
+    'bg-purple-400',
+    'bg-sky-400',
+  ];
+
+  const getHabitColor = (habitId: string): string => {
+    const index = habits.findIndex(h => h.id === habitId);
+    return HABIT_COLORS[index % HABIT_COLORS.length];
   };
 
   // Touch handlers for mobile drag (for future implementation)
@@ -535,9 +554,16 @@ export function HabitsPage() {
                     </div>
 
                     <div className="flex flex-row items-center justify-between w-full md:w-auto gap-3">
-                      <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap">
-                        {formatScheduledDays(habit.scheduledDays)}
-                      </span>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap">
+                          {formatScheduledDays(habit.scheduledDays)}
+                        </span>
+
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(habit.id)} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap`}>
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/70"></div>
+                          <span>{habit.startTime} - {habit.endTime}</span>
+                        </div>
+                      </div>
 
                       <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity">
                         <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
@@ -594,6 +620,18 @@ export function HabitsPage() {
             <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
               <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
                 <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
+                
+                {editError && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-start gap-3">
+                    <div className="flex-shrink-0 text-rose-600 mt-0.5">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-rose-700 font-medium">{editError}</p>
+                  </div>
+                )}
+                
                 <div>
                   <label htmlFor="edit-habit-title" className="block text-sm font-medium text-gray-700 mb-1">
                     Habit Name *

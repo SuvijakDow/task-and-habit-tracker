@@ -45,6 +45,33 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
     );
   }, [todaysHabits]);
 
+  // Calculate time range (min and max hours with ±1 hour buffer)
+  const timeRange = useMemo(() => {
+    if (sortedHabits.length === 0) {
+      return { startHour: 9, endHour: 10 };
+    }
+
+    const times = sortedHabits.flatMap((habit) => [
+      timeToMinutes(habit.startTime),
+      timeToMinutes(habit.endTime),
+    ]);
+
+    const minMinutes = Math.min(...times);
+    const maxMinutes = Math.max(...times);
+
+    let startHour = Math.max(0, Math.floor((minMinutes - 60) / 60));
+    let endHour = Math.min(24, Math.ceil((maxMinutes + 60) / 60));
+
+    // Ensure at least 4 hours of display
+    if (endHour - startHour < 4) {
+      const midHour = Math.floor((startHour + endHour) / 2);
+      startHour = Math.max(0, midHour - 2);
+      endHour = Math.min(24, midHour + 2);
+    }
+
+    return { startHour, endHour };
+  }, [sortedHabits]);
+
   // Calculate positions for overlapping habits
   const positionedHabits = useMemo(() => {
     const positioned: PositionedHabit[] = [];
@@ -110,10 +137,15 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
   };
 
   const getHabitPosition = (habit: PositionedHabit) => {
+    const { startHour, endHour } = timeRange;
+    const totalMinutes = (endHour - startHour) * 60;
+    
     const startMin = timeToMinutes(habit.startTime);
     const endMin = timeToMinutes(habit.endTime);
-    const topPercent = (startMin / (24 * 60)) * 100;
-    const heightPercent = ((endMin - startMin) / (24 * 60)) * 100;
+    const startHourMin = startHour * 60;
+
+    const topPercent = ((startMin - startHourMin) / totalMinutes) * 100;
+    const heightPercent = ((endMin - startMin) / totalMinutes) * 100;
     const leftPercent = (habit.column / Math.max(habit.totalColumns, 1)) * 100;
     const widthPercent = 100 / Math.max(habit.totalColumns, 1);
 
@@ -144,26 +176,38 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
         <div className="flex min-w-full">
           {/* Time labels sidebar */}
           <div className="w-12 flex-shrink-0 pt-4">
-            {Array.from({ length: 24 }).map((_, hour) => (
-              <div
-                key={`label-${hour}`}
-                className="h-16 flex items-start justify-end pr-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
-              >
-                {String(hour).padStart(2, '0')}:00
-              </div>
-            ))}
+            {Array.from({ length: timeRange.endHour - timeRange.startHour }).map((_, i) => {
+              const hour = timeRange.startHour + i;
+              return (
+                <div
+                  key={`label-${hour}`}
+                  className="h-16 flex items-start justify-end pr-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
+                >
+                  {String(hour).padStart(2, '0')}:00
+                </div>
+              );
+            })}
           </div>
 
           {/* Timeline grid */}
-          <div className="flex-grow relative min-h-[1536px] bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div
+            className="flex-grow relative bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
+            style={{ minHeight: `${(timeRange.endHour - timeRange.startHour) * 64}px` }}
+          >
             {/* Hour grid lines */}
-            {Array.from({ length: 24 }).map((_, hour) => (
-              <div
-                key={`line-${hour}`}
-                className="absolute left-0 right-0 border-b border-slate-200 dark:border-slate-700"
-                style={{ top: `${(hour / 24) * 100}%`, height: '64px' }}
-              />
-            ))}
+            {Array.from({ length: timeRange.endHour - timeRange.startHour }).map((_, i) => {
+              const hour = timeRange.startHour + i;
+              return (
+                <div
+                  key={`line-${hour}`}
+                  className="absolute left-0 right-0 border-b border-slate-200 dark:border-slate-700"
+                  style={{
+                    top: `${(i / (timeRange.endHour - timeRange.startHour)) * 100}%`,
+                    height: '64px',
+                  }}
+                />
+              );
+            })}
 
             {/* Habit blocks */}
             {positionedHabits.map((habit) => {
