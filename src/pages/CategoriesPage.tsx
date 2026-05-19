@@ -310,7 +310,7 @@ export function CategoriesPage() {
         onSubmit={handleCreateCategory}
         className="glass-card p-2.5 sm:p-5 md:p-6 mb-6 space-y-2.5 sm:space-y-4"
       >
-        <h2 className="text-sm md:text-xl font-semibold text-gray-900">Add Category</h2>
+        <h2 className="text-sm md:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Add Category</h2>
         <label htmlFor="new-category-name" className="block text-xs sm:text-sm font-medium text-gray-700">
           Category Name
         </label>
