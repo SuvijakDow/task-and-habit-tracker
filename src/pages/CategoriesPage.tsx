@@ -308,10 +308,10 @@ export function CategoriesPage() {
 
       <form
         onSubmit={handleCreateCategory}
-        className="glass-card p-4 sm:p-5 md:p-6 mb-6 space-y-3 sm:space-y-4"
+        className="glass-card p-2.5 sm:p-5 md:p-6 mb-6 space-y-2.5 sm:space-y-4"
       >
-        <h2 className="text-lg md:text-xl font-semibold text-gray-900">Add Category</h2>
-        <label htmlFor="new-category-name" className="block text-sm font-medium text-gray-700">
+        <h2 className="text-sm md:text-xl font-semibold text-gray-900">Add Category</h2>
+        <label htmlFor="new-category-name" className="block text-xs sm:text-sm font-medium text-gray-700">
           Category Name
         </label>
         <input
@@ -321,16 +321,16 @@ export function CategoriesPage() {
           value={formData.name}
           onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
           placeholder="Category name"
-          className="w-full min-h-[42px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+          className="w-full min-h-[36px] sm:min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
           disabled={isSubmitting || !!deletingCategoryId}
         />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {PASTEL_CATEGORY_COLORS.map((color) => (
             <button
               key={color}
               type="button"
               onClick={() => setFormData((prev) => ({ ...prev, color }))}
-              className={`h-10 w-10 sm:h-11 sm:w-11 rounded-full border-2 transition ${
+              className={`h-8 w-8 sm:h-11 sm:w-11 rounded-full border-2 transition ${
                 formData.color === color
                   ? 'border-purple-500 scale-110'
                   : 'border-transparent hover:scale-105'
@@ -344,9 +344,9 @@ export function CategoriesPage() {
         <button
           type="submit"
           disabled={isSubmitting || !!deletingCategoryId}
-          className="inline-flex items-center gap-1.5 min-h-[42px] sm:min-h-[44px] px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition"
+          className="inline-flex items-center gap-1.5 min-h-[36px] sm:min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 disabled:bg-purple-300 transition"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           {isSubmitting ? 'Adding...' : 'Add Category'}
         </button>
       </form>
