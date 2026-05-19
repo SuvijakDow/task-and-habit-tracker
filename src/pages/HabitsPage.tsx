@@ -348,7 +348,7 @@ export function HabitsPage() {
             {/* Days Selection */}
             <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-5">
               <p className="text-[11px] sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Schedule:</p>
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2">
+              <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
                   <label key={index} className="cursor-pointer">
                     <input
@@ -363,7 +363,7 @@ export function HabitsPage() {
                       }}
                       className="peer sr-only"
                     />
-                    <span className="flex min-h-[32px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[10px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                    <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                       {day}
                     </span>
                   </label>
@@ -539,7 +539,7 @@ export function HabitsPage() {
 
                 <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
                   <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
-                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
                       <label key={index} className="cursor-pointer">
                         <input
@@ -554,7 +554,7 @@ export function HabitsPage() {
                           }}
                           className="peer sr-only"
                         />
-                        <span className="flex min-h-[40px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-xs sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                        <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
                           {day}
                         </span>
                       </label>
