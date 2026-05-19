@@ -369,11 +369,32 @@ export function TasksPage() {
     <div className="min-h-screen">
       <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
         {/* Hero Greeting */}
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
-            Hello, {userDisplayName}
-          </h1>
-          <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+              Hello, {userDisplayName}
+            </h1>
+            <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
+          </div>
+          
+          {/* Desktop Add Task Button */}
+          <button
+            onClick={() => {
+              setFormData({
+                title: '',
+                description: '',
+                category: getDefaultCategoryValue(),
+                dueDate: '',
+              });
+              setIsModalOpen(true);
+            }}
+            className="hidden md:flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all font-semibold"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Task
+          </button>
         </div>
 
         {/* Add Task Form Modal */}
@@ -505,25 +526,6 @@ export function TasksPage() {
           </div>,
           document.body
         )}
-
-        {/* Floating Action Button */}
-        <button
-          onClick={() => {
-            setFormData({
-              title: '',
-              description: '',
-              category: getDefaultCategoryValue(),
-              dueDate: '',
-            });
-            setIsModalOpen(true);
-          }}
-          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
-          title="Add new task"
-        >
-          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
 
         {/* Tasks Sections */}
         {loading ? (
@@ -769,6 +771,25 @@ export function TasksPage() {
           document.body
         )}
       </div>
+
+      {/* Floating Action Button - Fixed outside container (Mobile only) */}
+      <button
+        onClick={() => {
+          setFormData({
+            title: '',
+            description: '',
+            category: getDefaultCategoryValue(),
+            dueDate: '',
+          });
+          setIsModalOpen(true);
+        }}
+        className="fixed bottom-24 right-4 md:hidden h-12 w-12 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 z-50 flex items-center justify-center fab-breathe"
+        title="Add new task"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
     </div>
   );
 }
@@ -820,8 +841,9 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
+      const overdueDays = Math.abs(diffDays);
       return {
-        text: 'Overdue',
+        text: `Overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}`,
         color: 'text-red-600',
         bgColor: 'bg-red-50',
         borderColor: 'border-red-200'
@@ -887,7 +909,16 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
             {task.title}
           </span>
 
-          <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3 mt-1 text-[11px] sm:text-sm text-purple-900/60">
+          {task.description && (
+            <p 
+              className={`text-xs sm:text-sm text-gray-500 truncate max-w-[95%] ${task.isCompleted ? 'opacity-60' : ''}`}
+              title={task.description}
+            >
+              {task.description}
+            </p>
+          )}
+
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1 text-[11px] sm:text-sm text-purple-900/60">
             <span
               className="inline-flex items-center text-[9px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-md border"
               style={{

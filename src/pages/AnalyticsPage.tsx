@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Activity, CheckCircle2, TrendingUp } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Activity, CheckCircle2, TrendingUp, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getUserDailyHabits, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation } from '@/services/habitService';
+import { getUserDailyHabits, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation, resetHabitData } from '@/services/habitService';
 import { DailyHabit } from '@/types';
 
 export function AnalyticsPage() {
@@ -9,7 +10,44 @@ export function AnalyticsPage() {
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resetTargetHabit, setResetTargetHabit] = useState<DailyHabit | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
   const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
+
+  const handleResetConfirm = async () => {
+    if (!resetTargetHabit) return;
+    try {
+      setIsResetting(true);
+      await resetHabitData(resetTargetHabit.id);
+      await loadAnalytics(); // Reload after reset
+    } catch (err) {
+      console.error('Error resetting habit:', err);
+    } finally {
+      setIsResetting(false);
+      setResetTargetHabit(null);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const getDaysAgoText = (startDate: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - start.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return '(Started today)';
+    if (diffDays === 1) return '(1 day ago)';
+    return `(${diffDays} days ago)`;
+  };
 
   const loadAnalytics = async () => {
     if (!user) return;
@@ -124,7 +162,8 @@ export function AnalyticsPage() {
           const scheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
           const streak = calculateStreak(habit.completedDates, scheduledDays);
           const totalCompletions = habit.completedDates.length;
-          const consistency = calculateConsistency(habit.completedDates, scheduledDays, habit.createdAt);
+          const startDate = habit.trackingStartDate || habit.createdAt;
+          const consistency = calculateConsistency(habit.completedDates, scheduledDays, startDate);
           const past7Days = getPast7DaysStatus(habit.completedDates);
 
           return (
@@ -132,10 +171,27 @@ export function AnalyticsPage() {
               key={habit.id}
               className="glass-card p-4 sm:p-6 md:p-8 md:hover:shadow-2xl md:hover:-translate-y-0.5 transition-all"
             >
-              {/* Habit Title */}
-              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 truncate">
-                {habit.title}
-              </h2>
+              {/* Habit Title & Reset */}
+              <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 truncate">
+                    {habit.title}
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 flex items-center gap-1 font-medium">
+                    <span>🗓️</span> Tracking since: {formatDate(habit.trackingStartDate || habit.createdAt)} <span className="text-purple-600/80 ml-0.5">{getDaysAgoText(habit.trackingStartDate || habit.createdAt)}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setResetTargetHabit(habit)}
+                  disabled={isResetting}
+                  className="flex-shrink-0 p-1.5 sm:p-2 rounded-lg bg-gray-100/80 hover:bg-rose-100 text-gray-400 hover:text-rose-600 transition-colors disabled:opacity-50"
+                  title="Reset Habit Data"
+                  aria-label={`Reset tracking for ${habit.title}`}
+                >
+                  <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+              </div>
 
               {/* Stats Row */}
               <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
@@ -226,6 +282,37 @@ export function AnalyticsPage() {
           );
         })}
       </div>
+
+      {resetTargetHabit && createPortal(
+        <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
+          <div className="modal-enter max-w-sm w-full bg-white/95 backdrop-blur-xl rounded-2xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)] border border-rose-100/80">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
+              <RefreshCw className="h-6 w-6 text-rose-600" />
+            </div>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 text-center">Reset Data?</h3>
+            <p className="text-gray-700 text-sm text-center mb-6">
+              Are you sure you want to reset all tracking data for "<strong>{resetTargetHabit.title}</strong>"?<br/><br/>Your streak and completions will become 0. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setResetTargetHabit(null)}
+                disabled={isResetting}
+                className="flex-1 px-3 py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetConfirm}
+                disabled={isResetting}
+                className="flex-1 px-3 py-2.5 text-sm sm:text-base bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-semibold rounded-xl transition disabled:opacity-70 shadow-[0_8px_20px_rgba(243,110,132,0.28)]"
+              >
+                {isResetting ? 'Resetting...' : 'Reset'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

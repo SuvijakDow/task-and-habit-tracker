@@ -57,6 +57,7 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       scheduledDays: doc.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
       startTime: doc.data().startTime || '09:00',
       endTime: doc.data().endTime || '10:00',
+      trackingStartDate: doc.data().trackingStartDate ? doc.data().trackingStartDate.toDate() : undefined,
       createdAt: doc.data().createdAt.toDate(),
       updatedAt: doc.data().updatedAt.toDate(),
     })) as DailyHabit[];
@@ -84,6 +85,7 @@ export const getDailyHabitById = async (habitId: string): Promise<DailyHabit | n
       scheduledDays: docSnap.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
       startTime: docSnap.data().startTime || '09:00',
       endTime: docSnap.data().endTime || '10:00',
+      trackingStartDate: docSnap.data().trackingStartDate ? docSnap.data().trackingStartDate.toDate() : undefined,
       createdAt: docSnap.data().createdAt.toDate(),
       updatedAt: docSnap.data().updatedAt.toDate(),
     } as DailyHabit;
@@ -108,6 +110,23 @@ export const updateDailyHabit = async (
     });
   } catch (error) {
     console.error('Error updating daily habit:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reset habit data (clear completed dates and set new tracking start date)
+ */
+export const resetHabitData = async (habitId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, DAILY_HABITS_COLLECTION, habitId);
+    await updateDoc(docRef, {
+      completedDates: [],
+      trackingStartDate: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error resetting habit data:', error);
     throw error;
   }
 };
@@ -233,7 +252,7 @@ export const calculateStreak = (completedDates: string[], scheduledDays?: number
  * Calculate overall consistency percentage
  * (completed on scheduled days / total scheduled days that have passed) * 100
  */
-export const calculateConsistency = (completedDates: string[], scheduledDays?: number[], createdAt?: Date): number => {
+export const calculateConsistency = (completedDates: string[], scheduledDays?: number[], startDateInput?: Date): number => {
   const defaultSchedule = [0, 1, 2, 3, 4, 5, 6];
   const schedule = scheduledDays || defaultSchedule;
   
@@ -241,7 +260,7 @@ export const calculateConsistency = (completedDates: string[], scheduledDays?: n
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const startDate = createdAt ? new Date(createdAt) : new Date(today);
+  const startDate = startDateInput ? new Date(startDateInput) : new Date(today);
   startDate.setHours(0, 0, 0, 0);
   
   let scheduledDayCount = 0;

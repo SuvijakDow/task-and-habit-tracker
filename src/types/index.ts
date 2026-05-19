@@ -28,6 +28,7 @@ export interface DailyHabit {
   startTime: string; // HH:MM format, e.g. '09:00'
   endTime: string; // HH:MM format, e.g. '10:00'
   order?: number; // For drag-drop reordering
+  trackingStartDate?: Date; // Date when tracking started or was last reset
   createdAt: Date;
   updatedAt: Date;
 }

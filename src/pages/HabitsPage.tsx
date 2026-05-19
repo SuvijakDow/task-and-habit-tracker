@@ -45,9 +45,7 @@ export function HabitsPage() {
   // Delete confirmation state
   const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
 
-  // Drag state
-  const [draggedHabitId, setDraggedHabitId] = useState<string | null>(null);
-  const [overHabitId, setOverHabitId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!user) {
@@ -66,7 +64,7 @@ export function HabitsPage() {
       setLoading(true);
       setLoadError(null);
       const userHabits = await getUserDailyHabits(user.uid);
-      setHabits(userHabits.sort((a, b) => (a.order || 0) - (b.order || 0)));
+      setHabits(userHabits.sort((a, b) => a.startTime.localeCompare(b.startTime)));
       setError(null);
     } catch (err) {
       const message = 'Could not load habits. Refresh and try again.';
@@ -104,21 +102,23 @@ export function HabitsPage() {
         endTime,
       });
 
-      setHabits((prev) => [
-        ...prev,
-        {
-          id: newHabitId,
-          userId: user.uid,
-          title: habitTitle.trim(),
-          completedDates: [],
-          scheduledDays,
-          startTime,
-          endTime,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          order: prev.length,
-        },
-      ]);
+      setHabits((prev) => {
+        const newHabits = [
+          ...prev,
+          {
+            id: newHabitId,
+            userId: user.uid,
+            title: habitTitle.trim(),
+            completedDates: [],
+            scheduledDays,
+            startTime,
+            endTime,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+        return newHabits.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      });
 
       setHabitTitle('');
       setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
@@ -215,7 +215,7 @@ export function HabitsPage() {
           : habit
       );
 
-      setHabits(updatedHabits);
+      setHabits(updatedHabits.sort((a, b) => a.startTime.localeCompare(b.startTime)));
       setEditingHabitId(null);
       setEditHabitTitle('');
       setEditScheduledDays([0, 1, 2, 3, 4, 5, 6]);
@@ -253,59 +253,7 @@ export function HabitsPage() {
     }
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (habitId: string) => {
-    setDraggedHabitId(habitId);
-  };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDragEnter = (habitId: string) => {
-    if (draggedHabitId !== habitId) {
-      setOverHabitId(habitId);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setOverHabitId(null);
-  };
-
-  const handleDrop = async (targetHabitId: string) => {
-    if (!draggedHabitId || draggedHabitId === targetHabitId) {
-      setDraggedHabitId(null);
-      setOverHabitId(null);
-      return;
-    }
-
-    const draggedIndex = habits.findIndex((h) => h.id === draggedHabitId);
-    const targetIndex = habits.findIndex((h) => h.id === targetHabitId);
-
-    if (draggedIndex !== -1 && targetIndex !== -1) {
-      const newHabits = [...habits];
-      [newHabits[draggedIndex], newHabits[targetIndex]] = [
-        newHabits[targetIndex],
-        newHabits[draggedIndex],
-      ];
-
-      setHabits(newHabits);
-
-      // Update order field in Firestore
-      try {
-        await Promise.all(
-          newHabits.map((habit, index) =>
-            updateDoc(doc(db, 'dailyHabits', habit.id), { order: index })
-          )
-        );
-      } catch (err) {
-        console.error('Error updating habit order:', err);
-      }
-    }
-
-    setDraggedHabitId(null);
-    setOverHabitId(null);
-  };
 
   const formatScheduledDays = (days: number[]): string => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -485,34 +433,17 @@ export function HabitsPage() {
             {habits.map((habit) => {
               const isCompletedToday = habit.completedDates.includes(todayDate);
               const streak = habit.completedDates.length;
-              const isDragging = draggedHabitId === habit.id;
-              const isOver = overHabitId === habit.id;
+
 
               return (
                 <div key={habit.id}>
                   <div
-                    draggable
-                    data-habit-id={habit.id}
-                    onDragStart={() => handleDragStart(habit.id)}
-                    onDragOver={handleDragOver}
-                    onDragEnter={() => handleDragEnter(habit.id)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={() => handleDrop(habit.id)}
-                    className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 cursor-move group ${
+                    className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${
                       isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
-                    } ${isDragging ? 'opacity-50 scale-95' : 'hover:shadow-md sm:hover:shadow-2xl'} ${
-                      isOver ? 'ring-2 ring-purple-400 ring-opacity-50' : ''
-                    }`}
+                    } hover:shadow-md sm:hover:shadow-2xl`}
                   >
                     <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
-                      <div className="flex-shrink-0 text-gray-300 group-hover:text-purple-400 transition-colors duration-200">
-                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                        </svg>
-                        <svg className="w-4 h-4 md:w-5 md:h-5 -mt-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M8 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                        </svg>
-                      </div>
+
 
                       <button
                         type="button"
