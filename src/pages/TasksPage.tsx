@@ -517,7 +517,7 @@ export function TasksPage() {
             });
             setIsModalOpen(true);
           }}
-          className="fixed md:sticky bottom-24 right-4 md:bottom-auto md:right-auto md:mt-8 h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe md:w-full md:h-auto md:max-w-fit md:px-6 md:py-3 md:rounded-full md:mx-0"
+          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg md:shadow-[0_14px_34px_rgba(157,78,221,0.42)] hover:shadow-xl md:hover:shadow-[0_18px_40px_rgba(157,78,221,0.5)] hover:scale-105 transition-all duration-200 z-40 flex items-center justify-center fab-breathe"
           title="Add new task"
         >
           <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
