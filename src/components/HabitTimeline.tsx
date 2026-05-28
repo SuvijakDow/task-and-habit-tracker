@@ -66,59 +66,56 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
   // Calculate positions for overlapping habits
   const positionedHabits = useMemo(() => {
     const positioned: PositionedHabit[] = [];
-    const timeSlots: Map<string, number[]> = new Map();
+    const columns: number[] = new Array(sortedHabits.length).fill(-1);
 
-    // Group habits by time slot
-    sortedHabits.forEach((habit, index) => {
-      const startMin = timeToMinutes(habit.startTime);
-      const endMin = timeToMinutes(habit.endTime);
-      const key = `${startMin}-${endMin}`;
-
-      if (!timeSlots.has(key)) {
-        timeSlots.set(key, []);
-      }
-      timeSlots.get(key)!.push(index);
-    });
-
-    // Assign column positions
-    sortedHabits.forEach((habit, index) => {
+    // Assign the lowest available column
+    for (let i = 0; i < sortedHabits.length; i++) {
+      const habit = sortedHabits[i];
       const startMin = timeToMinutes(habit.startTime);
       const endMin = timeToMinutes(habit.endTime);
       
-      // Find overlapping habits
-      let maxColumn = 0;
-      sortedHabits.forEach((other, otherIndex) => {
-        if (index !== otherIndex) {
-          const otherStart = timeToMinutes(other.startTime);
-          const otherEnd = timeToMinutes(other.endTime);
-          
-          // Check overlap
-          if (startMin < otherEnd && endMin > otherStart) {
-            if (otherIndex < index) maxColumn++;
-          }
+      const takenColumns = new Set<number>();
+      for (let j = 0; j < i; j++) {
+        const other = sortedHabits[j];
+        const otherStart = timeToMinutes(other.startTime);
+        const otherEnd = timeToMinutes(other.endTime);
+        
+        if (startMin < otherEnd && endMin > otherStart) {
+          takenColumns.add(columns[j]);
         }
-      });
+      }
+      
+      let col = 0;
+      while (takenColumns.has(col)) {
+        col++;
+      }
+      columns[i] = col;
+    }
 
-      // Count total overlapping
-      let totalColumns = 1;
-      sortedHabits.forEach((other, otherIndex) => {
-        if (index !== otherIndex) {
-          const otherStart = timeToMinutes(other.startTime);
-          const otherEnd = timeToMinutes(other.endTime);
-          
-          if (startMin < otherEnd && endMin > otherStart) {
-            totalColumns = Math.max(totalColumns, 2);
-          }
+    // Calculate total columns required for each habit's group
+    for (let i = 0; i < sortedHabits.length; i++) {
+      const habit = sortedHabits[i];
+      const startMin = timeToMinutes(habit.startTime);
+      const endMin = timeToMinutes(habit.endTime);
+      
+      let maxColInGroup = columns[i];
+      for (let j = 0; j < sortedHabits.length; j++) {
+        const other = sortedHabits[j];
+        const otherStart = timeToMinutes(other.startTime);
+        const otherEnd = timeToMinutes(other.endTime);
+        
+        if (startMin < otherEnd && endMin > otherStart) {
+          maxColInGroup = Math.max(maxColInGroup, columns[j]);
         }
-      });
-
+      }
+      
       positioned.push({
         ...habit,
-        index,
-        column: maxColumn,
-        totalColumns,
+        index: i,
+        column: columns[i],
+        totalColumns: maxColInGroup + 1,
       });
-    });
+    }
 
     return positioned;
   }, [sortedHabits]);
@@ -162,13 +159,14 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
       <div className="relative overflow-x-auto">
         <div className="flex min-w-full">
           {/* Time labels sidebar */}
-          <div className="w-12 flex-shrink-0 pt-4">
+          <div className="w-12 flex-shrink-0 pt-[1px]">
             {Array.from({ length: timeRange.endHour - timeRange.startHour }).map((_, i) => {
               const hour = timeRange.startHour + i;
               return (
                 <div
                   key={`label-${hour}`}
-                  className="h-16 flex items-start justify-end pr-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
+                  className="flex items-start justify-end pr-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
+                  style={{ height: '64px' }}
                 >
                   {String(hour).padStart(2, '0')}:00
                 </div>
@@ -179,7 +177,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
           {/* Timeline grid */}
           <div
             className="flex-grow relative bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
-            style={{ minHeight: `${(timeRange.endHour - timeRange.startHour) * 64}px` }}
+            style={{ height: `${(timeRange.endHour - timeRange.startHour) * 64 + 2}px` }}
           >
             {/* Hour grid lines */}
             {Array.from({ length: timeRange.endHour - timeRange.startHour }).map((_, i) => {

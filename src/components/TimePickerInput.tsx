@@ -19,6 +19,10 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
   const [displayValue, setDisplayValue] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setDisplayValue(value);
+  }, [value]);
+
   const [hours, minutes] = value.split(':').map(Number);
 
   const handleHourChange = (newHours: number) => {

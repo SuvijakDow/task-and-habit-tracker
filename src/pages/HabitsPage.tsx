@@ -327,7 +327,7 @@ export function HabitsPage() {
         )}
 
         {/* Add Habit Form */}
-        <div className="glass-card p-2.5 sm:p-6 md:p-8 mb-3 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
+        <div className="relative z-20 glass-card p-2.5 sm:p-6 md:p-8 mb-3 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
           <h2 className="text-sm sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1 sm:mb-2">Add New Habit</h2>
           <p className="text-[9px] sm:text-sm text-gray-600 mb-2.5 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
           <form onSubmit={handleAddHabit} className="space-y-2.5 sm:space-y-5">
