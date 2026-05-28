@@ -147,12 +147,12 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = ({
 
                       if (isFuture) {
                         cellClass += "opacity-0"; // Future days invisible
-                      } else if (isBeforeStart || !isScheduled) {
-                        cellClass += "bg-transparent border border-dashed border-slate-300";
-                        title += " (Not scheduled)";
                       } else if (isCompleted) {
                         cellClass += "bg-gradient-to-tr from-purple-500 to-fuchsia-400 shadow-sm shadow-purple-500/20";
                         title += " (Completed)";
+                      } else if (isBeforeStart || !isScheduled) {
+                        cellClass += "bg-transparent border border-dashed border-slate-300";
+                        title += " (Not scheduled)";
                       } else if (isPast) {
                         cellClass += "bg-rose-50/80 border border-rose-200";
                         title += " (Missed)";
