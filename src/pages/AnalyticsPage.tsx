@@ -29,26 +29,7 @@ export function AnalyticsPage() {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
 
-  const getDaysAgoText = (startDate: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
-    const diffTime = today.getTime() - start.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const totalDays = diffDays + 1;
-    
-    if (totalDays === 1) return '(Day 1)';
-    return `(${totalDays} days)`;
-  };
 
   const loadAnalytics = async () => {
     if (!user) return;
