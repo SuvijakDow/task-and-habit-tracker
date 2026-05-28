@@ -14,6 +14,7 @@ import {
   getUserCategories,
 } from '@/services/categoryService';
 import { showToast } from '@/components/Toast';
+import { playSuccessSound } from '@/utils/audio';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -213,6 +214,10 @@ export function TasksPage() {
 
   const handleToggleCompletion = useCallback(async (taskId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
+
+    if (newStatus) {
+      playSuccessSound();
+    }
 
     // Optimistic update: instantly reflect the change in UI
     setTasks((prev) =>

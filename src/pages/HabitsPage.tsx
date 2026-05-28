@@ -14,6 +14,7 @@ import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import { showToast } from '@/components/Toast';
+import { playSuccessSound } from '@/utils/audio';
 import { HabitTimeline } from '@/components/HabitTimeline';
 import { TimePickerInput } from '@/components/TimePickerInput';
 
@@ -134,6 +135,10 @@ export function HabitsPage() {
 
   const handleToggleHabit = useCallback(async (habitId: string, isCompletedToday: boolean) => {
     if (!user) return;
+
+    if (!isCompletedToday) {
+      playSuccessSound();
+    }
 
     // Compute the optimistic completedDates
     const habit = habits.find((h) => h.id === habitId);
