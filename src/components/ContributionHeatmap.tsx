@@ -117,14 +117,14 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = ({
             
             <div className="flex">
               {/* Day of Week Labels */}
-              <div className="w-7 sm:w-8 flex-shrink-0 flex flex-col justify-between pr-2 text-[9px] sm:text-[10px] text-slate-400 font-medium h-[108px] sm:h-[126px]">
-                <span className="leading-none mt-1">Sun</span>
-                <span className="leading-none opacity-0">Mon</span>
-                <span className="leading-none">Tue</span>
-                <span className="leading-none opacity-0">Wed</span>
-                <span className="leading-none">Thu</span>
-                <span className="leading-none opacity-0">Fri</span>
-                <span className="leading-none">Sat</span>
+              <div className="w-7 sm:w-8 flex-shrink-0 flex flex-col gap-1 pr-2 text-[9px] sm:text-[10px] text-slate-400 font-medium">
+                <span className="h-3 sm:h-3.5 leading-none flex items-center">Sun</span>
+                <span className="h-3 sm:h-3.5 leading-none flex items-center opacity-0">Mon</span>
+                <span className="h-3 sm:h-3.5 leading-none flex items-center">Tue</span>
+                <span className="h-3 sm:h-3.5 leading-none flex items-center opacity-0">Wed</span>
+                <span className="h-3 sm:h-3.5 leading-none flex items-center">Thu</span>
+                <span className="h-3 sm:h-3.5 leading-none flex items-center opacity-0">Fri</span>
+                <span className="h-3 sm:h-3.5 leading-none flex items-center">Sat</span>
               </div>
 
               {/* Heatmap Grid */}
