@@ -362,7 +362,18 @@ export function TasksPage() {
       if (!b.dueDate) return -1;
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
-  const completedTasks = tasks.filter((t) => t.isCompleted);
+  const completedTasks = tasks
+    .filter((t) => t.isCompleted)
+    .sort((a, b) => {
+      if (!a.dueDate && !b.dueDate) {
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      }
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+
+      const dueDiff = b.dueDate.getTime() - a.dueDate.getTime();
+      return dueDiff !== 0 ? dueDiff : b.createdAt.getTime() - a.createdAt.getTime();
+    });
   const isEditCategoryMissing =
     !!editFormData.category &&
     !categories.some(
