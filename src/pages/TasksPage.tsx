@@ -10,6 +10,7 @@ import {
   updateTask,
   deleteTask,
 } from '@/services/taskService';
+import TasksTable from '@/components/TasksTable';
 import {
   getUserCategories,
 } from '@/services/categoryService';
@@ -78,6 +79,8 @@ export function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // View mode: 'list' or 'table'
+  const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -393,6 +396,27 @@ export function TasksPage() {
             <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
           </div>
           
+          <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="hidden sm:flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              aria-pressed={viewMode === 'list'}
+              aria-label="List view"
+            >
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              aria-pressed={viewMode === 'table'}
+              aria-label="Table view"
+            >
+              Table
+            </button>
+          </div>
+
           {/* Desktop Add Task Button */}
           <button
             onClick={() => {
@@ -411,6 +435,7 @@ export function TasksPage() {
             </svg>
             Add Task
           </button>
+          </div>
         </div>
 
         {/* Add Task Form Modal */}
@@ -585,50 +610,64 @@ export function TasksPage() {
           </div>
         ) : (
           <>
-            {/* Incomplete Tasks Section */}
-            <div className="mb-8 sm:mb-10">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
-                Pending Tasks ({incompleteTasks.length})
-              </h2>
-              {incompleteTasks.length === 0 ? (
-                <div className="glass-card p-6 sm:p-8 text-center text-gray-600">
-                  <p>No pending tasks. Great job, everything is complete.</p>
-                </div>
-              ) : (
-                <div className="space-y-3 sm:space-y-4 list-stagger">
-                  {incompleteTasks.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      categories={categories}
-                      onToggleCompletion={handleToggleCompletion}
-                      onEdit={handleEditTask}
-                      onDelete={handleDeleteTask}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Completed Tasks Section */}
-            {completedTasks.length > 0 && (
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
-                  Completed Tasks ({completedTasks.length})
-                </h2>
-                <div className="space-y-3 sm:space-y-4 list-stagger">
-                  {completedTasks.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      categories={categories}
-                      onToggleCompletion={handleToggleCompletion}
-                      onEdit={handleEditTask}
-                      onDelete={handleDeleteTask}
-                    />
-                  ))}
-                </div>
+            {viewMode === 'table' ? (
+              <div className="mb-6">
+                <TasksTable
+                  tasks={tasks}
+                  categories={categories}
+                  onToggleCompletion={handleToggleCompletion}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                />
               </div>
+            ) : (
+              <>
+                {/* Incomplete Tasks Section */}
+                <div className="mb-8 sm:mb-10">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                    Pending Tasks ({incompleteTasks.length})
+                  </h2>
+                  {incompleteTasks.length === 0 ? (
+                    <div className="glass-card p-6 sm:p-8 text-center text-gray-600">
+                      <p>No pending tasks. Great job, everything is complete.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 sm:space-y-4 list-stagger">
+                      {incompleteTasks.map((task) => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          categories={categories}
+                          onToggleCompletion={handleToggleCompletion}
+                          onEdit={handleEditTask}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Completed Tasks Section */}
+                {completedTasks.length > 0 && (
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                      Completed Tasks ({completedTasks.length})
+                    </h2>
+                    <div className="space-y-3 sm:space-y-4 list-stagger">
+                      {completedTasks.map((task) => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          categories={categories}
+                          onToggleCompletion={handleToggleCompletion}
+                          onEdit={handleEditTask}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
