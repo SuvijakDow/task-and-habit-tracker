@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, CheckCircle2, TrendingUp, RefreshCw, Minus, X } from 'lucide-react';
+import { Activity, CheckCircle2, TrendingUp, RefreshCw, Minus, X, ChevronDown, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getUserDailyHabits, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation, resetHabitData } from '@/services/habitService';
 import { DailyHabit } from '@/types';
@@ -16,6 +16,7 @@ export function AnalyticsPage() {
   // Selection/search state to avoid long scrolling — user can pick a habit to view
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
 
   const handleResetConfirm = async () => {
@@ -60,6 +61,18 @@ export function AnalyticsPage() {
 
     loadAnalytics();
   }, [user]);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.custom-select-container')) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isDropdownOpen]);
 
   if (!user) {
     return (
@@ -137,41 +150,75 @@ export function AnalyticsPage() {
         </div>
       )}
 
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:gap-3">
-            <label htmlFor="habit-select" className="sr-only">Select habit</label>
-            <select
-              id="habit-select"
-              value={selectedHabitId ?? ''}
-              onChange={(e) => {
-                const v = e.target.value;
-                setSelectedHabitId(v === '' ? null : v);
-                if (v !== '') setSearchQuery('');
-              }}
-              className="min-w-0 flex-1 md:flex-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-purple-200"
-            >
-              <option value="">— Select a habit —</option>
-              {habits.map((h) => (
-                <option value={h.id} key={h.id}>{h.title}</option>
-              ))}
-            </select>
-
-            <input
-              aria-label="Search habits"
-              placeholder="Search habits..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="mt-2 sm:mt-0 sm:ml-2 flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-purple-200"
-            />
-
-            <div className="mt-2 sm:mt-0 sm:ml-2 flex items-center gap-2">
+          <div className="mb-6 flex flex-col md:flex-row md:items-center gap-3">
+            <div className="relative custom-select-container flex-1 md:max-w-xs">
               <button
                 type="button"
-                onClick={() => { setSelectedHabitId(null); setSearchQuery(''); }}
-                className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium hover:bg-gray-50"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full flex items-center justify-between min-h-[40px] bg-white/70 backdrop-blur-md border border-purple-100 hover:border-purple-300 rounded-xl px-4 py-2 text-sm text-purple-900 shadow-sm hover:bg-white hover:shadow-md transition-all font-semibold focus:outline-none focus:ring-2 focus:ring-purple-300/50"
               >
-                Show all
+                <span className="truncate">
+                  {selectedHabitId ? habits.find((h) => h.id === selectedHabitId)?.title : '— Select a habit —'}
+                </span>
+                <ChevronDown className={`ml-2 h-4 w-4 text-purple-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
+
+              {isDropdownOpen && (
+                <div className="absolute left-0 right-0 mt-1.5 z-30 bg-white/95 backdrop-blur-md border border-purple-100/50 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1.5 modal-enter">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedHabitId(null);
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-all hover:bg-purple-50 font-semibold ${
+                      !selectedHabitId ? 'text-purple-700 bg-purple-50/50' : 'text-gray-600'
+                    }`}
+                  >
+                    — Show All —
+                  </button>
+                  {habits.map((h) => (
+                    <button
+                      key={h.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedHabitId(h.id);
+                        setSearchQuery('');
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
+                        selectedHabitId === h.id ? 'text-purple-700 bg-purple-50/50 font-bold' : 'text-gray-700'
+                      }`}
+                    >
+                      <span className="truncate">{h.title}</span>
+                      {selectedHabitId === h.id && <span className="h-2 w-2 rounded-full bg-purple-500"></span>}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
+              <input
+                aria-label="Search habits"
+                placeholder="Search habits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full min-h-[40px] pl-10 pr-4 bg-white/70 backdrop-blur-md border border-purple-100 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 shadow-sm focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none transition-all"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedHabitId(null);
+                setSearchQuery('');
+              }}
+              className="min-h-[40px] px-5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold rounded-xl shadow-md shadow-purple-500/10 hover:shadow-lg transition duration-200 border border-transparent flex items-center justify-center"
+            >
+              Reset filters
+            </button>
           </div>
 
           <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
