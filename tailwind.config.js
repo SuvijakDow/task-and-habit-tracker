@@ -6,7 +6,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Poppins', 'Noto Sans Thai', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        sans: ['Bai Jamjuree', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
     },
   },
