@@ -13,6 +13,9 @@ export function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [resetTargetHabit, setResetTargetHabit] = useState<DailyHabit | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  // Selection/search state to avoid long scrolling — user can pick a habit to view
+  const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
 
   const handleResetConfirm = async () => {
@@ -134,16 +137,56 @@ export function AnalyticsPage() {
         </div>
       )}
 
-      <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
-        {habits.map((habit) => (
-          <HabitAnalyticsCard
-            key={habit.id}
-            habit={habit}
-            setResetTargetHabit={setResetTargetHabit}
-            isResetting={isResetting}
-          />
-        ))}
-      </div>
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:gap-3">
+            <label htmlFor="habit-select" className="sr-only">Select habit</label>
+            <select
+              id="habit-select"
+              value={selectedHabitId ?? ''}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSelectedHabitId(v === '' ? null : v);
+                if (v !== '') setSearchQuery('');
+              }}
+              className="min-w-0 flex-1 md:flex-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-purple-200"
+            >
+              <option value="">— Select a habit —</option>
+              {habits.map((h) => (
+                <option value={h.id} key={h.id}>{h.title}</option>
+              ))}
+            </select>
+
+            <input
+              aria-label="Search habits"
+              placeholder="Search habits..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mt-2 sm:mt-0 sm:ml-2 flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-purple-200"
+            />
+
+            <div className="mt-2 sm:mt-0 sm:ml-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setSelectedHabitId(null); setSearchQuery(''); }}
+                className="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium hover:bg-gray-50"
+              >
+                Show all
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
+            {habits
+              .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
+              .filter((h) => (searchQuery ? h.title.toLowerCase().includes(searchQuery.toLowerCase()) : true))
+              .map((habit) => (
+                <HabitAnalyticsCard
+                  key={habit.id}
+                  habit={habit}
+                  setResetTargetHabit={setResetTargetHabit}
+                  isResetting={isResetting}
+                />
+              ))}
+          </div>
 
       {resetTargetHabit && createPortal(
         <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">

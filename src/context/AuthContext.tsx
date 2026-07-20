@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { subscribeToAuthState } from '@/services/authService';
 import { ensureUserProfile, getUserProfile } from '@/services/userService';
 import { UserProfile } from '@/types';
 
@@ -19,26 +18,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = subscribeToAuthState(async (authUser) => {
-      setUser(authUser);
+    let cancelled = false;
+    let unsub: (() => void) | null = null;
 
-      if (authUser) {
-        try {
-          // Ensure the Firestore profile exists (creates on first login)
-          const profile = await ensureUserProfile(authUser);
-          setUserProfile(profile);
-        } catch (error) {
-          console.error('Error syncing user profile:', error);
-          setUserProfile(null);
-        }
-      } else {
-        setUserProfile(null);
+    (async () => {
+      try {
+        const { subscribeToAuthState } = await import('@/services/authService');
+        if (cancelled) return;
+
+        unsub = subscribeToAuthState(async (authUser: any) => {
+          setUser(authUser);
+
+          if (authUser) {
+            try {
+              // Ensure the Firestore profile exists (creates on first login)
+              const profile = await ensureUserProfile(authUser);
+              setUserProfile(profile);
+            } catch (error) {
+              console.error('Error syncing user profile:', error);
+              setUserProfile(null);
+            }
+          } else {
+            setUserProfile(null);
+          }
+
+          setLoading(false);
+        });
+      } catch (err) {
+        console.error('Failed to load auth service:', err);
+        setLoading(false);
       }
+    })();
 
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      if (unsub) unsub();
+    };
   }, []);
 
   const refreshUserProfile = useCallback(async () => {

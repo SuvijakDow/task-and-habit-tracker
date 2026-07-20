@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { signIn, signUp, signOut, signInWithGoogle } from '@/services/authService';
 import { normalizeProfilePhotoURL } from '@/services/userService';
-import { MainPage } from './MainPage';
-import SettingsModal from '@/components/SettingsModal';
+const MainPage = lazy(() => import('./MainPage').then((m) => ({ default: m.MainPage })));
+const SettingsModal = lazy(() => import('@/components/SettingsModal').then((m) => ({ default: m.default || m.SettingsModal })));
+
 
 type AuthMode = 'login' | 'signup' | 'profile';
 
@@ -32,6 +32,7 @@ export function AuthPage() {
   const handleLogout = async () => {
     try {
       setIsSubmitting(true);
+      const { signOut } = await import('@/services/authService');
       await signOut();
     } catch (err) {
       setError('Could not sign out. Please try again.');
@@ -104,10 +105,14 @@ export function AuthPage() {
         </div>
 
         {/* Main app content */}
-        <MainPage />
+        <Suspense fallback={<div className="p-4">Loading app...</div>}>
+          <MainPage />
+        </Suspense>
 
         {/* Settings Modal */}
-        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        <Suspense>
+          <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        </Suspense>
       </div>
     );
   }
@@ -133,6 +138,7 @@ export function AuthPage() {
 
     try {
       setIsSubmitting(true);
+      const { signIn } = await import('@/services/authService');
       await signIn(loginData.email, loginData.password);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to sign in';
@@ -180,6 +186,7 @@ export function AuthPage() {
 
     try {
       setIsSubmitting(true);
+      const { signUp } = await import('@/services/authService');
       await signUp(signupData.email, signupData.password, signupData.displayName);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to sign up';
@@ -203,6 +210,7 @@ export function AuthPage() {
     setError(null);
     try {
       setIsSubmitting(true);
+      const { signInWithGoogle } = await import('@/services/authService');
       await signInWithGoogle();
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to sign in with Google';

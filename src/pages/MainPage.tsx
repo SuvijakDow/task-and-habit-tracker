@@ -1,14 +1,15 @@
-import { ComponentType, useState } from 'react';
+import { ComponentType, useState, lazy, Suspense } from 'react';
 import {
   Activity,
   FolderTree,
   ListChecks,
   TrendingUp,
 } from 'lucide-react';
-import { TasksPage } from '@/pages/TasksPage';
-import { HabitsPage } from '@/pages/HabitsPage';
-import { AnalyticsPage } from '@/pages/AnalyticsPage';
-import { CategoriesPage } from '@/pages/CategoriesPage';
+const TasksPage = lazy(() => import('@/pages/TasksPage').then((m) => ({ default: m.TasksPage })));
+const HabitsPage = lazy(() => import('@/pages/HabitsPage').then((m) => ({ default: m.HabitsPage })));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
+const CategoriesPage = lazy(() => import('@/pages/CategoriesPage').then((m) => ({ default: m.CategoriesPage })));
+
 
 type Page = 'tasks' | 'habits' | 'categories' | 'analytics';
 
@@ -84,7 +85,9 @@ export function MainPage() {
 
       {/* Page Content */}
       <div key={currentPage} className="page-enter pt-2.5 pb-[5.5rem] md:pb-0 md:pt-4">
-        {currentPageContent}
+        <Suspense fallback={<div className="p-4">Loading page...</div>}>
+          {currentPageContent}
+        </Suspense>
       </div>
     </div>
   );
