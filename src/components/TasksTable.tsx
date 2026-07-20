@@ -307,13 +307,15 @@ export default function TasksTable({
                 </td>
               </tr>
             ) : (
-              rows.map((t) => (
+              rows.map((t) => {
+              const tdPaddingClass = t.description ? 'py-3.5 align-top' : 'py-2 align-middle';
+              return (
                 <tr key={t.id} className="border-t last:border-b hover:bg-gray-50 transition">
-                  <td className="px-3 py-3 align-top max-w-[45%]">
+                  <td className={`px-3 ${tdPaddingClass} max-w-[45%]`}>
                     <div className="font-medium truncate">{t.title}</div>
                     {t.description && <div className="text-xs text-gray-500 truncate">{t.description}</div>}
                   </td>
-                  <td className="px-3 py-3 align-top">
+                  <td className={`px-3 ${tdPaddingClass}`}>
                     {(() => {
                       const matchedCategory = getCategory(t.category);
                       const categoryName = matchedCategory?.name || t.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -336,14 +338,14 @@ export default function TasksTable({
                       );
                     })()}
                   </td>
-                  <td className="px-3 py-3 align-top">
+                  <td className={`px-3 ${tdPaddingClass}`}>
                     {t.dueDate ? (
                       <div className="text-sm text-gray-700">{new Date(t.dueDate).toLocaleDateString()}</div>
                     ) : (
                       <div className="text-sm text-gray-400">—</div>
                     )}
                   </td>
-                  <td className="px-3 py-3 align-top">
+                  <td className={`px-3 ${tdPaddingClass}`}>
                     {t.dueDate ? (
                       (() => {
                         const deadlineStatus = getDeadlineStatus(t);
@@ -359,7 +361,7 @@ export default function TasksTable({
                       <div className="text-sm text-gray-400">—</div>
                     )}
                   </td>
-                  <td className="px-3 py-3 align-top text-center">
+                  <td className={`px-3 ${tdPaddingClass} text-center`}>
                     <button
                       type="button"
                       role="checkbox"
@@ -376,7 +378,7 @@ export default function TasksTable({
                       </svg>
                     </button>
                   </td>
-                  <td className="px-3 py-3 align-top text-right">
+                  <td className={`px-3 ${tdPaddingClass} text-right`}>
                     <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                       <button
                         onClick={() => toggleSelected(t.id)}
@@ -392,7 +394,8 @@ export default function TasksTable({
                     </div>
                   </td>
                 </tr>
-              ))
+              );
+            })
             )}
           </tbody>
         </table>
