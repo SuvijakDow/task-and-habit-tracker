@@ -243,6 +243,47 @@ export function TasksPage() {
     }
   }, []);
 
+  const handleBulkSetCompletion = async (taskIds: string[], isCompleted: boolean) => {
+    if (taskIds.length === 0) return;
+
+    if (isCompleted) {
+      playSuccessSound();
+    }
+
+    try {
+      await Promise.all(taskIds.map((taskId) => updateTask(taskId, { isCompleted })));
+      const idSet = new Set(taskIds);
+      setTasks((prev) =>
+        prev.map((task) => (idSet.has(task.id) ? { ...task, isCompleted } : task))
+      );
+      showToast(
+        isCompleted
+          ? `Marked ${taskIds.length} task(s) as completed.`
+          : `Moved ${taskIds.length} task(s) back to pending.`,
+        'success'
+      );
+    } catch (err) {
+      showToast('Bulk update failed. Please try again.', 'error');
+      console.error('Error bulk updating tasks:', err);
+      await loadTasks();
+    }
+  };
+
+  const handleBulkDelete = async (taskIds: string[]) => {
+    if (taskIds.length === 0) return;
+
+    try {
+      await Promise.all(taskIds.map((taskId) => deleteTask(taskId)));
+      const idSet = new Set(taskIds);
+      setTasks((prev) => prev.filter((task) => !idSet.has(task.id)));
+      showToast(`Deleted ${taskIds.length} task(s).`, 'success');
+    } catch (err) {
+      showToast('Bulk delete failed. Please try again.', 'error');
+      console.error('Error bulk deleting tasks:', err);
+      await loadTasks();
+    }
+  };
+
   const handleEditTask = (task: Task) => {
     const matchedCategory = findCategoryByTaskValue(categories, task.category);
     setEditingTaskId(task.id);
@@ -379,53 +420,93 @@ export function TasksPage() {
     <div className="min-h-screen">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
         {/* Hero Greeting */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
-              Hello, {userDisplayName}
-            </h1>
-            <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
-          </div>
-          
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-          {/* View Toggle */}
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full sm:w-auto">
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+                Hello, {userDisplayName}
+              </h1>
+              <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
+            </div>
+
+            <div className="hidden md:flex items-center gap-3">
+              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                  aria-pressed={viewMode === 'list'}
+                  aria-label="List view"
+                >
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                  aria-pressed={viewMode === 'table'}
+                  aria-label="Table view"
+                >
+                  Table
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setFormData({
+                    title: '',
+                    description: '',
+                    category: getDefaultCategoryValue(),
+                    dueDate: '',
+                  });
+                  setIsModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all font-semibold whitespace-nowrap"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Task
+              </button>
+            </div>
+
             <button
-              onClick={() => setViewMode('list')}
-              className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
-              aria-pressed={viewMode === 'list'}
-              aria-label="List view"
+              onClick={() => {
+                setFormData({
+                  title: '',
+                  description: '',
+                  category: getDefaultCategoryValue(),
+                  dueDate: '',
+                });
+                setIsModalOpen(true);
+              }}
+              className="inline-flex md:hidden items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all font-semibold whitespace-nowrap"
             >
-              List
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
-              aria-pressed={viewMode === 'table'}
-              aria-label="Table view"
-            >
-              Table
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Task
             </button>
           </div>
 
-          {/* Desktop Add Task Button */}
-          <button
-            onClick={() => {
-              setFormData({
-                title: '',
-                description: '',
-                category: getDefaultCategoryValue(),
-                dueDate: '',
-              });
-              setIsModalOpen(true);
-            }}
-            className="hidden md:flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all font-semibold"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Task
-          </button>
+          {/* View Toggle */}
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex md:hidden items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full sm:w-fit">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                aria-pressed={viewMode === 'list'}
+                aria-label="List view"
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                aria-pressed={viewMode === 'table'}
+                aria-label="Table view"
+              >
+                Table
+              </button>
+            </div>
           </div>
         </div>
 
@@ -609,6 +690,8 @@ export function TasksPage() {
                   onToggleCompletion={handleToggleCompletion}
                   onEdit={handleEditTask}
                   onDelete={handleDeleteTask}
+                  onBulkSetCompletion={handleBulkSetCompletion}
+                  onBulkDelete={handleBulkDelete}
                 />
               </div>
             ) : (
@@ -818,24 +901,6 @@ export function TasksPage() {
         )}
       </div>
 
-      {/* Floating Action Button - Fixed outside container (Mobile only) */}
-      <button
-        onClick={() => {
-          setFormData({
-            title: '',
-            description: '',
-            category: getDefaultCategoryValue(),
-            dueDate: '',
-          });
-          setIsModalOpen(true);
-        }}
-        className="fixed bottom-24 right-4 md:hidden h-12 w-12 bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-500 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 z-50 flex items-center justify-center fab-breathe"
-        title="Add new task"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
     </div>
   );
 }

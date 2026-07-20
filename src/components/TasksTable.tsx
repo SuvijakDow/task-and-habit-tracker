@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, RefreshCw } from 'lucide-react';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
 const COLOR_HEX_REGEX = /^#[0-9A-F]{6}$/i;
+
+type QuickFilter = 'all' | 'today' | 'overdue' | 'week';
 
 const isValidHexColor = (value: string): boolean => COLOR_HEX_REGEX.test(value);
 
@@ -38,16 +41,37 @@ interface Props {
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onBulkSetCompletion: (taskIds: string[], isCompleted: boolean) => Promise<void>;
+  onBulkDelete: (taskIds: string[]) => Promise<void>;
 }
 
-export default function TasksTable({ tasks, categories, onToggleCompletion, onEdit, onDelete }: Props) {
+export default function TasksTable({
+  tasks,
+  categories,
+  onToggleCompletion,
+  onEdit,
+  onDelete,
+  onBulkSetCompletion,
+  onBulkDelete,
+}: Props) {
   const [pendingPage, setPendingPage] = useState(1);
   const [completedPage, setCompletedPage] = useState(1);
   const [pendingPageSize, setPendingPageSize] = useState(10);
   const [completedPageSize, setCompletedPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkRunning, setIsBulkRunning] = useState(false);
+  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
 
   const getCategory = (taskCategory: string) =>
     categories.find((c) => c.id === taskCategory || c.name === taskCategory);
+
+  const getCategoryName = (task: Task) => {
+    const matchedCategory = getCategory(task.category);
+    return matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
+  };
 
   const getDeadlineStatus = (task: Task) => {
     if (!task.dueDate) return null;
@@ -82,50 +106,183 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
     };
   };
 
+  const matchesQuickFilter = (task: Task): boolean => {
+    if (quickFilter === 'all') return true;
+    if (!task.dueDate) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDate = new Date(task.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+
+    if (quickFilter === 'today') {
+      return dueDate.getTime() === today.getTime();
+    }
+
+    if (quickFilter === 'overdue') {
+      return dueDate.getTime() < today.getTime();
+    }
+
+    const weekEnd = new Date(today);
+    weekEnd.setDate(today.getDate() + 7);
+    return dueDate.getTime() >= today.getTime() && dueDate.getTime() <= weekEnd.getTime();
+  };
+
+  const matchesFilters = (task: Task): boolean => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const categoryName = getCategoryName(task).toLowerCase();
+    const title = task.title.toLowerCase();
+    const description = task.description.toLowerCase();
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      title.includes(normalizedSearch) ||
+      description.includes(normalizedSearch) ||
+      categoryName.includes(normalizedSearch);
+
+    const matchedCategory = getCategory(task.category);
+    const categoryId = matchedCategory?.id || task.category;
+    const categoryNameRaw = matchedCategory?.name || task.category;
+    const matchesCategory =
+      categoryFilter === 'all' ||
+      categoryFilter === categoryId ||
+      categoryFilter === categoryNameRaw;
+
+    return matchesSearch && matchesCategory && matchesQuickFilter(task);
+  };
+
   const pendingTasks = useMemo(
     () =>
       tasks
-      .filter((t) => !t.isCompleted)
-      .sort((a, b) => {
-        if (!a.dueDate && !b.dueDate) {
-          return b.createdAt.getTime() - a.createdAt.getTime();
-        }
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
+        .filter((t) => !t.isCompleted)
+        .sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+          }
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
 
-        const dueDiff = a.dueDate.getTime() - b.dueDate.getTime();
-        return dueDiff !== 0 ? dueDiff : b.createdAt.getTime() - a.createdAt.getTime();
-      }),
+          const dueDiff = a.dueDate.getTime() - b.dueDate.getTime();
+          return dueDiff !== 0 ? dueDiff : b.createdAt.getTime() - a.createdAt.getTime();
+        }),
     [tasks]
   );
 
   const completedTasks = useMemo(
     () =>
       tasks
-      .filter((t) => t.isCompleted)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        .filter((t) => t.isCompleted)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
     [tasks]
   );
 
-  const pendingTotalPages = Math.max(1, Math.ceil(pendingTasks.length / pendingPageSize));
-  const completedTotalPages = Math.max(1, Math.ceil(completedTasks.length / completedPageSize));
-  const pendingPaged = pendingTasks.slice((pendingPage - 1) * pendingPageSize, pendingPage * pendingPageSize);
-  const completedPaged = completedTasks.slice((completedPage - 1) * completedPageSize, completedPage * completedPageSize);
+  const filteredPendingTasks = useMemo(
+    () => pendingTasks.filter(matchesFilters),
+    [pendingTasks, searchQuery, categoryFilter, quickFilter, categories]
+  );
+  const filteredCompletedTasks = useMemo(
+    () => completedTasks.filter(matchesFilters),
+    [completedTasks, searchQuery, categoryFilter, quickFilter, categories]
+  );
 
-  const renderTable = (
-    rows: Task[],
-    emptyText: string
-  ) => (
+  const pendingTotalPages = Math.max(1, Math.ceil(filteredPendingTasks.length / pendingPageSize));
+  const completedTotalPages = Math.max(1, Math.ceil(filteredCompletedTasks.length / completedPageSize));
+  const pendingPaged = filteredPendingTasks.slice((pendingPage - 1) * pendingPageSize, pendingPage * pendingPageSize);
+  const completedPaged = filteredCompletedTasks.slice(
+    (completedPage - 1) * completedPageSize,
+    completedPage * completedPageSize
+  );
+
+  useEffect(() => {
+    setPendingPage(1);
+    setCompletedPage(1);
+  }, [searchQuery, categoryFilter, quickFilter]);
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const existing = new Set(tasks.map((t) => t.id));
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (existing.has(id)) next.add(id);
+      });
+      return next;
+    });
+  }, [tasks]);
+
+  useEffect(() => {
+    if (selectedIds.size === 0) {
+      setIsBulkDeleteConfirmOpen(false);
+    }
+  }, [selectedIds]);
+
+  const allFilteredIds = useMemo(
+    () => [...filteredPendingTasks, ...filteredCompletedTasks].map((t) => t.id),
+    [filteredPendingTasks, filteredCompletedTasks]
+  );
+
+  const allFilteredSelected =
+    allFilteredIds.length > 0 && allFilteredIds.every((id) => selectedIds.has(id));
+
+  const selectedPendingIds = useMemo(
+    () => pendingTasks.filter((t) => selectedIds.has(t.id)).map((t) => t.id),
+    [pendingTasks, selectedIds]
+  );
+  const selectedCompletedIds = useMemo(
+    () => completedTasks.filter((t) => selectedIds.has(t.id)).map((t) => t.id),
+    [completedTasks, selectedIds]
+  );
+
+  const toggleSelected = (taskId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllFiltered = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allFilteredSelected) {
+        allFilteredIds.forEach((id) => next.delete(id));
+      } else {
+        allFilteredIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const runBulk = async (action: () => Promise<void>) => {
+    try {
+      setIsBulkRunning(true);
+      await action();
+      clearSelection();
+    } finally {
+      setIsBulkRunning(false);
+    }
+  };
+
+  const renderTable = (rows: Task[], emptyText: string) => (
     <div className="overflow-x-auto bg-white border border-gray-100 rounded-lg shadow-sm">
-      <table className="min-w-[940px] w-full text-sm">
-        <thead className="bg-gray-50">
+      <table className="min-w-[980px] w-full text-sm table-fixed">
+        <colgroup>
+          <col style={{ width: '40%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '24%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '14%' }} />
+        </colgroup>
+        <thead className="bg-gradient-to-r from-purple-600 to-pink-500 text-white">
           <tr>
             <th className="px-3 py-2 text-left font-semibold">Title</th>
             <th className="px-3 py-2 text-left font-semibold">Category</th>
             <th className="px-3 py-2 text-left font-semibold">
               <span className="inline-flex items-center gap-2">
                 Due
-                <CalendarDays className="h-4 w-4 text-purple-600" />
+                <CalendarDays className="h-4 w-4 text-purple-100" />
               </span>
             </th>
             <th className="px-3 py-2 text-center font-semibold">Done</th>
@@ -206,6 +363,16 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
                 </td>
                 <td className="px-3 py-3 align-top text-right">
                   <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => toggleSelected(t.id)}
+                      className={`px-2 py-1 text-xs rounded border ${
+                        selectedIds.has(t.id)
+                          ? 'bg-purple-100 border-purple-300 text-purple-700'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      {selectedIds.has(t.id) ? 'Selected' : 'Select'}
+                    </button>
                     <button onClick={() => onEdit(t)} className="px-2 py-1 text-xs rounded bg-white border hover:bg-gray-50">Edit</button>
                     <button onClick={() => onDelete(t.id)} className="px-2 py-1 text-xs rounded bg-white border hover:bg-gray-50 text-rose-600">Delete</button>
                   </div>
@@ -220,13 +387,81 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
 
   return (
     <div className="space-y-6">
+      <div className="glass-card p-3 sm:p-4">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tasks, description, or category..."
+            className="min-h-[40px] flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+          />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="min-h-[40px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={quickFilter}
+            onChange={(e) => setQuickFilter(e.target.value as QuickFilter)}
+            className="min-h-[40px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+          >
+            <option value="all">All Due States</option>
+            <option value="today">Due Today</option>
+            <option value="overdue">Overdue</option>
+            <option value="week">Due in 7 Days</option>
+          </select>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleSelectAllFiltered}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+          >
+            {allFilteredSelected ? 'Unselect filtered' : 'Select filtered'}
+          </button>
+          <span className="text-sm text-gray-600">{selectedIds.size} selected</span>
+          <button
+            type="button"
+            disabled={selectedPendingIds.length === 0 || isBulkRunning}
+            onClick={() => runBulk(() => onBulkSetCompletion(selectedPendingIds, true))}
+            className="px-3 py-1.5 text-sm rounded-lg bg-purple-600 text-white disabled:opacity-50"
+          >
+            Complete selected
+          </button>
+          <button
+            type="button"
+            disabled={selectedCompletedIds.length === 0 || isBulkRunning}
+            onClick={() => runBulk(() => onBulkSetCompletion(selectedCompletedIds, false))}
+            className="px-3 py-1.5 text-sm rounded-lg bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Move selected to pending
+          </button>
+          <button
+            type="button"
+            disabled={selectedIds.size === 0 || isBulkRunning}
+            onClick={() => setIsBulkDeleteConfirmOpen(true)}
+            className="px-3 py-1.5 text-sm rounded-lg bg-rose-600 text-white disabled:opacity-50"
+          >
+            Delete selected
+          </button>
+        </div>
+      </div>
+
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
-          Pending Tasks ({pendingTasks.length})
+          Pending Tasks ({filteredPendingTasks.length})
         </h2>
         {renderTable(pendingPaged, 'No pending tasks. Great job, everything is complete.')}
-        <div className="flex items-center justify-between px-3 py-2 border border-t-0 border-gray-100 rounded-b-lg bg-gray-50">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center justify-between px-3 py-2 border border-t-0 border-purple-200 rounded-b-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white">
+          <div className="flex items-center gap-2 text-sm text-white">
             <span>Page {pendingPage} of {pendingTotalPages}</span>
             <select
               value={pendingPageSize}
@@ -234,7 +469,7 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
                 setPendingPageSize(Number(e.target.value));
                 setPendingPage(1);
               }}
-              className="border rounded px-2 py-1 text-sm"
+              className="border border-white/50 bg-white/95 text-purple-700 rounded px-2 py-1 text-sm"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -245,14 +480,14 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
             <button
               onClick={() => setPendingPage((p) => Math.max(1, p - 1))}
               disabled={pendingPage === 1}
-              className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded disabled:opacity-50"
             >
               Prev
             </button>
             <button
               onClick={() => setPendingPage((p) => Math.min(pendingTotalPages, p + 1))}
               disabled={pendingPage === pendingTotalPages}
-              className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded disabled:opacity-50"
             >
               Next
             </button>
@@ -262,11 +497,11 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
 
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
-          Completed Tasks ({completedTasks.length})
+          Completed Tasks ({filteredCompletedTasks.length})
         </h2>
         {renderTable(completedPaged, 'No completed tasks yet.')}
-        <div className="flex items-center justify-between px-3 py-2 border border-t-0 border-gray-100 rounded-b-lg bg-gray-50">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center justify-between px-3 py-2 border border-t-0 border-purple-200 rounded-b-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white">
+          <div className="flex items-center gap-2 text-sm text-white">
             <span>Page {completedPage} of {completedTotalPages}</span>
             <select
               value={completedPageSize}
@@ -274,7 +509,7 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
                 setCompletedPageSize(Number(e.target.value));
                 setCompletedPage(1);
               }}
-              className="border rounded px-2 py-1 text-sm"
+              className="border border-white/50 bg-white/95 text-purple-700 rounded px-2 py-1 text-sm"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -285,20 +520,57 @@ export default function TasksTable({ tasks, categories, onToggleCompletion, onEd
             <button
               onClick={() => setCompletedPage((p) => Math.max(1, p - 1))}
               disabled={completedPage === 1}
-              className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded disabled:opacity-50"
             >
               Prev
             </button>
             <button
               onClick={() => setCompletedPage((p) => Math.min(completedTotalPages, p + 1))}
               disabled={completedPage === completedTotalPages}
-              className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded disabled:opacity-50"
             >
               Next
             </button>
           </div>
         </div>
       </div>
+
+      {isBulkDeleteConfirmOpen &&
+        createPortal(
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
+            <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
+                <RefreshCw className="h-6 w-6 text-rose-600" />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 text-center">Delete selected tasks?</h3>
+              <p className="text-gray-700 text-sm text-center mb-6">
+                Are you sure you want to delete <strong>{selectedIds.size}</strong> selected task(s)? This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsBulkDeleteConfirmOpen(false)}
+                  disabled={isBulkRunning}
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-xl transition disabled:opacity-70"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() =>
+                    runBulk(async () => {
+                      await onBulkDelete(Array.from(selectedIds));
+                      setIsBulkDeleteConfirmOpen(false);
+                    })
+                  }
+                  disabled={isBulkRunning}
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold rounded-xl transition shadow-[0_8px_20px_rgba(244,63,94,0.28)] disabled:opacity-70"
+                >
+                  {isBulkRunning ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
