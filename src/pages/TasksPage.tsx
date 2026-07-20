@@ -698,7 +698,7 @@ export function TasksPage() {
               <>
                 {/* Incomplete Tasks Section */}
                 <div className="mb-8 sm:mb-10">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-pink-600 mb-3 sm:mb-4">
                     Pending Tasks ({incompleteTasks.length})
                   </h2>
                   {incompleteTasks.length === 0 ? (
@@ -724,7 +724,7 @@ export function TasksPage() {
                 {/* Completed Tasks Section */}
                 {completedTasks.length > 0 && (
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-purple-700 mb-3 sm:mb-4">
                       Completed Tasks ({completedTasks.length})
                     </h2>
                     <div className="space-y-3 sm:space-y-4 list-stagger">
