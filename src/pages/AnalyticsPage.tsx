@@ -199,14 +199,15 @@ export function AnalyticsPage() {
             </div>
 
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
               <input
                 aria-label="Search habits"
                 placeholder="Search habits..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full min-h-[40px] pl-10 pr-4 bg-white/70 backdrop-blur-md border border-purple-100 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 shadow-sm focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none transition-all"
+                className="w-full min-h-[40px] pr-4 bg-white/70 backdrop-blur-md border border-purple-100 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 shadow-sm focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none transition-all"
+                style={{ paddingLeft: '2.5rem' }}
               />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-600 pointer-events-none flex-shrink-0" />
             </div>
 
             <button

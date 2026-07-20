@@ -421,12 +421,13 @@ export function TasksPage() {
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
         {/* Hero Greeting */}
         <div className="mb-6">
-          <div className="flex items-center justify-between gap-2.5 w-full">
+          {/* Layout for sm (640px) and above: Everything in one line */}
+          <div className="hidden sm:flex items-center justify-between gap-3 w-full">
             <div className="min-w-0 pr-2">
               <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
                 Hello, {userDisplayName}
               </h1>
-              <p className="hidden sm:block mt-0.5 text-sm text-gray-500 font-medium">Focus list for today.</p>
+              <p className="mt-0.5 text-sm text-gray-500 font-medium">Focus list for today.</p>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -467,6 +468,52 @@ export function TasksPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                 </svg>
                 Add Task
+              </button>
+            </div>
+          </div>
+
+          {/* Layout for mobile (below 640px): Hello & Add Task on Row 1, Toggle on Row 2 */}
+          <div className="sm:hidden flex flex-col gap-3.5 w-full">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
+                Hello, {userDisplayName}
+              </h1>
+              <button
+                onClick={() => {
+                  setFormData({
+                    title: '',
+                    description: '',
+                    category: getDefaultCategoryValue(),
+                    dueDate: '',
+                  });
+                  setIsModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Task
+              </button>
+            </div>
+
+            {/* View Toggle on Row 2 */}
+            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full shadow-sm">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
+                aria-pressed={viewMode === 'list'}
+                aria-label="List view"
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
+                aria-pressed={viewMode === 'table'}
+                aria-label="Table view"
+              >
+                Table
               </button>
             </div>
           </div>

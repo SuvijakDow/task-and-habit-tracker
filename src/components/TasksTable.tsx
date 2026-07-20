@@ -277,12 +277,12 @@ export default function TasksTable({
       <div className="overflow-x-auto bg-white border border-gray-100 rounded-lg shadow-sm">
         <table className="min-w-[980px] w-full text-sm table-fixed">
           <colgroup>
-            <col style={{ width: '32%' }} />
+            <col style={{ width: '37%' }} />
             <col style={{ width: '13%' }} />
             <col style={{ width: '10%' }} />
             <col style={{ width: '15%' }} />
-            <col style={{ width: '7%' }} />
-            <col style={{ width: '23%' }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '20%' }} />
           </colgroup>
           <thead className={`${headerBg} text-white`}>
             <tr>
@@ -367,8 +367,8 @@ export default function TasksTable({
                       aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
                       onClick={() => onToggleCompletion(t.id, t.isCompleted)}
                       className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
-                          ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                          : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                        ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
+                        : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
                         }`}
                     >
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,8 +381,8 @@ export default function TasksTable({
                       <button
                         onClick={() => toggleSelected(t.id)}
                         className={`px-2 py-1 text-xs rounded border ${selectedIds.has(t.id)
-                            ? 'bg-purple-100 border-purple-300 text-purple-700'
-                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                          ? 'bg-purple-100 border-purple-300 text-purple-700'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
                           }`}
                       >
                         {selectedIds.has(t.id) ? 'Selected' : 'Select'}
