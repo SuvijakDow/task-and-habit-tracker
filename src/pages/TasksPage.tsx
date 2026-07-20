@@ -421,19 +421,20 @@ export function TasksPage() {
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
         {/* Hero Greeting */}
         <div className="mb-6">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+          <div className="flex items-center justify-between gap-2.5 w-full">
+            <div className="min-w-0 pr-2">
+              <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
                 Hello, {userDisplayName}
               </h1>
-              <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
+              <p className="hidden sm:block mt-0.5 text-sm text-gray-500 font-medium">Focus list for today.</p>
             </div>
 
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
                   aria-pressed={viewMode === 'list'}
                   aria-label="List view"
                 >
@@ -441,7 +442,7 @@ export function TasksPage() {
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
                   aria-pressed={viewMode === 'table'}
                   aria-label="Table view"
                 >
@@ -449,6 +450,7 @@ export function TasksPage() {
                 </button>
               </div>
 
+              {/* Add Task Button */}
               <button
                 onClick={() => {
                   setFormData({
@@ -459,52 +461,12 @@ export function TasksPage() {
                   });
                   setIsModalOpen(true);
                 }}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all font-semibold whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                 </svg>
                 Add Task
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                setFormData({
-                  title: '',
-                  description: '',
-                  category: getDefaultCategoryValue(),
-                  dueDate: '',
-                });
-                setIsModalOpen(true);
-              }}
-              className="inline-flex md:hidden items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all font-semibold whitespace-nowrap"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Task
-            </button>
-          </div>
-
-          {/* View Toggle */}
-          <div className="mt-4 flex items-center gap-3">
-            <div className="flex md:hidden items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full sm:w-fit">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
-                aria-pressed={viewMode === 'list'}
-                aria-label="List view"
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
-                aria-pressed={viewMode === 'table'}
-                aria-label="Table view"
-              >
-                Table
               </button>
             </div>
           </div>
