@@ -367,16 +367,7 @@ export function TasksPage() {
     });
   const completedTasks = tasks
     .filter((t) => t.isCompleted)
-    .sort((a, b) => {
-      if (!a.dueDate && !b.dueDate) {
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      }
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-
-      const dueDiff = b.dueDate.getTime() - a.dueDate.getTime();
-      return dueDiff !== 0 ? dueDiff : b.createdAt.getTime() - a.createdAt.getTime();
-    });
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   const isEditCategoryMissing =
     !!editFormData.category &&
     !categories.some(
@@ -386,7 +377,7 @@ export function TasksPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
+      <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
         {/* Hero Greeting */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -396,12 +387,12 @@ export function TasksPage() {
             <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Focus list for today.</p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* View Toggle */}
-          <div className="hidden sm:flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full sm:w-auto">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
               aria-pressed={viewMode === 'list'}
               aria-label="List view"
             >
@@ -409,7 +400,7 @@ export function TasksPage() {
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`flex-1 sm:flex-none px-3 py-2 rounded-md text-sm font-medium ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
               aria-pressed={viewMode === 'table'}
               aria-label="Table view"
             >
