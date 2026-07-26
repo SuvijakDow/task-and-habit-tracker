@@ -111,6 +111,22 @@ export default function HabitsTable({
     }
   };
 
+  const HABIT_COLORS = [
+    'bg-red-400',
+    'bg-teal-400',
+    'bg-blue-400',
+    'bg-orange-400',
+    'bg-emerald-300',
+    'bg-yellow-400',
+    'bg-purple-400',
+    'bg-sky-400',
+  ];
+
+  const getHabitColor = (habitId: string): string => {
+    const index = habits.findIndex((h) => h.id === habitId);
+    return HABIT_COLORS[(index >= 0 ? index : 0) % HABIT_COLORS.length];
+  };
+
   return (
     <div className="space-y-6">
       {/* Filter and Control Bar */}
@@ -202,9 +218,16 @@ export default function HabitsTable({
 
                       {/* Time */}
                       <td className="px-3.5 py-3 align-middle">
-                        <span className="text-xs font-medium text-gray-700">
-                          {habit.startTime} - {habit.endTime}
-                        </span>
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(
+                            habit.id
+                          )} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs`}
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-white/70"></div>
+                          <span>
+                            {habit.startTime} - {habit.endTime}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Streak */}
