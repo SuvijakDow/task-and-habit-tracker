@@ -40,6 +40,36 @@ export const createDailyHabit = async (
   }
 };
 
+export const PASTEL_HABIT_COLORS = [
+  '#F87171', // Red
+  '#FB923C', // Orange
+  '#FACC15', // Yellow
+  '#34D399', // Emerald
+  '#2DD4BF', // Teal
+  '#38BDF8', // Sky
+  '#60A5FA', // Blue
+  '#C084FC', // Purple
+  '#F472B6', // Pink
+];
+
+export const getHabitColorHex = (habit: DailyHabit, habits: DailyHabit[]): string => {
+  if (habit.color && habit.color.startsWith('#')) {
+    return habit.color;
+  }
+  const index = habits.findIndex((h) => h.id === habit.id);
+  return PASTEL_HABIT_COLORS[(index >= 0 ? index : 0) % PASTEL_HABIT_COLORS.length];
+};
+
+export const hexToRgba = (hex: string, alpha: number): string => {
+  if (!hex || !hex.startsWith('#') || hex.length !== 7) {
+    return `rgba(167, 139, 250, ${alpha})`;
+  }
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 /**
  * Get all daily habits for a user
  */
@@ -57,6 +87,7 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       scheduledDays: doc.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
       startTime: doc.data().startTime || '09:00',
       endTime: doc.data().endTime || '10:00',
+      color: doc.data().color || undefined,
       trackingStartDate: doc.data().trackingStartDate ? doc.data().trackingStartDate.toDate() : undefined,
       createdAt: doc.data().createdAt.toDate(),
       updatedAt: doc.data().updatedAt.toDate(),

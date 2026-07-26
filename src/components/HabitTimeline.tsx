@@ -6,7 +6,7 @@ import { timeToMinutes } from '@/services/habitService';
 interface HabitTimelineProps {
   habits: DailyHabit[];
   getHabitColor: (habitId: string) => string;
-  onEditHabit?: (habitId: string, title: string, scheduledDays: number[], startTime: string, endTime: string) => void;
+  onEditHabit?: (habit: DailyHabit) => void;
 }
 
 interface PositionedHabit extends DailyHabit {
@@ -165,8 +165,8 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
               return (
                 <div
                   key={`label-${hour}`}
-                  className="flex items-start justify-end pr-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
-                  style={{ height: '64px' }}
+                  className="flex items-start justify-end pr-2 text-xs font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700"
+                  style={{ height: '84px' }}
                 >
                   {String(hour).padStart(2, '0')}:00
                 </div>
@@ -177,7 +177,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
           {/* Timeline grid */}
           <div
             className="flex-grow relative bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
-            style={{ height: `${(timeRange.endHour - timeRange.startHour) * 64 + 2}px` }}
+            style={{ height: `${(timeRange.endHour - timeRange.startHour) * 84 + 2}px` }}
           >
             {/* Hour grid lines */}
             {Array.from({ length: timeRange.endHour - timeRange.startHour }).map((_, i) => {
@@ -188,7 +188,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
                   className="absolute left-0 right-0 border-b border-slate-200 dark:border-slate-700"
                   style={{
                     top: `${(i / (timeRange.endHour - timeRange.startHour)) * 100}%`,
-                    height: '64px',
+                    height: '84px',
                   }}
                 />
               );
@@ -198,44 +198,59 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
             {positionedHabits.map((habit) => {
               const { topPercent, heightPercent, leftPercent, widthPercent } = getHabitPosition(habit);
               const isCompleted = habit.completedDates.includes(todayDateStr);
+              const habitColor = getHabitColor(habit.id);
+              const isHex = habitColor.startsWith('#');
+              const sMin = timeToMinutes(habit.startTime);
+              const eMin = timeToMinutes(habit.endTime);
+              const durationMins = Math.max(1, eMin - sMin);
 
               return (
                 <div
                   key={habit.id}
-                  className={`absolute cursor-pointer transition-all hover:shadow-lg hover:z-20 ${
+                  className={`absolute cursor-pointer transition-all hover:shadow-lg hover:z-30 ${
                     isCompleted ? 'opacity-60' : 'opacity-100'
                   }`}
                   style={{
-                    top: `${topPercent}%`,
+                    top: `calc(${topPercent}% + 1px)`,
                     left: `${leftPercent}%`,
                     width: `${widthPercent}%`,
-                    height: `${Math.max(heightPercent, 5)}%`,
-                    minHeight: '40px',
+                    height: `calc(${heightPercent}% - 2px)`,
+                    minHeight: '30px',
                   }}
                   onClick={() => {
                     if (onEditHabit) {
-                      onEditHabit(
-                        habit.id,
-                        habit.title,
-                        habit.scheduledDays,
-                        habit.startTime,
-                        habit.endTime
-                      );
+                      onEditHabit(habit);
                     }
                   }}
-                  title={`${habit.title} (${habit.startTime}-${habit.endTime})`}
+                  title={`${habit.title}\nTime: ${habit.startTime} - ${habit.endTime}\nClick to edit habit`}
                 >
                   <div
-                    className={`w-full h-full rounded-md p-2 flex flex-col justify-center border-l-4 border-slate-300 dark:border-slate-600 ${getHabitColor(
-                      habit.id
-                    )}`}
+                    className={`w-full h-full rounded-lg px-3 py-1.5 flex ${
+                      durationMins < 25 ? 'flex-row items-center justify-between' : 'flex-col justify-center'
+                    } border-l-4 border-white/80 text-white shadow-sm overflow-hidden ${
+                      !isHex ? habitColor : ''
+                    }`}
+                    style={isHex ? { backgroundColor: habitColor } : undefined}
                   >
-                    <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">
-                      {habit.title}
-                    </p>
-                    <p className="text-xs text-white/90 truncate leading-tight">
-                      {habit.startTime} - {habit.endTime}
-                    </p>
+                    {durationMins < 25 ? (
+                      <>
+                        <span className="text-xs font-bold text-white truncate leading-none mr-2">
+                          {habit.title}
+                        </span>
+                        <span className="text-[10px] font-semibold text-white/90 whitespace-nowrap leading-none flex-shrink-0">
+                          {habit.startTime} - {habit.endTime}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs sm:text-sm font-bold text-white truncate leading-tight">
+                          {habit.title}
+                        </p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-white/90 truncate mt-0.5 leading-tight">
+                          {habit.startTime} - {habit.endTime}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               );

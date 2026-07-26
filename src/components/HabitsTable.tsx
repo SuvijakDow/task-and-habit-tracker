@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
 import { Flame, RefreshCw, Clock } from 'lucide-react';
+import { getHabitColorHex } from '@/services/habitService';
 
 const formatScheduledDays = (days: number[]): string => {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -111,22 +112,6 @@ export default function HabitsTable({
     }
   };
 
-  const HABIT_COLORS = [
-    'bg-red-400',
-    'bg-teal-400',
-    'bg-blue-400',
-    'bg-orange-400',
-    'bg-emerald-300',
-    'bg-yellow-400',
-    'bg-purple-400',
-    'bg-sky-400',
-  ];
-
-  const getHabitColor = (habitId: string): string => {
-    const index = habits.findIndex((h) => h.id === habitId);
-    return HABIT_COLORS[(index >= 0 ? index : 0) % HABIT_COLORS.length];
-  };
-
   return (
     <div className="space-y-6">
       {/* Filter and Control Bar */}
@@ -219,9 +204,8 @@ export default function HabitsTable({
                       {/* Time */}
                       <td className="px-3.5 py-3 align-middle">
                         <div
-                          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(
-                            habit.id
-                          )} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs`}
+                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
+                          style={{ backgroundColor: getHabitColorHex(habit, habits) }}
                         >
                           <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
                           <span>

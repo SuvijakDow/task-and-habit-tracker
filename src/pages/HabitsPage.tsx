@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock } from 'lucide-react';
+import { Activity, Flame, Clock, CalendarRange } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -9,6 +9,8 @@ import {
   markHabitCompletedToday,
   unmarkHabitCompletedDate,
   deleteDailyHabit,
+  PASTEL_HABIT_COLORS,
+  getHabitColorHex,
 } from '@/services/habitService';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
@@ -17,6 +19,7 @@ import { showToast } from '@/components/Toast';
 import { playSuccessSound } from '@/utils/audio';
 import { HabitTimeline } from '@/components/HabitTimeline';
 import { TimePickerInput } from '@/components/TimePickerInput';
+import { WeeklyScheduleModal } from '@/components/WeeklyScheduleModal';
 import HabitsTable from '@/components/HabitsTable';
 
 export function HabitsPage() {
@@ -28,12 +31,14 @@ export function HabitsPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isWeeklyModalOpen, setIsWeeklyModalOpen] = useState(false);
 
   // Form state
   const [habitTitle, setHabitTitle] = useState('');
   const [scheduledDays, setScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [habitColor, setHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayDate] = useState(getTodayDateString());
 
@@ -43,6 +48,7 @@ export function HabitsPage() {
   const [editScheduledDays, setEditScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editStartTime, setEditStartTime] = useState('09:00');
   const [editEndTime, setEditEndTime] = useState('10:00');
+  const [editHabitColor, setEditHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
 
   // Delete confirmation state
   const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
@@ -100,6 +106,7 @@ export function HabitsPage() {
         scheduledDays,
         startTime,
         endTime,
+        color: habitColor,
       });
 
       setHabits((prev) => {
@@ -113,6 +120,7 @@ export function HabitsPage() {
             scheduledDays,
             startTime,
             endTime,
+            color: habitColor,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -125,6 +133,7 @@ export function HabitsPage() {
       setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
       setStartTime('09:00');
       setEndTime('10:00');
+      setHabitColor(PASTEL_HABIT_COLORS[0]);
       setIsAddModalOpen(false);
     } catch (err) {
       setError('Failed to add habit. Please try again.');
@@ -172,17 +181,14 @@ export function HabitsPage() {
   );
 
   const handleEditHabit = (
-    habitId: string,
-    title: string,
-    days: number[],
-    start: string,
-    end: string
+    habitToEdit: DailyHabit
   ) => {
-    setEditingHabitId(habitId);
-    setEditHabitTitle(title);
-    setEditScheduledDays(days);
-    setEditStartTime(start);
-    setEditEndTime(end);
+    setEditingHabitId(habitToEdit.id);
+    setEditHabitTitle(habitToEdit.title);
+    setEditScheduledDays(habitToEdit.scheduledDays);
+    setEditStartTime(habitToEdit.startTime);
+    setEditEndTime(habitToEdit.endTime);
+    setEditHabitColor(getHabitColorHex(habitToEdit, habits));
   };
 
   const handleSaveEdit = async () => {
@@ -207,6 +213,7 @@ export function HabitsPage() {
         scheduledDays: editScheduledDays,
         startTime: editStartTime,
         endTime: editEndTime,
+        color: editHabitColor,
         updatedAt: new Date(),
       });
 
@@ -218,6 +225,7 @@ export function HabitsPage() {
               scheduledDays: editScheduledDays,
               startTime: editStartTime,
               endTime: editEndTime,
+              color: editHabitColor,
               updatedAt: new Date(),
             }
           : habit
@@ -280,22 +288,6 @@ export function HabitsPage() {
     if (!days || days.length === 7) return 'Everyday';
     if (days.length === 0) return 'No days';
     return days.map((d) => dayNames[d]).join(', ');
-  };
-
-  const HABIT_COLORS = [
-    'bg-red-400',
-    'bg-teal-400',
-    'bg-blue-400',
-    'bg-orange-400',
-    'bg-emerald-300',
-    'bg-yellow-400',
-    'bg-purple-400',
-    'bg-sky-400',
-  ];
-
-  const getHabitColor = (habitId: string): string => {
-    const index = habits.findIndex((h) => h.id === habitId);
-    return HABIT_COLORS[index % HABIT_COLORS.length];
   };
 
   if (authLoading) {
@@ -362,6 +354,15 @@ export function HabitsPage() {
                 </button>
               </div>
 
+              {/* Weekly Timetable Button */}
+              <button
+                onClick={() => setIsWeeklyModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+              >
+                <CalendarRange className="w-4 h-4 text-purple-600" />
+                <span>Weekly Timetable</span>
+              </button>
+
               {/* Add Habit Button */}
               <button
                 onClick={() => {
@@ -384,26 +385,35 @@ export function HabitsPage() {
 
           {/* Mobile Header Layout */}
           <div className="sm:hidden flex flex-col gap-3.5 w-full">
-            <div className="flex items-center justify-between gap-3 w-full">
+            <div className="flex items-center justify-between gap-2 w-full">
               <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
                 Hello, {userDisplayName}
               </h1>
-              <button
-                onClick={() => {
-                  setHabitTitle('');
-                  setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                  setStartTime('09:00');
-                  setEndTime('10:00');
-                  setError(null);
-                  setIsAddModalOpen(true);
-                }}
-                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Habit
-              </button>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => setIsWeeklyModalOpen(true)}
+                  className="inline-flex items-center justify-center p-2 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs text-xs font-semibold"
+                  title="Weekly Timetable"
+                >
+                  <CalendarRange className="w-4 h-4 text-purple-600" />
+                </button>
+                <button
+                  onClick={() => {
+                    setHabitTitle('');
+                    setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                    setStartTime('09:00');
+                    setEndTime('10:00');
+                    setError(null);
+                    setIsAddModalOpen(true);
+                  }}
+                  className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Habit
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full shadow-sm">
@@ -519,6 +529,28 @@ export function HabitsPage() {
                     />
                   </div>
 
+                  {/* Color Selection */}
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                      Habit Color
+                    </label>
+                    <div className="flex justify-start flex-wrap gap-2">
+                      {PASTEL_HABIT_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setHabitColor(c)}
+                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition flex-shrink-0 ${
+                            habitColor === c ? 'border-purple-600 scale-110 shadow-sm' : 'border-transparent hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: c }}
+                          aria-label={`Select color ${c}`}
+                          disabled={isSubmitting}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                     <button
                       type="submit"
@@ -591,9 +623,7 @@ export function HabitsPage() {
                 habits={habits}
                 todayDate={todayDate}
                 onToggleCompletion={handleToggleHabit}
-                onEdit={(h) =>
-                  handleEditHabit(h.id, h.title, h.scheduledDays, h.startTime, h.endTime)
-                }
+                onEdit={handleEditHabit}
                 onDelete={(id) => setDeletingHabitId(id)}
                 onBulkDelete={handleBulkDeleteHabits}
               />
@@ -644,9 +674,8 @@ export function HabitsPage() {
                             </span>
 
                             <div
-                              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(
-                                habit.id
-                              )} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0`}
+                              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0 shadow-xs"
+                              style={{ backgroundColor: getHabitColorHex(habit, habits) }}
                             >
                               <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
                               <span>
@@ -663,15 +692,7 @@ export function HabitsPage() {
 
                             <div className="flex items-center gap-1 sm:gap-2">
                               <button
-                                onClick={() =>
-                                  handleEditHabit(
-                                    habit.id,
-                                    habit.title,
-                                    habit.scheduledDays,
-                                    habit.startTime,
-                                    habit.endTime
-                                  )
-                                }
+                                onClick={() => handleEditHabit(habit)}
                                 className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
                                 title="Edit habit"
                                 aria-label={`Edit ${habit.title}`}
@@ -708,10 +729,11 @@ export function HabitsPage() {
             {habits.length > 0 && (
               <HabitTimeline
                 habits={habits}
-                getHabitColor={getHabitColor}
-                onEditHabit={(id, title, days, start, end) => {
-                  handleEditHabit(id, title, days, start, end);
+                getHabitColor={(id) => {
+                  const h = habits.find((item) => item.id === id);
+                  return h ? getHabitColorHex(h, habits) : '#A78BFA';
                 }}
+                onEditHabit={handleEditHabit}
               />
             )}
           </>
@@ -720,7 +742,7 @@ export function HabitsPage() {
         {/* Edit Habit Modal */}
         {editingHabitId &&
           createPortal(
-            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
               <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
                 <form
                   onSubmit={(e) => {
@@ -805,6 +827,28 @@ export function HabitsPage() {
                     />
                   </div>
 
+                  {/* Color Selection */}
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
+                      Habit Color
+                    </label>
+                    <div className="flex justify-start flex-wrap gap-2">
+                      {PASTEL_HABIT_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setEditHabitColor(c)}
+                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition flex-shrink-0 ${
+                            editHabitColor === c ? 'border-purple-600 scale-110 shadow-sm' : 'border-transparent hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: c }}
+                          aria-label={`Select color ${c}`}
+                          disabled={isSubmitting}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                     <button
                       type="submit"
@@ -865,6 +909,14 @@ export function HabitsPage() {
             </div>,
             document.body
           )}
+
+        {/* Weekly Schedule Timetable Modal */}
+        <WeeklyScheduleModal
+          isOpen={isWeeklyModalOpen}
+          onClose={() => setIsWeeklyModalOpen(false)}
+          habits={habits}
+          onEditHabit={handleEditHabit}
+        />
       </div>
     </div>
   );
