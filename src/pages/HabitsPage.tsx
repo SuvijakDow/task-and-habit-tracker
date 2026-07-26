@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame } from 'lucide-react';
+import { Activity, Flame, Clock } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -648,7 +648,7 @@ export function HabitsPage() {
                                 habit.id
                               )} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0`}
                             >
-                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/70"></div>
+                              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
                               <span>
                                 {habit.startTime} - {habit.endTime}
                               </span>

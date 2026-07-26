@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
-import { Flame, RefreshCw } from 'lucide-react';
+import { Flame, RefreshCw, Clock } from 'lucide-react';
 
 const formatScheduledDays = (days: number[]): string => {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -223,7 +223,7 @@ export default function HabitsTable({
                             habit.id
                           )} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs`}
                         >
-                          <div className="w-1.5 h-1.5 rounded-full bg-white/70"></div>
+                          <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
                           <span>
                             {habit.startTime} - {habit.endTime}
                           </span>
