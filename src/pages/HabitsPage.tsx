@@ -17,6 +17,7 @@ import { showToast } from '@/components/Toast';
 import { playSuccessSound } from '@/utils/audio';
 import { HabitTimeline } from '@/components/HabitTimeline';
 import { TimePickerInput } from '@/components/TimePickerInput';
+import HabitsTable from '@/components/HabitsTable';
 
 export function HabitsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -25,28 +26,26 @@ export function HabitsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Form state
   const [habitTitle, setHabitTitle] = useState('');
+  const [scheduledDays, setScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('10:00');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayDate] = useState(getTodayDateString());
 
   // Edit state
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
   const [editHabitTitle, setEditHabitTitle] = useState('');
-
-  // Scheduled days state
-  const [scheduledDays, setScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editScheduledDays, setEditScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
-
-  // Time state
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('10:00');
   const [editStartTime, setEditStartTime] = useState('09:00');
   const [editEndTime, setEditEndTime] = useState('10:00');
 
   // Delete confirmation state
   const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
-
-
 
   useEffect(() => {
     if (!user) {
@@ -121,10 +120,12 @@ export function HabitsPage() {
         return newHabits.sort((a, b) => a.startTime.localeCompare(b.startTime));
       });
 
+      // Reset form and close modal
       setHabitTitle('');
       setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
       setStartTime('09:00');
       setEndTime('10:00');
+      setIsAddModalOpen(false);
     } catch (err) {
       setError('Failed to add habit. Please try again.');
       console.error('Error adding habit:', err);
@@ -133,48 +134,50 @@ export function HabitsPage() {
     }
   };
 
-  const handleToggleHabit = useCallback(async (habitId: string, isCompletedToday: boolean) => {
-    if (!user) return;
+  const handleToggleHabit = useCallback(
+    async (habitId: string, isCompletedToday: boolean) => {
+      if (!user) return;
 
-    if (!isCompletedToday) {
-      playSuccessSound();
-    }
-
-    // Compute the optimistic completedDates
-    const habit = habits.find((h) => h.id === habitId);
-    if (!habit) return;
-
-    const previousDates = [...habit.completedDates];
-    const optimisticDates = isCompletedToday
-      ? habit.completedDates.filter((date) => date !== todayDate)
-      : [...habit.completedDates, todayDate];
-
-    // Optimistic update: instantly reflect the change in UI
-    setHabits((prev) =>
-      prev.map((h) =>
-        h.id === habitId ? { ...h, completedDates: optimisticDates } : h
-      )
-    );
-
-    try {
-      if (isCompletedToday) {
-        await unmarkHabitCompletedDate(habitId, todayDate);
-      } else {
-        await markHabitCompletedToday(habitId);
+      if (!isCompletedToday) {
+        playSuccessSound();
       }
-    } catch (err) {
-      // Revert to previous state on failure
-      setHabits((prev) =>
-        prev.map((h) =>
-          h.id === habitId ? { ...h, completedDates: previousDates } : h
-        )
-      );
-      showToast('Failed to update habit. Please try again.', 'error');
-      console.error('Error toggling habit:', err);
-    }
-  }, [habits, todayDate, user]);
 
-  const handleEditHabit = (habitId: string, title: string, days: number[], start: string, end: string) => {
+      const habit = habits.find((h) => h.id === habitId);
+      if (!habit) return;
+
+      const previousDates = [...habit.completedDates];
+      const optimisticDates = isCompletedToday
+        ? habit.completedDates.filter((date) => date !== todayDate)
+        : [...habit.completedDates, todayDate];
+
+      setHabits((prev) =>
+        prev.map((h) => (h.id === habitId ? { ...h, completedDates: optimisticDates } : h))
+      );
+
+      try {
+        if (isCompletedToday) {
+          await unmarkHabitCompletedDate(habitId, todayDate);
+        } else {
+          await markHabitCompletedToday(habitId);
+        }
+      } catch (err) {
+        setHabits((prev) =>
+          prev.map((h) => (h.id === habitId ? { ...h, completedDates: previousDates } : h))
+        );
+        showToast('Failed to update habit. Please try again.', 'error');
+        console.error('Error toggling habit:', err);
+      }
+    },
+    [habits, todayDate, user]
+  );
+
+  const handleEditHabit = (
+    habitId: string,
+    title: string,
+    days: number[],
+    start: string,
+    end: string
+  ) => {
     setEditingHabitId(habitId);
     setEditHabitTitle(title);
     setEditScheduledDays(days);
@@ -258,13 +261,25 @@ export function HabitsPage() {
     }
   };
 
-
+  const handleBulkDeleteHabits = async (habitIds: string[]) => {
+    if (habitIds.length === 0) return;
+    try {
+      await Promise.all(habitIds.map((id) => deleteDailyHabit(id)));
+      const idSet = new Set(habitIds);
+      setHabits((prev) => prev.filter((h) => !idSet.has(h.id)));
+      showToast(`Deleted ${habitIds.length} habit(s).`, 'success');
+    } catch (err) {
+      showToast('Bulk delete failed. Please try again.', 'error');
+      console.error('Error bulk deleting habits:', err);
+      await loadHabits();
+    }
+  };
 
   const formatScheduledDays = (days: number[]): string => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    if (days.length === 7) return 'Everyday';
+    if (!days || days.length === 7) return 'Everyday';
     if (days.length === 0) return 'No days';
-    return days.map(d => dayNames[d]).join(', ');
+    return days.map((d) => dayNames[d]).join(', ');
   };
 
   const HABIT_COLORS = [
@@ -279,14 +294,9 @@ export function HabitsPage() {
   ];
 
   const getHabitColor = (habitId: string): string => {
-    const index = habits.findIndex(h => h.id === habitId);
+    const index = habits.findIndex((h) => h.id === habitId);
     return HABIT_COLORS[index % HABIT_COLORS.length];
   };
-
-  // Touch handlers for mobile drag (for future implementation)
-  // const handleTouchStart = (habitId: string, e: React.TouchEvent) => {
-  //   setDraggedHabitId(habitId);
-  // };
 
   if (authLoading) {
     return (
@@ -315,97 +325,224 @@ export function HabitsPage() {
 
   return (
     <div className="min-h-screen pt-3 md:pt-6 pb-6 md:pb-12">
-      <div className="max-w-3xl mx-auto px-3 sm:px-6">
-        {/* Hero Greeting */}
+      <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6">
+        {/* Top Bar Header */}
         <div className="mb-6">
-          <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
-            Hello, {userDisplayName}
-          </h1>
-          <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Build better routines, one check at a time.</p>
+          {/* Desktop/Tablet Header: Everything in one row */}
+          <div className="hidden sm:flex items-center justify-between gap-3 w-full">
+            <div className="min-w-0 pr-2">
+              <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
+                Hello, {userDisplayName}
+              </h1>
+              <p className="mt-0.5 text-sm text-gray-500 font-medium">Build better routines, one check at a time.</p>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${
+                    viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  aria-pressed={viewMode === 'list'}
+                  aria-label="List view"
+                >
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${
+                    viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                  aria-pressed={viewMode === 'table'}
+                  aria-label="Table view"
+                >
+                  Table
+                </button>
+              </div>
+
+              {/* Add Habit Button */}
+              <button
+                onClick={() => {
+                  setHabitTitle('');
+                  setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                  setStartTime('09:00');
+                  setEndTime('10:00');
+                  setError(null);
+                  setIsAddModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Habit
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Header Layout */}
+          <div className="sm:hidden flex flex-col gap-3.5 w-full">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
+                Hello, {userDisplayName}
+              </h1>
+              <button
+                onClick={() => {
+                  setHabitTitle('');
+                  setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                  setStartTime('09:00');
+                  setEndTime('10:00');
+                  setError(null);
+                  setIsAddModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Habit
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full shadow-sm">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
+                  viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-pressed={viewMode === 'list'}
+                aria-label="List view"
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
+                  viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+                aria-pressed={viewMode === 'table'}
+                aria-label="Table view"
+              >
+                Table
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Error Message */}
+        {/* Global Error Banner */}
         {error && !(loadError && habits.length === 0) && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 text-xs sm:text-sm rounded-lg">
             {error}
           </div>
         )}
 
-        {/* Add Habit Form */}
-        <div className="relative z-10 md:mt-4 glass-card p-2.5 sm:p-6 md:p-8 mb-3 sm:mb-8 md:mb-10 border border-white/70 bg-white/85 backdrop-blur-none sm:backdrop-blur-xl shadow-[0_20px_48px_rgba(120,87,255,0.18)]">
-          <h2 className="text-sm sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600 mb-1 sm:mb-2">Add New Habit</h2>
-          <p className="text-[9px] sm:text-sm text-gray-600 mb-2.5 sm:mb-5">Create your next routine and choose the days you want it to appear.</p>
-          <form onSubmit={handleAddHabit} className="space-y-2.5 sm:space-y-5">
-            <div>
-              <label htmlFor="habit-title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-0.5 sm:mb-1">
-                Habit Name *
-              </label>
-              <input
-                id="habit-title"
-                type="text"
-                value={habitTitle}
-                onChange={(e) => setHabitTitle(e.target.value)}
-                placeholder="e.g., Morning Exercise, Read 30 mins"
-                className="w-full min-h-[36px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                disabled={isSubmitting}
-              />
-            </div>
+        {/* Add Habit Form Modal */}
+        {isAddModalOpen &&
+          createPortal(
+            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+                <form onSubmit={handleAddHabit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">
+                      Add New Habit
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddModalOpen(false)}
+                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
 
-            {/* Days Selection */}
-            <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-lg sm:rounded-xl shadow-sm p-2 sm:p-5">
-              <p className="text-[11px] sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Schedule:</p>
-              <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                  <label key={index} className="cursor-pointer">
+                  <div>
+                    <label htmlFor="habit-title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      Habit Name *
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={scheduledDays.includes(index)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setScheduledDays((prev) => [...prev, index].sort());
-                        } else {
-                          setScheduledDays((prev) => prev.filter((d) => d !== index));
-                        }
-                      }}
-                      className="peer sr-only"
+                      id="habit-title"
+                      type="text"
+                      value={habitTitle}
+                      onChange={(e) => setHabitTitle(e.target.value)}
+                      placeholder="e.g., Morning Exercise, Read 30 mins"
+                      className="w-full min-h-[38px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                      disabled={isSubmitting}
+                      autoFocus
                     />
-                    <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
-                      {day}
-                    </span>
-                  </label>
-                ))}
+                  </div>
+
+                  {/* Days Selection */}
+                  <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-lg sm:rounded-xl shadow-sm p-2.5 sm:p-5">
+                    <p className="text-[11px] sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Schedule:</p>
+                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                        <label key={index} className="cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={scheduledDays.includes(index)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setScheduledDays((prev) => [...prev, index].sort());
+                              } else {
+                                setScheduledDays((prev) => prev.filter((d) => d !== index));
+                              }
+                            }}
+                            className="peer sr-only"
+                          />
+                          <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                            {day}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Time Selection */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <TimePickerInput
+                      value={startTime}
+                      onChange={setStartTime}
+                      label="Start Time"
+                      required
+                      disabled={isSubmitting}
+                    />
+                    <TimePickerInput
+                      value={endTime}
+                      onChange={setEndTime}
+                      label="End Time"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[38px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-xs sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    >
+                      {isSubmitting ? 'Adding...' : 'Add Habit'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddModalOpen(false)}
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[38px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 text-xs sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </div>
-            </div>
+            </div>,
+            document.body
+          )}
 
-            {/* Time Selection */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <TimePickerInput
-                value={startTime}
-                onChange={setStartTime}
-                label="Start Time"
-                required
-                disabled={isSubmitting}
-              />
-              <TimePickerInput
-                value={endTime}
-                onChange={setEndTime}
-                label="End Time"
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full min-h-[36px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-xs sm:text-base font-semibold py-1.5 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
-            >
-              {isSubmitting ? 'Adding...' : 'Add Habit'}
-            </button>
-          </form>
-        </div>
-
-        {/* Habits List */}
+        {/* Content Section: Loading / Error / Empty / Table / List */}
         {loading ? (
           <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <div className="flex justify-center mb-3">
@@ -431,244 +568,303 @@ export function HabitsPage() {
               <Activity className="h-10 w-10 md:h-12 md:w-12 text-purple-300" />
             </div>
             <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">No habits yet</h3>
-            <p className="text-xs sm:text-sm text-gray-600">Start building better habits by adding one above!</p>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4">Start building better habits by adding one above!</p>
+            <button
+              type="button"
+              onClick={() => {
+                setHabitTitle('');
+                setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                setStartTime('09:00');
+                setEndTime('10:00');
+                setError(null);
+                setIsAddModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
+            >
+              Add first habit
+            </button>
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4 list-stagger">
-            {habits.map((habit) => {
-              const isCompletedToday = habit.completedDates.includes(todayDate);
-              const streak = habit.completedDates.length;
+          <>
+            {viewMode === 'table' ? (
+              <HabitsTable
+                habits={habits}
+                todayDate={todayDate}
+                onToggleCompletion={handleToggleHabit}
+                onEdit={(h) =>
+                  handleEditHabit(h.id, h.title, h.scheduledDays, h.startTime, h.endTime)
+                }
+                onDelete={(id) => setDeletingHabitId(id)}
+                onBulkDelete={handleBulkDeleteHabits}
+              />
+            ) : (
+              <div className="space-y-3 sm:space-y-4 list-stagger">
+                {habits.map((habit) => {
+                  const isCompletedToday = habit.completedDates.includes(todayDate);
+                  const streak = habit.completedDates.length;
 
-
-              return (
-                <div key={habit.id}>
-                  <div
-                    className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${
-                      isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
-                    } hover:shadow-md sm:hover:shadow-2xl`}
-                  >
-                    <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
-
-
-                      <button
-                        type="button"
-                        role="checkbox"
-                        aria-checked={isCompletedToday}
-                        aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
-                        onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
-                        className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
-                          isCompletedToday
-                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
-                            : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
-                        }`}
+                  return (
+                    <div key={habit.id}>
+                      <div
+                        className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${
+                          isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
+                        } hover:shadow-md sm:hover:shadow-2xl`}
                       >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
-
-                      <span
-                        className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${
-                          isCompletedToday
-                            ? 'text-purple-700 line-through opacity-70'
-                            : 'text-gray-900'
-                        }`}
-                      >
-                        {habit.title}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-row items-center justify-between w-full gap-3">
-                      <div className="flex flex-row items-center gap-2 flex-wrap flex-1 min-w-0">
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap flex-shrink-0">
-                          {formatScheduledDays(habit.scheduledDays)}
-                        </span>
-
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(habit.id)} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0`}>
-                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/70"></div>
-                          <span>{habit.startTime} - {habit.endTime}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
-                          <Flame className="h-3.5 w-3.5 text-pink-500" />
-                          {streak}
-                        </span>
-
-                        <div className="flex items-center gap-1 sm:gap-2">
-                        <button
-                          onClick={() => handleEditHabit(habit.id, habit.title, habit.scheduledDays, habit.startTime, habit.endTime)}
-                          className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
-                          title="Edit habit"
-                          aria-label={`Edit ${habit.title}`}
-                        >
-                          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => setDeletingHabitId(habit.id)}
-                          className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
-                          title="Delete habit"
-                          aria-label={`Delete ${habit.title}`}
+                        <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={isCompletedToday}
+                            aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
+                            onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
+                            className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+                              isCompletedToday
+                                ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
+                                : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
+                            }`}
                           >
-                            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path
-                                fillRule="evenodd"
-                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                clipRule="evenodd"
-                              />
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                             </svg>
                           </button>
+
+                          <span
+                            className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${
+                              isCompletedToday ? 'text-purple-700 line-through opacity-70' : 'text-gray-900'
+                            }`}
+                          >
+                            {habit.title}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-row items-center justify-between w-full gap-3">
+                          <div className="flex flex-row items-center gap-2 flex-wrap flex-1 min-w-0">
+                            <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap flex-shrink-0">
+                              {formatScheduledDays(habit.scheduledDays)}
+                            </span>
+
+                            <div
+                              className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg ${getHabitColor(
+                                habit.id
+                              )} text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0`}
+                            >
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white/70"></div>
+                              <span>
+                                {habit.startTime} - {habit.endTime}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
+                              <Flame className="h-3.5 w-3.5 text-pink-500" />
+                              {streak}
+                            </span>
+
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <button
+                                onClick={() =>
+                                  handleEditHabit(
+                                    habit.id,
+                                    habit.title,
+                                    habit.scheduledDays,
+                                    habit.startTime,
+                                    habit.endTime
+                                  )
+                                }
+                                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
+                                title="Edit habit"
+                                aria-label={`Edit ${habit.title}`}
+                              >
+                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => setDeletingHabitId(habit.id)}
+                                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
+                                title="Delete habit"
+                                aria-label={`Delete ${habit.title}`}
+                              >
+                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  );
+                })}
+              </div>
+            )}
 
-        {/* Habit Timeline */}
-        {habits.length > 0 && (
-          <HabitTimeline 
-            habits={habits}
-            getHabitColor={getHabitColor}
-            onEditHabit={handleEditHabit}
-          />
+            {/* Habit Timeline at the bottom for both List and Table views */}
+            {habits.length > 0 && (
+              <HabitTimeline
+                habits={habits}
+                getHabitColor={getHabitColor}
+                onEditHabit={(id, title, days, start, end) => {
+                  handleEditHabit(id, title, days, start, end);
+                }}
+              />
+            )}
+          </>
         )}
 
         {/* Edit Habit Modal */}
-        {editingHabitId && createPortal(
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
-                <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Habit</h2>
-                
-                {editError && (
-                  <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-start gap-3">
-                    <div className="flex-shrink-0 text-rose-600 mt-0.5">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
+        {editingHabitId &&
+          createPortal(
+            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveEdit();
+                  }}
+                  className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7"
+                >
+                  <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">
+                    Edit Habit
+                  </h2>
+
+                  {editError && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-start gap-3">
+                      <div className="flex-shrink-0 text-rose-600 mt-0.5">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-rose-700 font-medium">{editError}</p>
                     </div>
-                    <p className="text-sm text-rose-700 font-medium">{editError}</p>
+                  )}
+
+                  <div>
+                    <label htmlFor="edit-habit-title" className="block text-sm font-medium text-gray-700 mb-1">
+                      Habit Name *
+                    </label>
+                    <input
+                      id="edit-habit-title"
+                      type="text"
+                      value={editHabitTitle}
+                      onChange={(e) => setEditHabitTitle(e.target.value)}
+                      className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
                   </div>
-                )}
-                
-                <div>
-                  <label htmlFor="edit-habit-title" className="block text-sm font-medium text-gray-700 mb-1">
-                    Habit Name *
-                  </label>
-                  <input
-                    id="edit-habit-title"
-                    type="text"
-                    value={editHabitTitle}
-                    onChange={(e) => setEditHabitTitle(e.target.value)}
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  />
-                </div>
 
-                <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
-                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <label key={index} className="cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={editScheduledDays.includes(index)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setEditScheduledDays((prev) => [...prev, index].sort());
-                            } else {
-                              setEditScheduledDays((prev) => prev.filter((d) => d !== index));
-                            }
-                          }}
-                          className="peer sr-only"
-                        />
-                        <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
-                          {day}
-                        </span>
-                      </label>
-                    ))}
+                  <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
+                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                        <label key={index} className="cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editScheduledDays.includes(index)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEditScheduledDays((prev) => [...prev, index].sort());
+                              } else {
+                                setEditScheduledDays((prev) => prev.filter((d) => d !== index));
+                              }
+                            }}
+                            className="peer sr-only"
+                          />
+                          <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
+                            {day}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Time Selection */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <TimePickerInput
-                    value={editStartTime}
-                    onChange={setEditStartTime}
-                    label="Start Time"
-                    required
-                    disabled={isSubmitting}
-                  />
-                  <TimePickerInput
-                    value={editEndTime}
-                    onChange={setEditEndTime}
-                    label="End Time"
-                    required
-                    disabled={isSubmitting}
-                  />
-                </div>
+                  {/* Time Selection */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <TimePickerInput
+                      value={editStartTime}
+                      onChange={setEditStartTime}
+                      label="Start Time"
+                      required
+                      disabled={isSubmitting}
+                    />
+                    <TimePickerInput
+                      value={editEndTime}
+                      onChange={setEditEndTime}
+                      label="End Time"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
 
-                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
+                  <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    >
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )}
+
+        {/* Delete Confirmation Modal */}
+        {deletingHabitId &&
+          createPortal(
+            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
+              <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-none sm:backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
+                  <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-xl font-bold text-gray-900 text-center mb-2">Delete Habit?</h3>
+                <p className="text-xs sm:text-sm text-gray-700 text-center mb-6">
+                  This action cannot be undone. All habit data will be permanently deleted.
+                </p>
+                <div className="flex gap-3">
                   <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200"
+                    onClick={() => setDeletingHabitId(null)}
+                    className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm"
                   >
                     Cancel
                   </button>
+                  <button
+                    onClick={handleDeleteHabit}
+                    className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
+                  >
+                    Delete
+                  </button>
                 </div>
-              </form>
-            </div>
-          </div>,
-          document.body
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {deletingHabitId && createPortal(
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
-            <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-none sm:backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
-                <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0-10H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-5z" />
-                </svg>
               </div>
-              <h3 className="text-base sm:text-xl font-bold text-gray-900 text-center mb-2">Delete Habit?</h3>
-              <p className="text-xs sm:text-sm text-gray-700 text-center mb-6">
-                This action cannot be undone. All habit data will be permanently deleted.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeletingHabitId(null)}
-                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteHabit}
-                  className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+            </div>,
+            document.body
+          )}
       </div>
     </div>
   );

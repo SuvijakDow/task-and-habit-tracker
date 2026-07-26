@@ -268,137 +268,187 @@ export default function TasksTable({
   const renderTable = (
     rows: Task[],
     emptyText: string,
-    headerTheme: 'purple' | 'pink' = 'purple'
+    headerTheme: 'purple' | 'pink' = 'purple',
+    pageInfo: {
+      page: number;
+      totalPages: number;
+      pageSize: number;
+      onPageChange: (p: number) => void;
+      onPageSizeChange: (s: number) => void;
+    }
   ) => {
     const headerBg = headerTheme === 'purple' ? 'bg-purple-600' : 'bg-pink-600';
     const iconColor = headerTheme === 'purple' ? 'text-purple-100' : 'text-pink-100';
+    const borderColor = headerTheme === 'purple' ? 'border-purple-200' : 'border-pink-200';
+    const textColor = headerTheme === 'purple' ? 'text-purple-700' : 'text-pink-700';
 
     return (
-      <div className="overflow-x-auto bg-white border border-gray-100 rounded-lg shadow-sm">
-        <table className="min-w-[980px] w-full text-sm table-fixed">
-          <colgroup>
-            <col style={{ width: '37%' }} />
-            <col style={{ width: '13%' }} />
-            <col style={{ width: '10%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '5%' }} />
-            <col style={{ width: '20%' }} />
-          </colgroup>
-          <thead className={`${headerBg} text-white`}>
-            <tr>
-              <th className="px-3 py-2.5 text-left font-semibold">Title</th>
-              <th className="px-3 py-2.5 text-left font-semibold">Category</th>
-              <th className="px-3 py-2.5 text-left font-semibold">
-                <span className="inline-flex items-center gap-2">
-                  Due
-                  <CalendarDays className={`h-4 w-4 ${iconColor}`} />
-                </span>
-              </th>
-              <th className="px-3 py-2.5 text-left font-semibold">Status</th>
-              <th className="px-3 py-2.5 text-center font-semibold">Done</th>
-              <th className="px-3 py-2.5 text-right font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
+      <div className={`border ${borderColor} rounded-xl overflow-hidden bg-white shadow-sm`}>
+        <div className="overflow-x-auto">
+          <table className="min-w-[980px] w-full text-sm table-fixed">
+            <colgroup>
+              <col style={{ width: '35%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '6%' }} />
+              <col style={{ width: '17%' }} />
+            </colgroup>
+            <thead className={`${headerBg} text-white`}>
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                  {emptyText}
-                </td>
+                <th className="px-3 py-2.5 text-left font-semibold">Title</th>
+                <th className="px-3 py-2.5 text-left font-semibold">Category</th>
+                <th className="px-3 py-2.5 text-left font-semibold">
+                  <span className="inline-flex items-center gap-2">
+                    Due
+                    <CalendarDays className={`h-4 w-4 ${iconColor}`} />
+                  </span>
+                </th>
+                <th className="px-3 py-2.5 text-left font-semibold">Status</th>
+                <th className="px-3 py-2.5 text-center font-semibold">Done</th>
+                <th className="px-3 py-2.5 text-right font-semibold">Actions</th>
               </tr>
-            ) : (
-              rows.map((t) => {
-              const tdPaddingClass = t.description ? 'py-3.5 align-top' : 'py-2 align-middle';
-              return (
-                <tr key={t.id} className="border-t last:border-b hover:bg-gray-50 transition">
-                  <td className={`px-3 ${tdPaddingClass} max-w-[45%]`}>
-                    <div className="font-medium truncate">{t.title}</div>
-                    {t.description && <div className="text-xs text-gray-500 truncate">{t.description}</div>}
-                  </td>
-                  <td className={`px-3 ${tdPaddingClass}`}>
-                    {(() => {
-                      const matchedCategory = getCategory(t.category);
-                      const categoryName = matchedCategory?.name || t.category || DEFAULT_TASK_CATEGORY_NAME;
-                      const categoryColor = isValidHexColor(matchedCategory?.color || '')
-                        ? (matchedCategory?.color as string)
-                        : DEFAULT_TASK_CATEGORY_COLOR;
-                      const categoryTextColor = getReadableCategoryTextColor(categoryColor);
-
-                      return (
-                        <span
-                          className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md border"
-                          style={{
-                            backgroundColor: hexToRgba(categoryColor, 0.3),
-                            color: categoryTextColor,
-                            borderColor: hexToRgba(categoryColor, 0.65),
-                          }}
-                        >
-                          {categoryName}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className={`px-3 ${tdPaddingClass}`}>
-                    {t.dueDate ? (
-                      <div className="text-sm text-gray-700">{new Date(t.dueDate).toLocaleDateString()}</div>
-                    ) : (
-                      <div className="text-sm text-gray-400">—</div>
-                    )}
-                  </td>
-                  <td className={`px-3 ${tdPaddingClass}`}>
-                    {t.dueDate ? (
-                      (() => {
-                        const deadlineStatus = getDeadlineStatus(t);
-                        return deadlineStatus ? (
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${deadlineStatus.className}`}>
-                            {deadlineStatus.text}
-                          </span>
-                        ) : (
-                          <div className="text-sm text-gray-400">—</div>
-                        );
-                      })()
-                    ) : (
-                      <div className="text-sm text-gray-400">—</div>
-                    )}
-                  </td>
-                  <td className={`px-3 ${tdPaddingClass} text-center`}>
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={t.isCompleted}
-                      aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
-                      onClick={() => onToggleCompletion(t.id, t.isCompleted)}
-                      className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
-                        ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                        : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                        }`}
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
-                  </td>
-                  <td className={`px-3 ${tdPaddingClass} text-right`}>
-                    <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                      <button
-                        onClick={() => toggleSelected(t.id)}
-                        className={`px-2 py-1 text-xs rounded border ${selectedIds.has(t.id)
-                          ? 'bg-purple-100 border-purple-300 text-purple-700'
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
-                          }`}
-                      >
-                        {selectedIds.has(t.id) ? 'Selected' : 'Select'}
-                      </button>
-                      <button onClick={() => onEdit(t)} className="px-2 py-1 text-xs rounded bg-white border hover:bg-gray-50">Edit</button>
-                      <button onClick={() => onDelete(t.id)} className="px-2 py-1 text-xs rounded bg-white border hover:bg-gray-50 text-rose-600">Delete</button>
-                    </div>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
+                    {emptyText}
                   </td>
                 </tr>
-              );
-            })
-            )}
-          </tbody>
-        </table>
+              ) : (
+                rows.map((t) => {
+                  const tdPaddingClass = t.description ? 'py-3.5 align-top' : 'py-2 align-middle';
+                  const isSelected = selectedIds.has(t.id);
+                  const selectedBg =
+                    headerTheme === 'pink'
+                      ? 'bg-pink-100/90 hover:bg-pink-100'
+                      : 'bg-purple-100/90 hover:bg-purple-100';
+                  const rowBgClass = isSelected ? selectedBg : 'hover:bg-gray-50';
+
+                  return (
+                    <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
+                      <td className={`px-3 ${tdPaddingClass} max-w-[35%]`}>
+                        <div className="font-medium truncate">{t.title}</div>
+                        {t.description && <div className="text-xs text-gray-500 truncate">{t.description}</div>}
+                      </td>
+                      <td className={`px-3 ${tdPaddingClass}`}>
+                        {(() => {
+                          const matchedCategory = getCategory(t.category);
+                          const categoryName = matchedCategory?.name || t.category || DEFAULT_TASK_CATEGORY_NAME;
+                          const categoryColor = isValidHexColor(matchedCategory?.color || '')
+                            ? (matchedCategory?.color as string)
+                            : DEFAULT_TASK_CATEGORY_COLOR;
+                          const categoryTextColor = getReadableCategoryTextColor(categoryColor);
+
+                          return (
+                            <span
+                              className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-md border"
+                              style={{
+                                backgroundColor: hexToRgba(categoryColor, 0.3),
+                                color: categoryTextColor,
+                                borderColor: hexToRgba(categoryColor, 0.65),
+                              }}
+                            >
+                              {categoryName}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className={`px-3 ${tdPaddingClass}`}>
+                        {t.dueDate ? (
+                          <div className="text-sm text-gray-700">{new Date(t.dueDate).toLocaleDateString()}</div>
+                        ) : (
+                          <div className="text-sm text-gray-400">—</div>
+                        )}
+                      </td>
+                      <td className={`px-3 ${tdPaddingClass}`}>
+                        {t.dueDate ? (
+                          (() => {
+                            const deadlineStatus = getDeadlineStatus(t);
+                            return deadlineStatus ? (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${deadlineStatus.className}`}>
+                                {deadlineStatus.text}
+                              </span>
+                            ) : (
+                              <div className="text-sm text-gray-400">—</div>
+                            );
+                          })()
+                        ) : (
+                          <div className="text-sm text-gray-400">—</div>
+                        )}
+                      </td>
+                      <td className={`px-3 ${tdPaddingClass} text-center`}>
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={t.isCompleted}
+                          aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
+                          onClick={() => onToggleCompletion(t.id, t.isCompleted)}
+                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
+                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
+                            : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                            }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      </td>
+                      <td className={`px-3 ${tdPaddingClass} text-right`}>
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                          <button
+                            onClick={() => toggleSelected(t.id)}
+                            className={`px-2 py-1 text-xs rounded border ${selectedIds.has(t.id)
+                              ? 'bg-purple-100 border-purple-300 text-purple-700'
+                              : 'bg-white border-gray-200 hover:bg-gray-50'
+                              }`}
+                          >
+                            {selectedIds.has(t.id) ? 'Selected' : 'Select'}
+                          </button>
+                          <button onClick={() => onEdit(t)} className="px-2 py-1 text-xs rounded bg-white border hover:bg-gray-50">Edit</button>
+                          <button onClick={() => onDelete(t.id)} className="px-2 py-1 text-xs rounded bg-white border hover:bg-gray-50 text-rose-600">Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className={`flex items-center justify-between px-3.5 py-2.5 ${headerBg} text-white border-t border-white/20`}>
+          <div className="flex items-center gap-2 text-sm text-white">
+            <span>Page {pageInfo.page} of {pageInfo.totalPages}</span>
+            <select
+              value={pageInfo.pageSize}
+              onChange={(e) => pageInfo.onPageSizeChange(Number(e.target.value))}
+              className={`border border-white/50 bg-white/95 ${textColor} rounded px-2 py-1 text-sm focus:outline-none`}
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => pageInfo.onPageChange(Math.max(1, pageInfo.page - 1))}
+              disabled={pageInfo.page === 1}
+              className={`px-3 py-1 bg-white/95 ${textColor} border border-white/60 rounded font-medium disabled:opacity-50`}
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => pageInfo.onPageChange(Math.min(pageInfo.totalPages, pageInfo.page + 1))}
+              disabled={pageInfo.page === pageInfo.totalPages}
+              className={`px-3 py-1 bg-white/95 ${textColor} border border-white/60 rounded font-medium disabled:opacity-50`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -477,80 +527,32 @@ export default function TasksTable({
         <h2 className="text-xl sm:text-2xl font-bold text-pink-600 mb-3 sm:mb-4">
           Pending Tasks ({filteredPendingTasks.length})
         </h2>
-        {renderTable(pendingPaged, 'No pending tasks. Great job, everything is complete.', 'pink')}
-        <div className="flex items-center justify-between px-3 py-2 border border-t-0 border-pink-200 rounded-b-lg bg-pink-600 text-white">
-          <div className="flex items-center gap-2 text-sm text-white">
-            <span>Page {pendingPage} of {pendingTotalPages}</span>
-            <select
-              value={pendingPageSize}
-              onChange={(e) => {
-                setPendingPageSize(Number(e.target.value));
-                setPendingPage(1);
-              }}
-              className="border border-white/50 bg-white/95 text-pink-700 rounded px-2 py-1 text-sm"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPendingPage((p) => Math.max(1, p - 1))}
-              disabled={pendingPage === 1}
-              className="px-3 py-1 bg-white/95 text-pink-700 border border-white/60 rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => setPendingPage((p) => Math.min(pendingTotalPages, p + 1))}
-              disabled={pendingPage === pendingTotalPages}
-              className="px-3 py-1 bg-white/95 text-pink-700 border border-white/60 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        {renderTable(pendingPaged, 'No pending tasks. Great job, everything is complete.', 'pink', {
+          page: pendingPage,
+          totalPages: pendingTotalPages,
+          pageSize: pendingPageSize,
+          onPageChange: setPendingPage,
+          onPageSizeChange: (s) => {
+            setPendingPageSize(s);
+            setPendingPage(1);
+          },
+        })}
       </div>
 
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-purple-700 mb-3 sm:mb-4">
           Completed Tasks ({filteredCompletedTasks.length})
         </h2>
-        {renderTable(completedPaged, 'No completed tasks yet.', 'purple')}
-        <div className="flex items-center justify-between px-3 py-2 border border-t-0 border-purple-200 rounded-b-lg bg-purple-600 text-white">
-          <div className="flex items-center gap-2 text-sm text-white">
-            <span>Page {completedPage} of {completedTotalPages}</span>
-            <select
-              value={completedPageSize}
-              onChange={(e) => {
-                setCompletedPageSize(Number(e.target.value));
-                setCompletedPage(1);
-              }}
-              className="border border-white/50 bg-white/95 text-purple-700 rounded px-2 py-1 text-sm"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCompletedPage((p) => Math.max(1, p - 1))}
-              disabled={completedPage === 1}
-              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => setCompletedPage((p) => Math.min(completedTotalPages, p + 1))}
-              disabled={completedPage === completedTotalPages}
-              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        {renderTable(completedPaged, 'No completed tasks yet.', 'purple', {
+          page: completedPage,
+          totalPages: completedTotalPages,
+          pageSize: completedPageSize,
+          onPageChange: setCompletedPage,
+          onPageSizeChange: (s) => {
+            setCompletedPageSize(s);
+            setCompletedPage(1);
+          },
+        })}
       </div>
 
       {isBulkDeleteConfirmOpen &&
