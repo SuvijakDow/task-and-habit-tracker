@@ -4,8 +4,19 @@ export interface Task {
   title: string;
   description: string;
   category: string;
+  setId?: string; // Id of the TaskPreset it belongs to
   dueDate: Date | null;
   isCompleted: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TaskPreset {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

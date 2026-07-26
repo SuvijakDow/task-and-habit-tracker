@@ -167,6 +167,19 @@ src/
 }
 ```
 
+### taskPresets Collection
+```typescript
+{
+  id: string;
+  userId: string;
+  name: string;
+  color?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
 ### users Collection
 ```typescript
 {
@@ -261,6 +274,11 @@ service cloud.firestore {
     }
 
     match /categories/{document=**} {
+      allow read, write: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
+
+    match /taskPresets/{document=**} {
       allow read, write: if request.auth.uid == resource.data.userId;
       allow create: if request.auth.uid == request.resource.data.userId;
     }

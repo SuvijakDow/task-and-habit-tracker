@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarDays, FolderTree } from 'lucide-react';
+import { CalendarDays, ChevronDown, FolderTree, Layers, Settings2 } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
-import { Category, Task } from '@/types';
+import { Category, Task, TaskPreset } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   createTask,
@@ -17,6 +17,14 @@ import {
 } from '@/services/categoryService';
 import { showToast } from '@/components/Toast';
 import { playSuccessSound } from '@/utils/audio';
+import {
+  createTaskPreset,
+  deleteTaskPreset,
+  getUserTaskPresets,
+  setActiveTaskPreset,
+  updateTaskPreset,
+} from '@/services/taskPresetService';
+import { ManageTaskPresetsModal } from '@/components/ManageTaskPresetsModal';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -77,6 +85,10 @@ export function TasksPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [presets, setPresets] = useState<TaskPreset[]>([]);
+  const [activePresetId, setActivePresetId] = useState('');
+  const [isPresetDropdownOpen, setIsPresetDropdownOpen] = useState(false);
+  const [isManagePresetsOpen, setIsManagePresetsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +102,7 @@ export function TasksPage() {
     description: '',
     category: DEFAULT_TASK_CATEGORY_NAME,
     dueDate: '',
+    setId: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,6 +114,7 @@ export function TasksPage() {
     description: '',
     category: DEFAULT_TASK_CATEGORY_NAME,
     dueDate: '',
+    setId: '',
   });
 
   // Delete confirmation state
@@ -111,17 +125,27 @@ export function TasksPage() {
     if (!user) {
       setTasks([]);
       setCategories([]);
+      setPresets([]);
       setLoadError(null);
       setLoading(false);
       return;
     }
 
     const loadData = async () => {
-      await Promise.all([loadTasks(), loadCategories()]);
+      await Promise.all([loadTasks(), loadCategories(), loadPresets()]);
     };
 
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    if (!isPresetDropdownOpen) return;
+    const closeDropdown = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest('.routine-dropdown-container')) setIsPresetDropdownOpen(false);
+    };
+    document.addEventListener('click', closeDropdown);
+    return () => document.removeEventListener('click', closeDropdown);
+  }, [isPresetDropdownOpen]);
 
   const getDefaultCategoryValue = (categoryList: Category[] = categories): string => {
     const defaultCategory =
@@ -176,8 +200,24 @@ export function TasksPage() {
     }
   };
 
+  const loadPresets = async () => {
+    if (!user) return;
+    try {
+      const userPresets = await getUserTaskPresets(user.uid);
+      setPresets(userPresets);
+      const active = userPresets.find((preset) => preset.isActive) || userPresets[0];
+      if (active) {
+        setActivePresetId(active.id);
+        setFormData((previous) => ({ ...previous, setId: previous.setId || active.id }));
+      }
+    } catch (err) {
+      console.error('Error loading task presets:', err);
+      showToast('Could not load task presets. Check Firestore permissions.', 'error');
+    }
+  };
+
   const retryLoadData = async () => {
-    await Promise.all([loadTasks(), loadCategories()]);
+    await Promise.all([loadTasks(), loadCategories(), loadPresets()]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,10 +241,11 @@ export function TasksPage() {
         category: selectedCategory?.id || formData.category || getDefaultCategoryValue(),
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         isCompleted: false,
+        setId: formData.setId || activePresetId || undefined,
       });
 
       // Reset form and close modal
-      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '' });
+      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId });
       setIsModalOpen(false);
 
       // Reload tasks
@@ -296,6 +337,7 @@ export function TasksPage() {
       dueDate: task.dueDate
         ? task.dueDate.toISOString().split('T')[0]
         : '',
+      setId: task.setId || presets[0]?.id || activePresetId,
     });
   };
 
@@ -319,6 +361,7 @@ export function TasksPage() {
         description: editFormData.description,
         category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
+        setId: editFormData.setId || activePresetId || undefined,
       });
 
       setTasks(
@@ -332,6 +375,7 @@ export function TasksPage() {
                 dueDate: editFormData.dueDate
                   ? new Date(editFormData.dueDate)
                   : null,
+                setId: editFormData.setId || activePresetId || undefined,
               }
             : t
         )
@@ -348,7 +392,7 @@ export function TasksPage() {
 
   const handleCancelEdit = () => {
     setEditingTaskId(null);
-    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '' });
+    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId });
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -398,7 +442,62 @@ export function TasksPage() {
   }
   const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
-  const incompleteTasks = tasks
+  const activePreset = useMemo(
+    () => presets.find((preset) => preset.id === activePresetId) || presets[0],
+    [presets, activePresetId]
+  );
+  const visibleTasks = useMemo(() => {
+    if (!activePreset) return tasks;
+    const defaultPresetId = presets[0]?.id;
+    return tasks.filter((task) => task.setId ? task.setId === activePreset.id : activePreset.id === defaultPresetId);
+  }, [tasks, presets, activePreset]);
+
+  const handleActivatePreset = async (presetId: string) => {
+    if (!user) return;
+    try {
+      await setActiveTaskPreset(user.uid, presetId);
+      setActivePresetId(presetId);
+      setPresets((previous) => previous.map((preset) => ({ ...preset, isActive: preset.id === presetId })));
+      setIsPresetDropdownOpen(false);
+    } catch (err) {
+      console.error('Error activating task preset:', err);
+      showToast('Could not switch task preset.', 'error');
+    }
+  };
+
+  const handleCreatePreset = async (name: string, color: string) => {
+    if (!user) return;
+    const preset = await createTaskPreset(user.uid, name, color);
+    setPresets((previous) => [...previous, preset]);
+    showToast('Created task preset.', 'success');
+  };
+
+  const handleUpdatePreset = async (presetId: string, updates: Partial<Pick<TaskPreset, 'name' | 'color'>>) => {
+    await updateTaskPreset(presetId, updates);
+    setPresets((previous) => previous.map((preset) => preset.id === presetId ? { ...preset, ...updates } : preset));
+    showToast('Updated task preset.', 'success');
+  };
+
+  const handleDeletePreset = async (presetId: string) => {
+    if (!user || presets.length <= 1) return;
+    const fallback = presets.find((preset) => preset.id !== presetId);
+    if (!fallback) return;
+    try {
+      const defaultPresetId = presets[0]?.id;
+      const tasksInPreset = tasks.filter((task) => task.setId === presetId || (!task.setId && presetId === defaultPresetId));
+      await Promise.all(tasksInPreset.map((task) => deleteTask(task.id)));
+      await deleteTaskPreset(presetId);
+      setTasks((previous) => previous.filter((task) => !tasksInPreset.some((deletedTask) => deletedTask.id === task.id)));
+      setPresets((previous) => previous.filter((preset) => preset.id !== presetId));
+      if (presetId === activePresetId) await handleActivatePreset(fallback.id);
+      showToast('Deleted task preset and its tasks.', 'success');
+    } catch (err) {
+      console.error('Error deleting task preset:', err);
+      showToast('Could not delete task preset.', 'error');
+    }
+  };
+
+  const incompleteTasks = visibleTasks
     .filter((t) => !t.isCompleted)
     .sort((a, b) => {
       // Sort by due date: tasks with earlier dates first
@@ -408,7 +507,7 @@ export function TasksPage() {
       if (!b.dueDate) return -1;
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
-  const completedTasks = tasks
+  const completedTasks = visibleTasks
     .filter((t) => t.isCompleted)
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   const isEditCategoryMissing =
@@ -470,6 +569,7 @@ export function TasksPage() {
                     description: '',
                     category: getDefaultCategoryValue(),
                     dueDate: '',
+                    setId: activePresetId,
                   });
                   setIsModalOpen(true);
                 }}
@@ -504,6 +604,7 @@ export function TasksPage() {
                       description: '',
                       category: getDefaultCategoryValue(),
                       dueDate: '',
+                      setId: activePresetId,
                     });
                     setIsModalOpen(true);
                   }}
@@ -537,6 +638,42 @@ export function TasksPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="relative z-30 mb-4 flex items-center justify-between gap-2 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
+          <div className="relative routine-dropdown-container min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
+              className="flex min-h-[38px] w-full items-center justify-between rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-xs transition-all hover:border-purple-400 hover:shadow-sm focus:outline-none sm:px-4 sm:text-sm"
+              aria-expanded={isPresetDropdownOpen}
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Layers className="h-4 w-4 flex-shrink-0 text-purple-600" />
+                <span className="hidden font-normal text-gray-500 sm:inline">Preset:</span>
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: activePreset?.color || '#C084FC' }} />
+                  <span className="truncate font-bold text-gray-900">{activePreset?.name || 'Inbox'}</span>
+                </div>
+              </div>
+              <ChevronDown className={`ml-2 h-4 w-4 flex-shrink-0 text-purple-500 transition-transform duration-200 ${isPresetDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isPresetDropdownOpen && (
+              <div className="modal-enter absolute left-0 top-full z-[100] mt-1.5 w-64 rounded-xl border-2 border-purple-300 bg-white py-1.5 shadow-[0_16px_36px_rgba(120,87,255,0.35)]">
+                <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Preset</div>
+                {presets.map((preset) => {
+                  const isActive = preset.id === activePresetId;
+                  return <button key={preset.id} type="button" onClick={() => handleActivatePreset(preset.id)} className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-all hover:bg-purple-50 sm:text-sm ${isActive ? 'bg-purple-50 font-bold text-purple-900' : 'text-gray-700'}`}>
+                    <div className="flex items-center gap-2 truncate"><span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: preset.color || '#C084FC' }} /><span className="truncate">{preset.name}</span></div>
+                  </button>;
+                })}
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={() => setIsManagePresetsOpen(true)} className="inline-flex whitespace-nowrap rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs font-semibold text-purple-700 shadow-xs transition hover:bg-purple-50">
+            <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Manage Presets</span><span className="sm:hidden">Manage</span>
+          </button>
         </div>
 
         {/* Add Task Form Modal */}
@@ -630,6 +767,14 @@ export function TasksPage() {
 
                 {/* Due Date */}
                 <div>
+                  <label htmlFor="task-preset" className="block text-sm font-medium text-gray-700 mb-1">Task Preset</label>
+                  <select id="task-preset" value={formData.setId} onChange={(e) => setFormData({ ...formData, setId: e.target.value })} className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none" disabled={isSubmitting}>
+                    {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                  </select>
+                </div>
+
+                {/* Due Date */}
+                <div>
                   <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
                     Due Date
                   </label>
@@ -689,7 +834,7 @@ export function TasksPage() {
               Retry
             </button>
           </div>
-        ) : tasks.length === 0 ? (
+        ) : visibleTasks.length === 0 ? (
           <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No tasks yet</h2>
             <p className="text-gray-600 mb-5">Add your first task to start planning your week.</p>
@@ -701,6 +846,7 @@ export function TasksPage() {
                   description: '',
                   category: getDefaultCategoryValue(),
                   dueDate: '',
+                  setId: activePresetId,
                 });
                 setIsModalOpen(true);
               }}
@@ -714,7 +860,7 @@ export function TasksPage() {
             {viewMode === 'table' ? (
               <div className="mb-6">
                 <TasksTable
-                  tasks={tasks}
+                  tasks={visibleTasks}
                   categories={categories}
                   onToggleCompletion={handleToggleCompletion}
                   onEdit={handleEditTask}
@@ -856,6 +1002,14 @@ export function TasksPage() {
 
                 {/* Due Date */}
                 <div>
+                  <label htmlFor="edit-task-preset" className="block text-sm font-medium text-gray-700 mb-1">Task Preset</label>
+                  <select id="edit-task-preset" value={editFormData.setId} onChange={(e) => setEditFormData({ ...editFormData, setId: e.target.value })} className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none" disabled={isSubmitting}>
+                    {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                  </select>
+                </div>
+
+                {/* Due Date */}
+                <div>
                   <label htmlFor="edit-dueDate" className="block text-sm font-medium text-gray-700 mb-1">
                     Due Date
                   </label>
@@ -934,6 +1088,16 @@ export function TasksPage() {
           isOpen={isCategoriesModalOpen}
           onClose={() => setIsCategoriesModalOpen(false)}
           onCategoriesUpdated={loadCategories}
+        />
+        <ManageTaskPresetsModal
+          isOpen={isManagePresetsOpen}
+          presets={presets}
+          activePresetId={activePresetId}
+          onClose={() => setIsManagePresetsOpen(false)}
+          onActivate={handleActivatePreset}
+          onCreate={handleCreatePreset}
+          onUpdate={handleUpdatePreset}
+          onDelete={handleDeletePreset}
         />
       </div>
     </div>
