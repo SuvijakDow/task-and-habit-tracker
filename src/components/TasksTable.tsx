@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays, RefreshCw } from 'lucide-react';
+import { CalendarDays, RefreshCw, Search } from 'lucide-react';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -457,12 +457,15 @@ export default function TasksTable({
     <div className="space-y-6">
       <div className="glass-card p-2.5 sm:p-4">
         <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search tasks, description, or category..."
-            className="min-h-[36px] sm:min-h-[40px] flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
-          />
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks, description, or category..."
+              className="w-full min-h-[36px] sm:min-h-[40px] rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+            />
+          </div>
           <div className="grid grid-cols-2 lg:flex lg:flex-row gap-2">
             <select
               value={categoryFilter}
