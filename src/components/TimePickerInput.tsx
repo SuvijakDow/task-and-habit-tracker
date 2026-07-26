@@ -6,6 +6,8 @@ interface TimePickerInputProps {
   label?: string;
   disabled?: boolean;
   required?: boolean;
+  popoverPosition?: 'bottom' | 'top';
+  align?: 'left' | 'right';
 }
 
 export const TimePickerInput: React.FC<TimePickerInputProps> = ({
@@ -14,6 +16,8 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
   label,
   disabled = false,
   required = false,
+  popoverPosition = 'bottom',
+  align = 'left',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [displayValue, setDisplayValue] = useState(value);
@@ -93,7 +97,13 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute top-full mt-1 z-50 w-full bg-white border border-purple-200 rounded-lg shadow-lg p-3 sm:p-4">
+        <div
+          className={`absolute ${
+            popoverPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-1'
+          } ${
+            align === 'right' ? 'right-0 left-auto' : 'left-0 right-auto'
+          } z-[10010] min-w-[190px] sm:min-w-[210px] w-auto max-w-[240px] bg-white border-2 border-purple-300 rounded-2xl shadow-[0_16px_36px_rgba(120,87,255,0.35)] p-2.5 sm:p-4 backdrop-blur-md`}
+        >
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-2">Hours</label>

@@ -517,6 +517,8 @@ export function HabitsPage() {
                       value={startTime}
                       onChange={setStartTime}
                       label="Start Time"
+                      popoverPosition="top"
+                      align="left"
                       required
                       disabled={isSubmitting}
                     />
@@ -524,6 +526,8 @@ export function HabitsPage() {
                       value={endTime}
                       onChange={setEndTime}
                       label="End Time"
+                      popoverPosition="top"
+                      align="right"
                       required
                       disabled={isSubmitting}
                     />
@@ -815,6 +819,8 @@ export function HabitsPage() {
                       value={editStartTime}
                       onChange={setEditStartTime}
                       label="Start Time"
+                      popoverPosition="top"
+                      align="left"
                       required
                       disabled={isSubmitting}
                     />
@@ -822,6 +828,8 @@ export function HabitsPage() {
                       value={editEndTime}
                       onChange={setEditEndTime}
                       label="End Time"
+                      popoverPosition="top"
+                      align="right"
                       required
                       disabled={isSubmitting}
                     />
