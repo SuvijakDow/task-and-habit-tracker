@@ -51,26 +51,6 @@ const ensureDefaultTaskPreset = async (userId: string, presets: TaskPreset[]): P
   });
 };
 
-const mergeDuplicateDefaultTaskPresets = async (
-  userId: string,
-  presets: TaskPreset[],
-  defaultPresetId: string
-): Promise<void> => {
-  const duplicates = presets.filter((preset) => preset.name === DEFAULT_PRESET_NAME && preset.id !== defaultPresetId);
-  await Promise.all(duplicates.map(async (duplicate) => {
-    const tasks = await getDocs(query(
-      collection(db, 'tasks'),
-      where('userId', '==', userId),
-      where('setId', '==', duplicate.id)
-    ));
-    await Promise.all(tasks.docs.map((task) => updateDoc(task.ref, {
-      setId: defaultPresetId,
-      updatedAt: Timestamp.now(),
-    })));
-    await deleteDoc(doc(db, TASK_PRESETS_COLLECTION, duplicate.id));
-  }));
-};
-
 export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> => {
   const snapshot = await getDocs(
     query(collection(db, TASK_PRESETS_COLLECTION), where('userId', '==', userId))
@@ -84,8 +64,7 @@ export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> 
   })) as TaskPreset[];
 
   if (presets.length === 0) {
-    const defaultPresetId = await ensureDefaultTaskPreset(userId, presets);
-    await mergeDuplicateDefaultTaskPresets(userId, presets, defaultPresetId);
+    await ensureDefaultTaskPreset(userId, []);
 
     const updatedSnapshot = await getDocs(
       query(collection(db, TASK_PRESETS_COLLECTION), where('userId', '==', userId))
@@ -96,6 +75,45 @@ export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> 
       createdAt: snapshotDoc.data().createdAt?.toDate() || new Date(),
       updatedAt: snapshotDoc.data().updatedAt?.toDate() || new Date(),
     })) as TaskPreset[];
+  }
+
+  // Deduplicate presets by name if duplicates exist
+  const uniquePresetsMap = new Map<string, TaskPreset>();
+  const duplicatesToDelete: TaskPreset[] = [];
+
+  for (const preset of presets) {
+    const key = preset.name.trim().toLowerCase();
+    if (!uniquePresetsMap.has(key)) {
+      uniquePresetsMap.set(key, preset);
+    } else {
+      const existing = uniquePresetsMap.get(key)!;
+      // Prefer active preset, or keep the existing one
+      if (preset.isActive && !existing.isActive) {
+        duplicatesToDelete.push(existing);
+        uniquePresetsMap.set(key, preset);
+      } else {
+        duplicatesToDelete.push(preset);
+      }
+    }
+  }
+
+  if (duplicatesToDelete.length > 0) {
+    const keepPresetId = Array.from(uniquePresetsMap.values())[0]?.id;
+    if (keepPresetId) {
+      await Promise.all(duplicatesToDelete.map(async (duplicate) => {
+        const tasksSnapshot = await getDocs(query(
+          collection(db, 'tasks'),
+          where('userId', '==', userId),
+          where('setId', '==', duplicate.id)
+        ));
+        await Promise.all(tasksSnapshot.docs.map((taskDoc) => updateDoc(taskDoc.ref, {
+          setId: keepPresetId,
+          updatedAt: Timestamp.now(),
+        })));
+        await deleteDoc(doc(db, TASK_PRESETS_COLLECTION, duplicate.id));
+      }));
+    }
+    return Array.from(uniquePresetsMap.values());
   }
 
   return presets;

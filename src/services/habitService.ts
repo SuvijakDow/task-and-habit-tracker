@@ -56,26 +56,6 @@ const ensureDefaultHabitSet = async (userId: string, sets: HabitSet[]): Promise<
   });
 };
 
-const mergeDuplicateDefaultHabitSets = async (
-  userId: string,
-  sets: HabitSet[],
-  defaultSetId: string
-): Promise<void> => {
-  const duplicates = sets.filter((set) => set.name === DEFAULT_HABIT_SET_NAME && set.id !== defaultSetId);
-  await Promise.all(duplicates.map(async (duplicate) => {
-    const habits = await getDocs(query(
-      collection(db, DAILY_HABITS_COLLECTION),
-      where('userId', '==', userId),
-      where('setId', '==', duplicate.id)
-    ));
-    await Promise.all(habits.docs.map((habit) => updateDoc(habit.ref, {
-      setId: defaultSetId,
-      updatedAt: Timestamp.now(),
-    })));
-    await deleteDoc(doc(db, HABIT_SETS_COLLECTION, duplicate.id));
-  }));
-};
-
 /**
  * Habit Set (Routine Preset) Services
  */
@@ -95,8 +75,7 @@ export const getUserHabitSets = async (userId: string): Promise<HabitSet[]> => {
     })) as HabitSet[];
 
     if (sets.length === 0) {
-      const defaultSetId = await ensureDefaultHabitSet(userId, sets);
-      await mergeDuplicateDefaultHabitSets(userId, sets, defaultSetId);
+      await ensureDefaultHabitSet(userId, []);
 
       const updatedSnapshot = await getDocs(q);
       sets = updatedSnapshot.docs.map((setDoc) => ({
@@ -105,6 +84,44 @@ export const getUserHabitSets = async (userId: string): Promise<HabitSet[]> => {
         createdAt: setDoc.data().createdAt?.toDate() || new Date(),
         updatedAt: setDoc.data().updatedAt?.toDate() || new Date(),
       })) as HabitSet[];
+    }
+
+    // Deduplicate habit sets by name if duplicates exist
+    const uniqueSetsMap = new Map<string, HabitSet>();
+    const duplicatesToDelete: HabitSet[] = [];
+
+    for (const set of sets) {
+      const key = set.name.trim().toLowerCase();
+      if (!uniqueSetsMap.has(key)) {
+        uniqueSetsMap.set(key, set);
+      } else {
+        const existing = uniqueSetsMap.get(key)!;
+        if (set.isActive && !existing.isActive) {
+          duplicatesToDelete.push(existing);
+          uniqueSetsMap.set(key, set);
+        } else {
+          duplicatesToDelete.push(set);
+        }
+      }
+    }
+
+    if (duplicatesToDelete.length > 0) {
+      const keepSetId = Array.from(uniqueSetsMap.values())[0]?.id;
+      if (keepSetId) {
+        await Promise.all(duplicatesToDelete.map(async (duplicate) => {
+          const habitsSnapshot = await getDocs(query(
+            collection(db, DAILY_HABITS_COLLECTION),
+            where('userId', '==', userId),
+            where('setId', '==', duplicate.id)
+          ));
+          await Promise.all(habitsSnapshot.docs.map((habitDoc) => updateDoc(habitDoc.ref, {
+            setId: keepSetId,
+            updatedAt: Timestamp.now(),
+          })));
+          await deleteDoc(doc(db, HABIT_SETS_COLLECTION, duplicate.id));
+        }));
+      }
+      return Array.from(uniqueSetsMap.values());
     }
 
     return sets;
