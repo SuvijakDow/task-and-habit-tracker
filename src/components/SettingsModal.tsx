@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, X, Upload, ImagePlus } from 'lucide-react';
+import { AlertTriangle, Settings, Trash2, X, Upload, ImagePlus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import {
   updateUserProfile,
@@ -7,6 +7,8 @@ import {
   DEFAULT_AVATARS,
   normalizeProfilePhotoURL,
 } from '@/services/userService';
+import { deleteUserData } from '@/services/accountService';
+import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -21,6 +23,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Build the avatar options: 8 defaults + Google photo if available
@@ -95,6 +101,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
+  const usesPasswordProvider = user?.providerData.some((provider) => provider.providerId === 'password') ?? false;
+  const handleDeleteAccount = async () => {
+    if (!user || deleteConfirmation !== 'DELETE') return;
+    try {
+      setIsDeletingAccount(true);
+      setError(null);
+      await reauthenticateCurrentUser(usesPasswordProvider ? deletePassword : undefined);
+      await deleteUserData(user.uid);
+      await deleteAuthenticatedUser();
+      setIsDeleteDialogOpen(false);
+      onClose();
+    } catch (err: any) {
+      const message = err?.code === 'auth/wrong-password'
+        ? 'Incorrect password. Your account was not deleted.'
+        : err?.code === 'auth/popup-closed-by-user'
+          ? 'Google verification was cancelled. Your account was not deleted.'
+          : err?.message || 'Could not delete the account. Please try again.';
+      setError(message);
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   // Reset state when modal opens — use Firestore profile, fallback to Auth data
   React.useEffect(() => {
     if (isOpen) {
@@ -104,12 +133,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setSelectedAvatar(avatar);
       setError(null);
       setSuccess(false);
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmation('');
+      setDeletePassword('');
     }
   }, [isOpen, userProfile, user]);
 
   if (!isOpen) return null;
 
-  const busy = isSaving || isUploading;
+  const busy = isSaving || isUploading || isDeletingAccount;
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
@@ -288,8 +320,32 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               Cancel
             </button>
           </div>
+
+          <section className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+            <div className="flex gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600"><AlertTriangle size={18} /></div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-rose-900">Danger Zone</h3>
+                <p className="mt-1 text-xs leading-relaxed text-rose-700">Permanently delete your account and all tasks, habits, categories, presets, and profile data.</p>
+                <button type="button" onClick={() => setIsDeleteDialogOpen(true)} disabled={busy} className="mt-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"><Trash2 size={14} />Delete Account</button>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
+
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="modal-enter w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="flex items-start gap-3"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600"><AlertTriangle size={20} /></div><div><h3 className="text-lg font-bold text-gray-900">Delete your account?</h3><p className="mt-1 text-sm text-gray-600">This cannot be undone. All of your stored data will be permanently removed.</p></div></div>
+            <div className="mt-5 space-y-4">
+              {usesPasswordProvider && <div><label htmlFor="delete-password" className="mb-1 block text-sm font-semibold text-gray-700">Password</label><input id="delete-password" type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} disabled={isDeletingAccount} className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm outline-none focus:border-rose-500" autoComplete="current-password" /></div>}
+              <div><label htmlFor="delete-confirmation" className="mb-1 block text-sm font-semibold text-gray-700">Type <span className="font-bold text-rose-600">DELETE</span> to confirm</label><input id="delete-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} disabled={isDeletingAccount} className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm outline-none focus:border-rose-500" autoComplete="off" /></div>
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeletingAccount} className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50">Cancel</button><button type="button" onClick={handleDeleteAccount} disabled={isDeletingAccount || deleteConfirmation !== 'DELETE' || (usesPasswordProvider && !deletePassword)} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50">{isDeletingAccount ? 'Deleting...' : 'Permanently Delete Account'}</button></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

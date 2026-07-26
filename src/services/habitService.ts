@@ -7,6 +7,7 @@ import {
   getDocs,
   getDoc,
   query,
+  runTransaction,
   where,
   Timestamp,
   arrayUnion,
@@ -18,6 +19,60 @@ import { formatToDateString } from '@/utils/dateUtils';
 
 const DAILY_HABITS_COLLECTION = 'dailyHabits';
 const HABIT_SETS_COLLECTION = 'habitSets';
+const USERS_COLLECTION = 'users';
+const DEFAULT_HABIT_SET_NAME = 'General Routine';
+
+const ensureDefaultHabitSet = async (userId: string, sets: HabitSet[]): Promise<string> => {
+  const userRef = doc(db, USERS_COLLECTION, userId);
+  const existingDefault = sets.find((set) => set.name === DEFAULT_HABIT_SET_NAME) || sets[0];
+  const newSetRef = doc(collection(db, HABIT_SETS_COLLECTION));
+
+  return runTransaction(db, async (transaction) => {
+    const userSnapshot = await transaction.get(userRef);
+    const savedSetId = userSnapshot.data()?.defaultHabitSetId;
+    if (typeof savedSetId === 'string' && savedSetId) {
+      const savedSet = await transaction.get(doc(db, HABIT_SETS_COLLECTION, savedSetId));
+      if (savedSet.exists()) return savedSetId;
+    }
+
+    const defaultSetId = existingDefault?.id || newSetRef.id;
+    if (!existingDefault) {
+      transaction.set(newSetRef, {
+        userId,
+        name: DEFAULT_HABIT_SET_NAME,
+        color: '#C084FC',
+        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    }
+    transaction.set(userRef, {
+      defaultHabitSetId: defaultSetId,
+      updatedAt: Timestamp.now(),
+    }, { merge: true });
+    return defaultSetId;
+  });
+};
+
+const mergeDuplicateDefaultHabitSets = async (
+  userId: string,
+  sets: HabitSet[],
+  defaultSetId: string
+): Promise<void> => {
+  const duplicates = sets.filter((set) => set.name === DEFAULT_HABIT_SET_NAME && set.id !== defaultSetId);
+  await Promise.all(duplicates.map(async (duplicate) => {
+    const habits = await getDocs(query(
+      collection(db, DAILY_HABITS_COLLECTION),
+      where('userId', '==', userId),
+      where('setId', '==', duplicate.id)
+    ));
+    await Promise.all(habits.docs.map((habit) => updateDoc(habit.ref, {
+      setId: defaultSetId,
+      updatedAt: Timestamp.now(),
+    })));
+    await deleteDoc(doc(db, HABIT_SETS_COLLECTION, duplicate.id));
+  }));
+};
 
 /**
  * Habit Set (Routine Preset) Services
@@ -37,31 +92,22 @@ export const getUserHabitSets = async (userId: string): Promise<HabitSet[]> => {
       updatedAt: doc.data().updatedAt?.toDate() || new Date(),
     })) as HabitSet[];
 
-    // If user has no habit sets, initialize a default set
-    if (sets.length === 0) {
-      const defaultSetData = {
-        userId,
-        name: 'General Routine',
-        color: '#C084FC',
-        isActive: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-      const docRef = await addDoc(collection(db, HABIT_SETS_COLLECTION), defaultSetData);
-      sets = [
-        {
-          id: docRef.id,
-          userId,
-          name: 'General Routine',
-          color: '#C084FC',
-          isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-    }
+    const defaultSetId = await ensureDefaultHabitSet(userId, sets);
+    await mergeDuplicateDefaultHabitSets(userId, sets, defaultSetId);
 
-    return sets;
+    const updatedSnapshot = await getDocs(q);
+    sets = updatedSnapshot.docs.map((setDoc) => ({
+      id: setDoc.id,
+      ...setDoc.data(),
+      createdAt: setDoc.data().createdAt?.toDate() || new Date(),
+      updatedAt: setDoc.data().updatedAt?.toDate() || new Date(),
+    })) as HabitSet[];
+
+    return sets.sort((a, b) => {
+      if (a.id === defaultSetId) return -1;
+      if (b.id === defaultSetId) return 1;
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
   } catch (error: any) {
     if (error?.code === 'permission-denied') {
       console.warn('Firestore Rule Notice: "habitSets" collection requires permission rules in Firebase Console.');

@@ -7,6 +7,10 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
 } from 'firebase/auth';
 import { auth } from '@/utils/firebase';
 import { UserProfile } from '@/types';
@@ -86,6 +90,33 @@ export const signInWithGoogle = async (): Promise<FirebaseUser> => {
     console.error('Error signing in with Google:', error);
     throw error;
   }
+};
+
+/** Reauthenticate the signed-in user immediately before deleting their account. */
+export const reauthenticateCurrentUser = async (password?: string): Promise<void> => {
+  const user = auth.currentUser;
+  if (!user) throw new Error('No signed-in user found.');
+
+  const providerIds = user.providerData.map((provider) => provider.providerId);
+  if (providerIds.includes('password')) {
+    if (!password) throw new Error('Enter your password to delete this account.');
+    const credential = EmailAuthProvider.credential(user.email || '', password);
+    await reauthenticateWithCredential(user, credential);
+    return;
+  }
+
+  if (providerIds.includes('google.com')) {
+    await reauthenticateWithPopup(user, new GoogleAuthProvider());
+    return;
+  }
+
+  throw new Error('Sign in again with your original provider before deleting this account.');
+};
+
+export const deleteAuthenticatedUser = async (): Promise<void> => {
+  const user = auth.currentUser;
+  if (!user) throw new Error('No signed-in user found.');
+  await deleteUser(user);
 };
 
 /**

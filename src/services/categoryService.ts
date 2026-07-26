@@ -4,6 +4,7 @@ import {
   doc,
   getDocs,
   query,
+  runTransaction,
   Timestamp,
   where,
   writeBatch,
@@ -121,21 +122,25 @@ export const ensureDefaultCategories = async (userId: string): Promise<void> => 
       return;
     }
 
-    const batch = writeBatch(db);
-    const now = Timestamp.now();
+    await runTransaction(db, async (transaction) => {
+      const defaultRefs = DEFAULT_CATEGORIES.map((category) =>
+        doc(db, CATEGORIES_COLLECTION, `${userId}_default_${category.name.toLowerCase()}`)
+      );
+      const snapshots = await Promise.all(defaultRefs.map((ref) => transaction.get(ref)));
 
-    DEFAULT_CATEGORIES.forEach((category) => {
-      const newDocRef = doc(collection(db, CATEGORIES_COLLECTION));
-      batch.set(newDocRef, {
-        userId,
-        name: category.name,
-        color: category.color,
-        createdAt: now,
-        updatedAt: now,
+      snapshots.forEach((snapshot, index) => {
+        if (!snapshot.exists()) {
+          const category = DEFAULT_CATEGORIES[index];
+          transaction.set(defaultRefs[index], {
+            userId,
+            name: category.name,
+            color: category.color,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          });
+        }
       });
     });
-
-    await batch.commit();
   } catch (error) {
     console.error('Error ensuring default categories:', error);
     throw error;

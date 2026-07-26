@@ -5,6 +5,7 @@ import {
   doc,
   getDocs,
   query,
+  runTransaction,
   Timestamp,
   updateDoc,
   where,
@@ -13,7 +14,60 @@ import { db } from '@/utils/firebase';
 import { TaskPreset } from '@/types';
 
 const TASK_PRESETS_COLLECTION = 'taskPresets';
+const USERS_COLLECTION = 'users';
 const DEFAULT_PRESET_NAME = 'Inbox';
+
+const ensureDefaultTaskPreset = async (userId: string, presets: TaskPreset[]): Promise<string> => {
+  const userRef = doc(db, USERS_COLLECTION, userId);
+  const existingDefault = presets.find((preset) => preset.name === DEFAULT_PRESET_NAME) || presets[0];
+  const newPresetRef = doc(collection(db, TASK_PRESETS_COLLECTION));
+
+  return runTransaction(db, async (transaction) => {
+    const userSnapshot = await transaction.get(userRef);
+    const savedPresetId = userSnapshot.data()?.defaultTaskPresetId;
+    if (typeof savedPresetId === 'string' && savedPresetId) {
+      const savedPreset = await transaction.get(doc(db, TASK_PRESETS_COLLECTION, savedPresetId));
+      if (savedPreset.exists()) return savedPresetId;
+    }
+
+    const defaultPresetId = existingDefault?.id || newPresetRef.id;
+    if (!existingDefault) {
+      transaction.set(newPresetRef, {
+        userId,
+        name: DEFAULT_PRESET_NAME,
+        color: '#C084FC',
+        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    }
+    transaction.set(userRef, {
+      defaultTaskPresetId: defaultPresetId,
+      updatedAt: Timestamp.now(),
+    }, { merge: true });
+    return defaultPresetId;
+  });
+};
+
+const mergeDuplicateDefaultTaskPresets = async (
+  userId: string,
+  presets: TaskPreset[],
+  defaultPresetId: string
+): Promise<void> => {
+  const duplicates = presets.filter((preset) => preset.name === DEFAULT_PRESET_NAME && preset.id !== defaultPresetId);
+  await Promise.all(duplicates.map(async (duplicate) => {
+    const tasks = await getDocs(query(
+      collection(db, 'tasks'),
+      where('userId', '==', userId),
+      where('setId', '==', duplicate.id)
+    ));
+    await Promise.all(tasks.docs.map((task) => updateDoc(task.ref, {
+      setId: defaultPresetId,
+      updatedAt: Timestamp.now(),
+    })));
+    await deleteDoc(doc(db, TASK_PRESETS_COLLECTION, duplicate.id));
+  }));
+};
 
 export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> => {
   const snapshot = await getDocs(
@@ -27,28 +81,24 @@ export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> 
     updatedAt: snapshotDoc.data().updatedAt?.toDate() || new Date(),
   })) as TaskPreset[];
 
-  if (presets.length === 0) {
-    const defaultPreset = {
-      userId,
-      name: DEFAULT_PRESET_NAME,
-      color: '#C084FC',
-      isActive: true,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-    const presetDoc = await addDoc(collection(db, TASK_PRESETS_COLLECTION), defaultPreset);
-    presets = [{
-      id: presetDoc.id,
-      userId,
-      name: DEFAULT_PRESET_NAME,
-      color: '#C084FC',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }];
-  }
+  const defaultPresetId = await ensureDefaultTaskPreset(userId, presets);
+  await mergeDuplicateDefaultTaskPresets(userId, presets, defaultPresetId);
 
-  return presets.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const updatedSnapshot = await getDocs(
+    query(collection(db, TASK_PRESETS_COLLECTION), where('userId', '==', userId))
+  );
+  presets = updatedSnapshot.docs.map((snapshotDoc) => ({
+    id: snapshotDoc.id,
+    ...snapshotDoc.data(),
+    createdAt: snapshotDoc.data().createdAt?.toDate() || new Date(),
+    updatedAt: snapshotDoc.data().updatedAt?.toDate() || new Date(),
+  })) as TaskPreset[];
+
+  return presets.sort((a, b) => {
+    if (a.id === defaultPresetId) return -1;
+    if (b.id === defaultPresetId) return 1;
+    return a.createdAt.getTime() - b.createdAt.getTime();
+  });
 };
 
 export const createTaskPreset = async (userId: string, name: string, color = '#C084FC'): Promise<TaskPreset> => {
