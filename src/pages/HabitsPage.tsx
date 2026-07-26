@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock, CalendarRange } from 'lucide-react';
-import { DailyHabit } from '@/types';
+import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown } from 'lucide-react';
+import { DailyHabit, HabitSet } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   createDailyHabit,
@@ -11,6 +11,11 @@ import {
   deleteDailyHabit,
   PASTEL_HABIT_COLORS,
   getHabitColorHex,
+  getUserHabitSets,
+  createHabitSet,
+  setActiveHabitSet,
+  updateHabitSet,
+  deleteHabitSet,
 } from '@/services/habitService';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
@@ -20,11 +25,17 @@ import { playSuccessSound } from '@/utils/audio';
 import { HabitTimeline } from '@/components/HabitTimeline';
 import { TimePickerInput } from '@/components/TimePickerInput';
 import { WeeklyScheduleModal } from '@/components/WeeklyScheduleModal';
+import { ManageHabitSetsModal } from '@/components/ManageHabitSetsModal';
 import HabitsTable from '@/components/HabitsTable';
 
 export function HabitsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
+  const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
+  const [activeSetId, setActiveSetId] = useState<string>('');
+  const [isRoutineDropdownOpen, setIsRoutineDropdownOpen] = useState(false);
+  const [isManageSetsModalOpen, setIsManageSetsModalOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +50,7 @@ export function HabitsPage() {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [habitColor, setHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
+  const [habitSetId, setHabitSetId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayDate] = useState(getTodayDateString());
 
@@ -49,6 +61,7 @@ export function HabitsPage() {
   const [editStartTime, setEditStartTime] = useState('09:00');
   const [editEndTime, setEditEndTime] = useState('10:00');
   const [editHabitColor, setEditHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
+  const [editHabitSetId, setEditHabitSetId] = useState<string>('');
 
   // Delete confirmation state
   const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
@@ -56,6 +69,7 @@ export function HabitsPage() {
   useEffect(() => {
     if (!user) {
       setHabits([]);
+      setHabitSets([]);
       setLoadError(null);
       setLoading(false);
       return;
@@ -64,13 +78,35 @@ export function HabitsPage() {
     loadHabits();
   }, [user]);
 
+  useEffect(() => {
+    if (!isRoutineDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.routine-dropdown-container')) {
+        setIsRoutineDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isRoutineDropdownOpen]);
+
   const loadHabits = async () => {
     if (!user) return;
     try {
       setLoading(true);
       setLoadError(null);
-      const userHabits = await getUserDailyHabits(user.uid);
+      const [userHabits, sets] = await Promise.all([
+        getUserDailyHabits(user.uid),
+        getUserHabitSets(user.uid),
+      ]);
       setHabits(userHabits.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+      setHabitSets(sets);
+
+      const active = sets.find((s) => s.isActive) || sets[0];
+      if (active) {
+        setActiveSetId(active.id);
+        setHabitSetId(active.id);
+      }
       setError(null);
     } catch (err) {
       const message = 'Could not load habits. Refresh and try again.';
@@ -80,6 +116,70 @@ export function HabitsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const activeSet = useMemo(() => {
+    return habitSets.find((s) => s.id === activeSetId) || habitSets[0];
+  }, [habitSets, activeSetId]);
+
+  // Habits belonging strictly to active routine set (or default set for legacy habits)
+  const activeRoutineHabits = useMemo(() => {
+    if (!activeSet) return habits;
+    const defaultSetId = habitSets[0]?.id;
+    return habits.filter((h) => {
+      if (h.setId) {
+        return h.setId === activeSet.id;
+      }
+      return activeSet.id === defaultSetId;
+    });
+  }, [habits, activeSet, habitSets]);
+
+  const habitsToDisplay = activeRoutineHabits;
+
+  const handleSelectActiveSet = async (setId: string) => {
+    if (!user) return;
+    try {
+      await setActiveHabitSet(user.uid, setId);
+      setActiveSetId(setId);
+      setHabitSets((prev) =>
+        prev.map((s) => ({ ...s, isActive: s.id === setId }))
+      );
+      showToast('Activated routine preset', 'success');
+    } catch (err) {
+      showToast('Failed to change active routine preset', 'error');
+    }
+  };
+
+  const handleCreateSet = async (name: string, color?: string) => {
+    if (!user) return;
+    const newSet = await createHabitSet(user.uid, { name, color, isActive: false });
+    setHabitSets((prev) => [...prev, newSet]);
+    showToast('Created new routine preset', 'success');
+  };
+
+  const handleUpdateSet = async (setId: string, updates: Partial<Pick<HabitSet, 'name' | 'color'>>) => {
+    await updateHabitSet(setId, updates);
+    setHabitSets((prev) =>
+      prev.map((s) => (s.id === setId ? { ...s, ...updates } : s))
+    );
+    showToast('Updated routine preset', 'success');
+  };
+
+  const handleDeleteSet = async (setId: string) => {
+    if (!user) return;
+    await deleteHabitSet(setId, user.uid);
+    setHabitSets((prev) => prev.filter((s) => s.id !== setId));
+    setHabits((prev) => prev.filter((h) => h.setId !== setId));
+
+    // If active set was deleted, fallback to first remaining set
+    if (setId === activeSetId) {
+      const remaining = habitSets.filter((s) => s.id !== setId);
+      if (remaining.length > 0) {
+        await setActiveHabitSet(user.uid, remaining[0].id);
+        setActiveSetId(remaining[0].id);
+      }
+    }
+    showToast('Deleted preset and associated habits', 'success');
   };
 
   const handleAddHabit = async (e: React.FormEvent) => {
@@ -100,6 +200,7 @@ export function HabitsPage() {
       setIsSubmitting(true);
       setError(null);
 
+      const targetSetId = habitSetId || activeSetId;
       const newHabitId = await createDailyHabit(user.uid, {
         title: habitTitle.trim(),
         completedDates: [],
@@ -107,6 +208,7 @@ export function HabitsPage() {
         startTime,
         endTime,
         color: habitColor,
+        setId: targetSetId,
       });
 
       setHabits((prev) => {
@@ -121,6 +223,7 @@ export function HabitsPage() {
             startTime,
             endTime,
             color: habitColor,
+            setId: targetSetId,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -189,6 +292,7 @@ export function HabitsPage() {
     setEditStartTime(habitToEdit.startTime);
     setEditEndTime(habitToEdit.endTime);
     setEditHabitColor(getHabitColorHex(habitToEdit, habits));
+    setEditHabitSetId(habitToEdit.setId || activeSetId);
   };
 
   const handleSaveEdit = async () => {
@@ -208,12 +312,14 @@ export function HabitsPage() {
       setIsSubmitting(true);
       setEditError(null);
 
+      const targetSetId = editHabitSetId || activeSetId;
       await updateDoc(doc(db, 'dailyHabits', editingHabitId), {
         title: editHabitTitle.trim(),
         scheduledDays: editScheduledDays,
         startTime: editStartTime,
         endTime: editEndTime,
         color: editHabitColor,
+        setId: targetSetId,
         updatedAt: new Date(),
       });
 
@@ -226,6 +332,7 @@ export function HabitsPage() {
               startTime: editStartTime,
               endTime: editEndTime,
               color: editHabitColor,
+              setId: targetSetId,
               updatedAt: new Date(),
             }
           : habit
@@ -370,6 +477,7 @@ export function HabitsPage() {
                   setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
                   setStartTime('09:00');
                   setEndTime('10:00');
+                  setHabitSetId(activeSetId);
                   setError(null);
                   setIsAddModalOpen(true);
                 }}
@@ -403,6 +511,7 @@ export function HabitsPage() {
                     setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
                     setStartTime('09:00');
                     setEndTime('10:00');
+                    setHabitSetId(activeSetId);
                     setError(null);
                     setIsAddModalOpen(true);
                   }}
@@ -483,6 +592,24 @@ export function HabitsPage() {
                       disabled={isSubmitting}
                       autoFocus
                     />
+                  </div>
+
+                  <div>
+                    <label htmlFor="habit-preset" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      Routine Preset
+                    </label>
+                    <select
+                      id="habit-preset"
+                      value={habitSetId || activeSetId}
+                      onChange={(e) => setHabitSetId(e.target.value)}
+                      className="w-full min-h-[38px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                    >
+                      {habitSets.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} {s.id === activeSetId ? '(Active)' : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Days Selection */}
@@ -578,6 +705,80 @@ export function HabitsPage() {
             document.body
           )}
 
+        {/* Sleek Compact Routine Bar */}
+        <div className="relative z-30 mb-4 flex items-center justify-between gap-2 bg-white/80 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border border-purple-100/90 shadow-xs">
+          <div className="relative routine-dropdown-container flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={() => setIsRoutineDropdownOpen(!isRoutineDropdownOpen)}
+              className="w-full flex items-center justify-between min-h-[38px] bg-white border border-purple-200 hover:border-purple-400 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-900 shadow-xs hover:shadow-sm transition-all font-semibold focus:outline-none"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Layers className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                <span className="text-gray-500 font-normal hidden sm:inline">Routine:</span>
+                <div className="flex items-center gap-1.5 truncate">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: activeSet?.color || '#C084FC' }}
+                  />
+                  <span className="font-bold text-gray-900 truncate">{activeSet?.name || 'General Routine'}</span>
+                  <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold">
+                    Active
+                  </span>
+                </div>
+              </div>
+              <ChevronDown className={`ml-2 h-4 w-4 text-purple-500 flex-shrink-0 transition-transform duration-200 ${isRoutineDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isRoutineDropdownOpen && (
+              <div className="absolute left-0 top-full mt-1.5 z-[100] w-64 bg-white border-2 border-purple-300 rounded-xl shadow-[0_16px_36px_rgba(120,87,255,0.35)] py-1.5 modal-enter">
+                <div className="px-3 py-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  Switch Active Routine
+                </div>
+                {habitSets.map((set) => {
+                  const isActive = set.id === activeSetId;
+                  return (
+                    <button
+                      key={set.id}
+                      type="button"
+                      onClick={() => {
+                        handleSelectActiveSet(set.id);
+                        setIsRoutineDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3.5 py-2 text-xs sm:text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
+                        isActive ? 'bg-purple-50 text-purple-900 font-bold' : 'text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: set.color || '#C084FC' }}
+                        />
+                        <span className="truncate">{set.name}</span>
+                      </div>
+                      {isActive && (
+                        <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">
+                          Active
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsManageSetsModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition shadow-xs whitespace-nowrap"
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Manage Presets</span>
+            <span className="sm:hidden">Manage</span>
+          </button>
+        </div>
+
         {/* Content Section: Loading / Error / Empty / Table / List */}
         {loading ? (
           <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
@@ -598,13 +799,13 @@ export function HabitsPage() {
               Retry
             </button>
           </div>
-        ) : habits.length === 0 ? (
+        ) : habitsToDisplay.length === 0 ? (
           <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
             <div className="mb-4 flex justify-center">
               <Activity className="h-10 w-10 md:h-12 md:w-12 text-purple-300" />
             </div>
-            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">No habits yet</h3>
-            <p className="text-xs sm:text-sm text-gray-600 mb-4">Start building better habits by adding one above!</p>
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">No habits in this routine preset</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mb-4">Start building better habits in this routine preset by adding one above!</p>
             <button
               type="button"
               onClick={() => {
@@ -617,14 +818,14 @@ export function HabitsPage() {
               }}
               className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
             >
-              Add first habit
+              Add habit to preset
             </button>
           </div>
         ) : (
           <>
             {viewMode === 'table' ? (
               <HabitsTable
-                habits={habits}
+                habits={habitsToDisplay}
                 todayDate={todayDate}
                 onToggleCompletion={handleToggleHabit}
                 onEdit={handleEditHabit}
@@ -633,7 +834,7 @@ export function HabitsPage() {
               />
             ) : (
               <div className="space-y-3 sm:space-y-4 list-stagger">
-                {habits.map((habit) => {
+                {habitsToDisplay.map((habit) => {
                   const isCompletedToday = habit.completedDates.includes(todayDate);
                   const streak = habit.completedDates.length;
 
@@ -730,12 +931,12 @@ export function HabitsPage() {
             )}
 
             {/* Habit Timeline at the bottom for both List and Table views */}
-            {habits.length > 0 && (
+            {habitsToDisplay.length > 0 && (
               <HabitTimeline
-                habits={habits}
+                habits={habitsToDisplay}
                 getHabitColor={(id) => {
-                  const h = habits.find((item) => item.id === id);
-                  return h ? getHabitColorHex(h, habits) : '#A78BFA';
+                  const h = habitsToDisplay.find((item) => item.id === id);
+                  return h ? getHabitColorHex(h, habitsToDisplay) : '#A78BFA';
                 }}
                 onEditHabit={handleEditHabit}
               />
@@ -786,6 +987,24 @@ export function HabitsPage() {
                       className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
                       disabled={isSubmitting}
                     />
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-habit-preset" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                      Routine Preset
+                    </label>
+                    <select
+                      id="edit-habit-preset"
+                      value={editHabitSetId || activeSetId}
+                      onChange={(e) => setEditHabitSetId(e.target.value)}
+                      className="w-full min-h-[38px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm focus:border-purple-400 focus:outline-none"
+                    >
+                      {habitSets.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} {s.id === activeSetId ? '(Active)' : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
@@ -922,8 +1141,20 @@ export function HabitsPage() {
         <WeeklyScheduleModal
           isOpen={isWeeklyModalOpen}
           onClose={() => setIsWeeklyModalOpen(false)}
-          habits={habits}
+          habits={habitsToDisplay}
           onEditHabit={handleEditHabit}
+        />
+
+        {/* Manage Habit Sets Modal */}
+        <ManageHabitSetsModal
+          isOpen={isManageSetsModalOpen}
+          onClose={() => setIsManageSetsModalOpen(false)}
+          habitSets={habitSets}
+          activeSetId={activeSetId}
+          onSelectActiveSet={handleSelectActiveSet}
+          onCreateSet={handleCreateSet}
+          onUpdateSet={handleUpdateSet}
+          onDeleteSet={handleDeleteSet}
         />
       </div>
     </div>

@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, CheckCircle2, TrendingUp, RefreshCw, Minus, X, ChevronDown, Search } from 'lucide-react';
+import { Activity, CheckCircle2, TrendingUp, RefreshCw, Minus, X, ChevronDown, Search, Layers } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getUserDailyHabits, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation, resetHabitData } from '@/services/habitService';
-import { DailyHabit } from '@/types';
+import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation, resetHabitData } from '@/services/habitService';
+import { DailyHabit, HabitSet } from '@/types';
 import { ContributionHeatmap } from '@/components/ContributionHeatmap';
+import { showToast } from '@/components/Toast';
 
 export function AnalyticsPage() {
   const { user, userProfile } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
+  const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
+  const [selectedSetId, setSelectedSetId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resetTargetHabit, setResetTargetHabit] = useState<DailyHabit | null>(null);
@@ -17,6 +20,7 @@ export function AnalyticsPage() {
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isRoutineDropdownOpen, setIsRoutineDropdownOpen] = useState(false);
   const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
 
   const handleResetConfirm = async () => {
@@ -25,24 +29,33 @@ export function AnalyticsPage() {
       setIsResetting(true);
       await resetHabitData(resetTargetHabit.id);
       await loadAnalytics(); // Reload after reset
+      showToast('Habit history reset successfully', 'success');
     } catch (err) {
       console.error('Error resetting habit:', err);
+      showToast('Failed to reset habit history', 'error');
     } finally {
       setIsResetting(false);
       setResetTargetHabit(null);
     }
   };
 
-
-
   const loadAnalytics = async () => {
     if (!user) return;
     try {
       setLoading(true);
       setError(null);
-      const fetchedHabits = await getUserDailyHabits(user.uid);
+      const [fetchedHabits, sets] = await Promise.all([
+        getUserDailyHabits(user.uid),
+        getUserHabitSets(user.uid),
+      ]);
       const sortedHabits = fetchedHabits.sort((a, b) => a.startTime.localeCompare(b.startTime));
       setHabits(sortedHabits);
+      setHabitSets(sets);
+
+      const activeSet = sets.find((s) => s.isActive) || sets[0];
+      if (activeSet) {
+        setSelectedSetId(activeSet.id);
+      }
     } catch (loadError) {
       setError('Could not load analytics. Refresh and try again.');
       console.error('Error fetching habits:', loadError);
@@ -73,6 +86,30 @@ export function AnalyticsPage() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isDropdownOpen]);
+
+  useEffect(() => {
+    if (!isRoutineDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.analytics-routine-dropdown-container')) {
+        setIsRoutineDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isRoutineDropdownOpen]);
+
+  const selectedSet = useMemo(() => {
+    return habitSets.find((s) => s.id === selectedSetId) || habitSets[0];
+  }, [habitSets, selectedSetId]);
+
+  const filteredHabits = useMemo(() => {
+    const defaultSetId = habitSets[0]?.id;
+    return habits.filter((h) => {
+      if (h.setId) return h.setId === selectedSetId;
+      return selectedSetId === defaultSetId;
+    });
+  }, [habits, selectedSetId, habitSets]);
 
   if (!user) {
     return (
@@ -137,104 +174,177 @@ export function AnalyticsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
+      <div className="mb-3 sm:mb-5">
+        <h1 className="text-lg sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
           Hello, {userDisplayName}
         </h1>
-        <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Track consistency and momentum over time.</p>
+        <p className="mt-0.5 text-xs sm:text-sm text-gray-500 font-medium">Track consistency and momentum over time.</p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm md:text-base">
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs sm:text-sm">
           {error}
         </div>
       )}
 
-          <div className="mb-6 flex flex-col md:flex-row md:items-center gap-3">
-            <div className="relative custom-select-container flex-1 md:max-w-xs">
-              <button
-                type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full flex items-center justify-between min-h-[40px] bg-white/70 backdrop-blur-md border border-purple-100 hover:border-purple-300 rounded-xl px-4 py-2 text-sm text-purple-900 shadow-sm hover:bg-white hover:shadow-md transition-all font-semibold focus:outline-none focus:ring-2 focus:ring-purple-300/50"
-              >
-                <span className="truncate">
-                  {selectedHabitId ? habits.find((h) => h.id === selectedHabitId)?.title : '— Select a habit —'}
-                </span>
-                <ChevronDown className={`ml-2 h-4 w-4 text-purple-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+      {/* Ultra-Compact Control Bar */}
+      <div className="mb-4 sm:mb-6 flex flex-col gap-2 sm:gap-3">
+        {/* Row 1: Routine Selector & Habit Selector */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full">
+          {/* Custom Routine Dropdown (Identical to HabitsPage) */}
+          <div className="relative analytics-routine-dropdown-container flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={() => setIsRoutineDropdownOpen(!isRoutineDropdownOpen)}
+              className="w-full flex items-center justify-between min-h-[38px] bg-white/90 backdrop-blur-md border border-purple-200 hover:border-purple-300 rounded-xl px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm text-gray-900 shadow-xs hover:shadow-sm transition-all font-semibold focus:outline-none"
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <Layers className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
+                <span className="text-gray-500 font-normal hidden sm:inline">Routine:</span>
+                <div className="flex items-center gap-1 truncate">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: selectedSet?.color || '#C084FC' }}
+                  />
+                  <span className="font-bold text-gray-900 truncate">{selectedSet?.name || 'General Routine'}</span>
+                  {selectedSet?.isActive && (
+                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold hidden md:inline-block">
+                      Active
+                    </span>
+                  )}
+                </div>
+              </div>
+              <ChevronDown className={`ml-1 h-3.5 w-3.5 text-purple-500 flex-shrink-0 transition-transform duration-200 ${isRoutineDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-              {isDropdownOpen && (
-                <div className="absolute left-0 right-0 mt-1.5 z-30 bg-white/95 backdrop-blur-md border border-purple-100/50 rounded-xl shadow-xl max-h-60 overflow-y-auto py-1.5 modal-enter">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedHabitId(null);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-all hover:bg-purple-50 font-semibold ${
-                      !selectedHabitId ? 'text-purple-700 bg-purple-50/50' : 'text-gray-600'
-                    }`}
-                  >
-                    — Show All —
-                  </button>
-                  {habits.map((h) => (
+            {isRoutineDropdownOpen && (
+              <div className="absolute left-0 top-full mt-1 z-[100] w-64 bg-white border-2 border-purple-300 rounded-xl shadow-[0_16px_36px_rgba(120,87,255,0.35)] py-1 modal-enter">
+                <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Select Routine
+                </div>
+                {habitSets.map((set) => {
+                  const isSelected = set.id === selectedSetId;
+                  return (
                     <button
-                      key={h.id}
+                      key={set.id}
                       type="button"
                       onClick={() => {
-                        setSelectedHabitId(h.id);
-                        setSearchQuery('');
-                        setIsDropdownOpen(false);
+                        setSelectedSetId(set.id);
+                        setSelectedHabitId(null);
+                        setIsRoutineDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
-                        selectedHabitId === h.id ? 'text-purple-700 bg-purple-50/50 font-bold' : 'text-gray-700'
+                      className={`w-full text-left px-3 py-1.5 text-xs sm:text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
+                        isSelected ? 'bg-purple-50 text-purple-900 font-bold' : 'text-gray-700'
                       }`}
                     >
-                      <span className="truncate">{h.title}</span>
-                      {selectedHabitId === h.id && <span className="h-2 w-2 rounded-full bg-purple-500"></span>}
+                      <div className="flex items-center gap-2 truncate">
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: set.color || '#C084FC' }}
+                        />
+                        <span className="truncate">{set.name}</span>
+                      </div>
+                      {set.isActive && (
+                        <span className="text-[9px] bg-purple-600 text-white px-1.5 py-0.2 rounded-full font-bold">
+                          Active
+                        </span>
+                      )}
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-            <div className="relative flex-1">
-              <input
-                aria-label="Search habits"
-                placeholder="Search habits..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full min-h-[40px] pr-4 bg-white/70 backdrop-blur-md border border-purple-100 rounded-xl text-sm text-gray-700 placeholder:text-gray-400 shadow-sm focus:border-purple-300 focus:ring-2 focus:ring-purple-300/50 focus:outline-none transition-all"
-                style={{ paddingLeft: '2.5rem' }}
-              />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-600 pointer-events-none flex-shrink-0" />
-            </div>
+          {/* Habit Selector Dropdown */}
+          <div className="relative custom-select-container flex-1 min-w-0 sm:max-w-xs">
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full flex items-center justify-between min-h-[38px] bg-white/90 backdrop-blur-md border border-purple-200 hover:border-purple-300 rounded-xl px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm text-purple-900 shadow-xs transition-all font-semibold focus:outline-none"
+            >
+              <span className="truncate">
+                {selectedHabitId ? filteredHabits.find((h) => h.id === selectedHabitId)?.title : 'All Habits'}
+              </span>
+              <ChevronDown className={`ml-1 h-3.5 w-3.5 text-purple-500 flex-shrink-0 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
 
+            {isDropdownOpen && (
+              <div className="absolute right-0 sm:left-0 top-full mt-1 z-[100] w-56 bg-white border border-purple-200 rounded-xl shadow-xl max-h-56 overflow-y-auto py-1 modal-enter">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedHabitId(null);
+                    setIsDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 text-xs transition-all hover:bg-purple-50 font-semibold ${
+                    !selectedHabitId ? 'text-purple-700 bg-purple-50/50' : 'text-gray-600'
+                  }`}
+                >
+                  Show All Habits
+                </button>
+                {filteredHabits.map((h) => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedHabitId(h.id);
+                      setSearchQuery('');
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 text-xs transition-all hover:bg-purple-50 flex items-center justify-between ${
+                      selectedHabitId === h.id ? 'text-purple-700 bg-purple-50/50 font-bold' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="truncate">{h.title}</span>
+                    {selectedHabitId === h.id && <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Search Input on its own line below */}
+        <div className="relative w-full">
+          <input
+            aria-label="Search habits"
+            placeholder="Search habit..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full min-h-[38px] pr-8 bg-white/90 backdrop-blur-md border border-purple-200 rounded-xl text-xs sm:text-sm text-gray-700 placeholder:text-gray-400 shadow-xs focus:border-purple-300 focus:outline-none transition-all"
+            style={{ paddingLeft: '2.2rem' }}
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-purple-600 pointer-events-none flex-shrink-0" />
+          {(searchQuery || selectedHabitId) && (
             <button
               type="button"
               onClick={() => {
                 setSelectedHabitId(null);
                 setSearchQuery('');
               }}
-              className="min-h-[40px] px-5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold rounded-xl shadow-md shadow-purple-500/10 hover:shadow-lg transition duration-200 border border-transparent flex items-center justify-center"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 text-xs font-bold p-1"
+              title="Reset filters"
             >
-              Reset filters
+              <X className="w-3.5 h-3.5" />
             </button>
-          </div>
+          )}
+        </div>
+      </div>
 
-          <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
-            {habits
-              .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
-              .filter((h) => (searchQuery ? h.title.toLowerCase().includes(searchQuery.toLowerCase()) : true))
-              .map((habit) => (
-                <HabitAnalyticsCard
-                  key={habit.id}
-                  habit={habit}
-                  setResetTargetHabit={setResetTargetHabit}
-                  isResetting={isResetting}
-                />
-              ))}
-          </div>
+      <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
+        {filteredHabits
+          .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
+          .filter((h) => (searchQuery ? h.title.toLowerCase().includes(searchQuery.toLowerCase()) : true))
+          .map((habit) => (
+            <HabitAnalyticsCard
+              key={habit.id}
+              habit={habit}
+              setResetTargetHabit={setResetTargetHabit}
+              isResetting={isResetting}
+            />
+          ))}
+      </div>
 
       {resetTargetHabit && createPortal(
         <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">

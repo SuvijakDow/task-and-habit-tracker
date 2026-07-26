@@ -19,6 +19,16 @@ export interface Category {
   updatedAt: Date;
 }
 
+export interface HabitSet {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface DailyHabit {
   id: string;
   userId: string;
@@ -28,6 +38,7 @@ export interface DailyHabit {
   startTime: string; // HH:MM format, e.g. '09:00'
   endTime: string; // HH:MM format, e.g. '10:00'
   color?: string; // Hex color string, e.g. '#F87171'
+  setId?: string; // Id of the HabitSet it belongs to
   order?: number; // For drag-drop reordering
   trackingStartDate?: Date; // Date when tracking started or was last reset
   createdAt: Date;

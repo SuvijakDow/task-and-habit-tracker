@@ -131,6 +131,11 @@ service cloud.firestore {
       allow create: if request.auth.uid == request.resource.data.userId;
     }
 
+    match /habitSets/{document=**} {
+      allow read, write: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+    }
+
     match /categories/{document=**} {
       allow read, write: if request.auth.uid == resource.data.userId;
       allow create: if request.auth.uid == request.resource.data.userId;

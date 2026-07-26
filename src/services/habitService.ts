@@ -13,10 +13,160 @@ import {
   arrayRemove,
 } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
-import { DailyHabit } from '@/types';
+import { DailyHabit, HabitSet } from '@/types';
 import { formatToDateString } from '@/utils/dateUtils';
 
 const DAILY_HABITS_COLLECTION = 'dailyHabits';
+const HABIT_SETS_COLLECTION = 'habitSets';
+
+/**
+ * Habit Set (Routine Preset) Services
+ */
+export const getUserHabitSets = async (userId: string): Promise<HabitSet[]> => {
+  try {
+    const q = query(
+      collection(db, HABIT_SETS_COLLECTION),
+      where('userId', '==', userId)
+    );
+    const querySnapshot = await getDocs(q);
+
+    let sets = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate() || new Date(),
+      updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+    })) as HabitSet[];
+
+    // If user has no habit sets, initialize a default set
+    if (sets.length === 0) {
+      const defaultSetData = {
+        userId,
+        name: 'General Routine',
+        color: '#C084FC',
+        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      const docRef = await addDoc(collection(db, HABIT_SETS_COLLECTION), defaultSetData);
+      sets = [
+        {
+          id: docRef.id,
+          userId,
+          name: 'General Routine',
+          color: '#C084FC',
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+    }
+
+    return sets;
+  } catch (error: any) {
+    if (error?.code === 'permission-denied') {
+      console.warn('Firestore Rule Notice: "habitSets" collection requires permission rules in Firebase Console.');
+    } else {
+      console.error('Error getting user habit sets:', error);
+    }
+    return [
+      {
+        id: 'default',
+        userId,
+        name: 'General Routine',
+        color: '#C084FC',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  }
+};
+
+export const createHabitSet = async (
+  userId: string,
+  setData: { name: string; color?: string; isActive?: boolean }
+): Promise<HabitSet> => {
+  try {
+    const docRef = await addDoc(collection(db, HABIT_SETS_COLLECTION), {
+      userId,
+      name: setData.name,
+      color: setData.color || '#C084FC',
+      isActive: setData.isActive ?? false,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+
+    return {
+      id: docRef.id,
+      userId,
+      name: setData.name,
+      color: setData.color || '#C084FC',
+      isActive: setData.isActive ?? false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  } catch (error) {
+    console.error('Error creating habit set:', error);
+    throw error;
+  }
+};
+
+export const setActiveHabitSet = async (userId: string, targetSetId: string): Promise<void> => {
+  try {
+    const sets = await getUserHabitSets(userId);
+    const updatePromises = sets.map((set) => {
+      const isTarget = set.id === targetSetId;
+      if (set.isActive !== isTarget) {
+        const docRef = doc(db, HABIT_SETS_COLLECTION, set.id);
+        return updateDoc(docRef, {
+          isActive: isTarget,
+          updatedAt: Timestamp.now(),
+        });
+      }
+      return Promise.resolve();
+    });
+    await Promise.all(updatePromises);
+  } catch (error) {
+    console.error('Error setting active habit set:', error);
+    throw error;
+  }
+};
+
+export const updateHabitSet = async (
+  setId: string,
+  updates: Partial<Pick<HabitSet, 'name' | 'color'>>
+): Promise<void> => {
+  try {
+    const docRef = doc(db, HABIT_SETS_COLLECTION, setId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error updating habit set:', error);
+    throw error;
+  }
+};
+
+export const deleteHabitSet = async (setId: string, userId?: string): Promise<void> => {
+  try {
+    const docRef = doc(db, HABIT_SETS_COLLECTION, setId);
+    await deleteDoc(docRef);
+
+    if (userId) {
+      const q = query(
+        collection(db, DAILY_HABITS_COLLECTION),
+        where('userId', '==', userId),
+        where('setId', '==', setId)
+      );
+      const snapshot = await getDocs(q);
+      await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
+    }
+  } catch (error) {
+    console.error('Error deleting habit set:', error);
+    throw error;
+  }
+};
 
 /**
  * Create a new daily habit
@@ -88,6 +238,7 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       startTime: doc.data().startTime || '09:00',
       endTime: doc.data().endTime || '10:00',
       color: doc.data().color || undefined,
+      setId: doc.data().setId || undefined,
       trackingStartDate: doc.data().trackingStartDate ? doc.data().trackingStartDate.toDate() : undefined,
       createdAt: doc.data().createdAt.toDate(),
       updatedAt: doc.data().updatedAt.toDate(),
@@ -324,6 +475,27 @@ export const deleteDailyHabit = async (habitId: string): Promise<void> => {
     await deleteDoc(docRef);
   } catch (error) {
     console.error('Error deleting daily habit:', error);
+    throw error;
+  }
+};
+
+
+/**
+ * Reset completion history for ALL habits of a user
+ */
+export const resetAllHabitsAnalytics = async (userId: string): Promise<void> => {
+  try {
+    const habits = await getUserDailyHabits(userId);
+    await Promise.all(
+      habits.map((habit) =>
+        updateDoc(doc(db, DAILY_HABITS_COLLECTION, habit.id), {
+          completedDates: [],
+          updatedAt: Timestamp.now(),
+        })
+      )
+    );
+  } catch (error) {
+    console.error('Error resetting all habits analytics:', error);
     throw error;
   }
 };
