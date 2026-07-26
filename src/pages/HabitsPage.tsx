@@ -433,7 +433,7 @@ export function HabitsPage() {
               <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
                 Hello, {userDisplayName}
               </h1>
-              <p className="mt-0.5 text-sm text-gray-500 font-medium">Build better routines, one check at a time.</p>
+              <p className="mt-0.5 text-sm text-gray-500 font-medium">Build better routines.</p>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
