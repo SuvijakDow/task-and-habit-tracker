@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
 import { CalendarDays, RefreshCw, Search } from 'lucide-react';
+import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -155,16 +156,7 @@ export default function TasksTable({
     () =>
       tasks
         .filter((t) => !t.isCompleted)
-        .sort((a, b) => {
-          if (!a.dueDate && !b.dueDate) {
-            return b.createdAt.getTime() - a.createdAt.getTime();
-          }
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-
-          const dueDiff = a.dueDate.getTime() - b.dueDate.getTime();
-          return dueDiff !== 0 ? dueDiff : b.createdAt.getTime() - a.createdAt.getTime();
-        }),
+        .sort(sortIncompleteTasks),
     [tasks]
   );
 
@@ -172,7 +164,7 @@ export default function TasksTable({
     () =>
       tasks
         .filter((t) => t.isCompleted)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        .sort(sortCompletedTasks),
     [tasks]
   );
 

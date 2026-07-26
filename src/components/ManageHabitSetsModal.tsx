@@ -34,6 +34,12 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
   const [deletingSet, setDeletingSet] = useState<HabitSet | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const sortedHabitSets = React.useMemo(() => {
+    return [...habitSets].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+  }, [habitSets]);
+
   if (!isOpen) return null;
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -96,7 +102,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               Your Routine Presets
             </label>
 
-            {habitSets.map((set) => {
+            {sortedHabitSets.map((set) => {
               const isActive = set.id === activeSetId;
               const isEditing = set.id === editingSetId;
 

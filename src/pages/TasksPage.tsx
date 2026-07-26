@@ -17,6 +17,7 @@ import {
 } from '@/services/categoryService';
 import { showToast } from '@/components/Toast';
 import { playSuccessSound } from '@/utils/audio';
+import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import {
   createTaskPreset,
   deleteTaskPreset,
@@ -132,7 +133,14 @@ export function TasksPage() {
     }
 
     const loadData = async () => {
-      await Promise.all([loadTasks(), loadCategories(), loadPresets()]);
+      try {
+        setLoading(true);
+        await Promise.all([loadTasks(), loadCategories(), loadPresets()]);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
@@ -158,7 +166,6 @@ export function TasksPage() {
   const loadTasks = async () => {
     if (!user) return;
     try {
-      setLoading(true);
       setLoadError(null);
       const userTasks = await getUserTasks(user.uid);
       setTasks(userTasks);
@@ -168,8 +175,6 @@ export function TasksPage() {
       setLoadError(message);
       setError(message);
       console.error('Error loading tasks:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -442,6 +447,12 @@ export function TasksPage() {
   }
   const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
+  const sortedPresets = useMemo(() => {
+    return [...presets].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+  }, [presets]);
+
   const activePreset = useMemo(
     () => presets.find((preset) => preset.id === activePresetId) || presets[0],
     [presets, activePresetId]
@@ -453,14 +464,29 @@ export function TasksPage() {
   }, [tasks, presets, activePreset]);
 
   const handleActivatePreset = async (presetId: string) => {
-    if (!user) return;
+    if (!user || presetId === activePresetId) {
+      setIsPresetDropdownOpen(false);
+      return;
+    }
+
+    const previousPresetId = activePresetId;
+
+    // Optimistic Update: Instantly update active state & close dropdown
+    setActivePresetId(presetId);
+    setPresets((previous) =>
+      previous.map((preset) => ({ ...preset, isActive: preset.id === presetId }))
+    );
+    setIsPresetDropdownOpen(false);
+
     try {
       await setActiveTaskPreset(user.uid, presetId);
-      setActivePresetId(presetId);
-      setPresets((previous) => previous.map((preset) => ({ ...preset, isActive: preset.id === presetId })));
-      setIsPresetDropdownOpen(false);
     } catch (err) {
       console.error('Error activating task preset:', err);
+      // Revert on failure
+      setActivePresetId(previousPresetId);
+      setPresets((previous) =>
+        previous.map((preset) => ({ ...preset, isActive: preset.id === previousPresetId }))
+      );
       showToast('Could not switch task preset.', 'error');
     }
   };
@@ -499,17 +525,10 @@ export function TasksPage() {
 
   const incompleteTasks = visibleTasks
     .filter((t) => !t.isCompleted)
-    .sort((a, b) => {
-      // Sort by due date: tasks with earlier dates first
-      // Tasks without due dates go to the bottom
-      if (!a.dueDate && !b.dueDate) return 0;
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-    });
+    .sort(sortIncompleteTasks);
   const completedTasks = visibleTasks
     .filter((t) => t.isCompleted)
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    .sort(sortCompletedTasks);
   const isEditCategoryMissing =
     !!editFormData.category &&
     !categories.some(
@@ -520,160 +539,110 @@ export function TasksPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
-        {/* Hero Greeting */}
-        <div className="mb-6">
-          {/* Layout for sm (640px) and above: Everything in one line */}
-          <div className="hidden sm:flex items-center justify-between gap-3 w-full">
-            <div className="min-w-0 pr-2">
-              <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
-                Hello, {userDisplayName}
-              </h1>
-              <p className="mt-0.5 text-sm text-gray-500 font-medium">Focus list for today.</p>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              {/* View Toggle */}
-              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
-                  aria-pressed={viewMode === 'list'}
-                  aria-label="List view"
-                >
-                  List
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
-                  aria-pressed={viewMode === 'table'}
-                  aria-label="Table view"
-                >
-                  Table
-                </button>
-              </div>
-
-              {/* Categories Button */}
-              <button
-                onClick={() => setIsCategoriesModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
-              >
-                <FolderTree className="w-4 h-4 text-purple-600" />
-                Categories
-              </button>
-
-              {/* Add Task Button */}
-              <button
-                onClick={() => {
-                  setFormData({
-                    title: '',
-                    description: '',
-                    category: getDefaultCategoryValue(),
-                    dueDate: '',
-                    setId: activePresetId,
-                  });
-                  setIsModalOpen(true);
-                }}
-                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Task
-              </button>
-            </div>
+        {/* Top Bar Header */}
+        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-3 w-full">
+          <div className="min-w-0 pr-2">
+            <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
+              Hello, {userDisplayName}
+            </h1>
+            <p className="mt-0.5 text-sm text-gray-500 font-medium hidden sm:block">Focus list for today.</p>
           </div>
 
-          {/* Layout for mobile (below 640px): Hello & Action Buttons on Row 1, Toggle on Row 2 */}
-          <div className="sm:hidden flex flex-col gap-3.5 w-full">
-            <div className="flex items-center justify-between gap-2 w-full">
-              <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
-                Hello, {userDisplayName}
-              </h1>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  onClick={() => setIsCategoriesModalOpen(true)}
-                  className="inline-flex items-center justify-center p-2 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs text-xs font-semibold"
-                  title="Manage Categories"
-                >
-                  <FolderTree className="w-4 h-4 text-purple-600" />
-                </button>
-                <button
-                  onClick={() => {
-                    setFormData({
-                      title: '',
-                      description: '',
-                      category: getDefaultCategoryValue(),
-                      dueDate: '',
-                      setId: activePresetId,
-                    });
-                    setIsModalOpen(true);
-                  }}
-                  className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Task
-                </button>
-              </div>
-            </div>
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            {/* Categories Button */}
+            <button
+              onClick={() => setIsCategoriesModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+              title="Manage Categories"
+            >
+              <FolderTree className="w-4 h-4 text-purple-600" />
+              <span className="hidden sm:inline">Categories</span>
+            </button>
 
-            {/* View Toggle on Row 2 */}
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full shadow-sm">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
-                aria-pressed={viewMode === 'list'}
-                aria-label="List view"
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'}`}
-                aria-pressed={viewMode === 'table'}
-                aria-label="Table view"
-              >
-                Table
-              </button>
-            </div>
+            {/* Add Task Button */}
+            <button
+              onClick={() => {
+                setFormData({
+                  title: '',
+                  description: '',
+                  category: getDefaultCategoryValue(),
+                  dueDate: '',
+                  setId: activePresetId,
+                });
+                setIsModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Add Task</span>
+            </button>
           </div>
         </div>
 
-        <div className="relative z-30 mb-4 flex items-center justify-between gap-2 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
-          <div className="relative routine-dropdown-container min-w-0 flex-1">
+        {/* Unified Control Bar: Preset Selector & View Toggle */}
+        <div className="relative z-30 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-3 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 bg-white border border-purple-200/80 rounded-xl p-1 shadow-2xs">
             <button
               type="button"
-              onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
-              className="flex min-h-[38px] w-full items-center justify-between rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-xs transition-all hover:border-purple-400 hover:shadow-sm focus:outline-none sm:px-4 sm:text-sm"
-              aria-expanded={isPresetDropdownOpen}
+              onClick={() => setViewMode('list')}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'}`}
+              aria-pressed={viewMode === 'list'}
+              aria-label="List view"
             >
-              <div className="flex items-center gap-2 truncate">
-                <Layers className="h-4 w-4 flex-shrink-0 text-purple-600" />
-                <span className="hidden font-normal text-gray-500 sm:inline">Preset:</span>
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: activePreset?.color || '#C084FC' }} />
-                  <span className="truncate font-bold text-gray-900">{activePreset?.name || 'Inbox'}</span>
-                </div>
-              </div>
-              <ChevronDown className={`ml-2 h-4 w-4 flex-shrink-0 text-purple-500 transition-transform duration-200 ${isPresetDropdownOpen ? 'rotate-180' : ''}`} />
+              List
             </button>
-            {isPresetDropdownOpen && (
-              <div className="modal-enter absolute left-0 top-full z-[100] mt-1.5 w-64 rounded-xl border-2 border-purple-300 bg-white py-1.5 shadow-[0_16px_36px_rgba(120,87,255,0.35)]">
-                <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Preset</div>
-                {presets.map((preset) => {
-                  const isActive = preset.id === activePresetId;
-                  return <button key={preset.id} type="button" onClick={() => handleActivatePreset(preset.id)} className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-all hover:bg-purple-50 sm:text-sm ${isActive ? 'bg-purple-50 font-bold text-purple-900' : 'text-gray-700'}`}>
-                    <div className="flex items-center gap-2 truncate"><span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: preset.color || '#C084FC' }} /><span className="truncate">{preset.name}</span></div>
-                  </button>;
-                })}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'}`}
+              aria-pressed={viewMode === 'table'}
+              aria-label="Table view"
+            >
+              Table
+            </button>
           </div>
-          <button type="button" onClick={() => setIsManagePresetsOpen(true)} className="inline-flex whitespace-nowrap rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs font-semibold text-purple-700 shadow-xs transition hover:bg-purple-50">
-            <Settings2 className="mr-1.5 h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Manage Presets</span><span className="sm:hidden">Manage</span>
-          </button>
+
+          {/* Preset Selector & Manage Button */}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className="relative routine-dropdown-container min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setIsPresetDropdownOpen(!isPresetDropdownOpen)}
+                className="flex min-h-[36px] sm:min-h-[38px] w-full items-center justify-between rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-2xs transition-all hover:border-purple-400 hover:shadow-xs focus:outline-none sm:px-4 sm:text-sm"
+                aria-expanded={isPresetDropdownOpen}
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Layers className="h-4 w-4 flex-shrink-0 text-purple-600" />
+                  <span className="hidden font-normal text-gray-500 sm:inline">Preset:</span>
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: activePreset?.color || '#C084FC' }} />
+                    <span className="truncate font-bold text-gray-900">{activePreset?.name || ''}</span>
+                  </div>
+                </div>
+                <ChevronDown className={`ml-2 h-4 w-4 flex-shrink-0 text-purple-500 transition-transform duration-200 ${isPresetDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isPresetDropdownOpen && (
+                <div className="modal-enter absolute left-0 top-full z-[100] mt-1.5 w-64 rounded-xl border-2 border-purple-300 bg-white py-1.5 shadow-[0_16px_36px_rgba(120,87,255,0.35)]">
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Preset</div>
+                  {sortedPresets.map((preset) => {
+                    const isActive = preset.id === activePresetId;
+                    return (
+                      <button key={preset.id} type="button" onClick={() => handleActivatePreset(preset.id)} className={`flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-all hover:bg-purple-50 sm:text-sm ${isActive ? 'bg-purple-50 font-bold text-purple-900' : 'text-gray-700'}`}>
+                        <div className="flex items-center gap-2 truncate"><span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: preset.color || '#C084FC' }} /><span className="truncate">{preset.name}</span></div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={() => setIsManagePresetsOpen(true)} className="inline-flex min-h-[36px] sm:min-h-[38px] items-center whitespace-nowrap rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs font-semibold text-purple-700 shadow-2xs transition hover:bg-purple-50">
+              <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Manage Presets</span><span className="sm:hidden">Manage</span>
+            </button>
+          </div>
         </div>
 
         {/* Add Task Form Modal */}

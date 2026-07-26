@@ -15,11 +15,15 @@ import { TaskPreset } from '@/types';
 
 const TASK_PRESETS_COLLECTION = 'taskPresets';
 const USERS_COLLECTION = 'users';
-const DEFAULT_PRESET_NAME = 'Inbox';
+const DEFAULT_PRESET_NAME = 'General';
 
 const ensureDefaultTaskPreset = async (userId: string, presets: TaskPreset[]): Promise<string> => {
+  const activeOrFirst = presets.find((preset) => preset.isActive) || presets[0];
+  if (presets.length > 0 && activeOrFirst) {
+    return activeOrFirst.id;
+  }
+
   const userRef = doc(db, USERS_COLLECTION, userId);
-  const existingDefault = presets.find((preset) => preset.name === DEFAULT_PRESET_NAME) || presets[0];
   const newPresetRef = doc(collection(db, TASK_PRESETS_COLLECTION));
 
   return runTransaction(db, async (transaction) => {
@@ -30,17 +34,15 @@ const ensureDefaultTaskPreset = async (userId: string, presets: TaskPreset[]): P
       if (savedPreset.exists()) return savedPresetId;
     }
 
-    const defaultPresetId = existingDefault?.id || newPresetRef.id;
-    if (!existingDefault) {
-      transaction.set(newPresetRef, {
-        userId,
-        name: DEFAULT_PRESET_NAME,
-        color: '#C084FC',
-        isActive: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      });
-    }
+    const defaultPresetId = newPresetRef.id;
+    transaction.set(newPresetRef, {
+      userId,
+      name: DEFAULT_PRESET_NAME,
+      color: '#C084FC',
+      isActive: true,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
     transaction.set(userRef, {
       defaultTaskPresetId: defaultPresetId,
       updatedAt: Timestamp.now(),
@@ -81,24 +83,22 @@ export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> 
     updatedAt: snapshotDoc.data().updatedAt?.toDate() || new Date(),
   })) as TaskPreset[];
 
-  const defaultPresetId = await ensureDefaultTaskPreset(userId, presets);
-  await mergeDuplicateDefaultTaskPresets(userId, presets, defaultPresetId);
+  if (presets.length === 0) {
+    const defaultPresetId = await ensureDefaultTaskPreset(userId, presets);
+    await mergeDuplicateDefaultTaskPresets(userId, presets, defaultPresetId);
 
-  const updatedSnapshot = await getDocs(
-    query(collection(db, TASK_PRESETS_COLLECTION), where('userId', '==', userId))
-  );
-  presets = updatedSnapshot.docs.map((snapshotDoc) => ({
-    id: snapshotDoc.id,
-    ...snapshotDoc.data(),
-    createdAt: snapshotDoc.data().createdAt?.toDate() || new Date(),
-    updatedAt: snapshotDoc.data().updatedAt?.toDate() || new Date(),
-  })) as TaskPreset[];
+    const updatedSnapshot = await getDocs(
+      query(collection(db, TASK_PRESETS_COLLECTION), where('userId', '==', userId))
+    );
+    presets = updatedSnapshot.docs.map((snapshotDoc) => ({
+      id: snapshotDoc.id,
+      ...snapshotDoc.data(),
+      createdAt: snapshotDoc.data().createdAt?.toDate() || new Date(),
+      updatedAt: snapshotDoc.data().updatedAt?.toDate() || new Date(),
+    })) as TaskPreset[];
+  }
 
-  return presets.sort((a, b) => {
-    if (a.id === defaultPresetId) return -1;
-    if (b.id === defaultPresetId) return 1;
-    return a.createdAt.getTime() - b.createdAt.getTime();
-  });
+  return presets;
 };
 
 export const createTaskPreset = async (userId: string, name: string, color = '#C084FC'): Promise<TaskPreset> => {

@@ -118,6 +118,12 @@ export function HabitsPage() {
     }
   };
 
+  const sortedHabitSets = useMemo(() => {
+    return [...habitSets].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+  }, [habitSets]);
+
   const activeSet = useMemo(() => {
     return habitSets.find((s) => s.id === activeSetId) || habitSets[0];
   }, [habitSets, activeSetId]);
@@ -137,15 +143,30 @@ export function HabitsPage() {
   const habitsToDisplay = activeRoutineHabits;
 
   const handleSelectActiveSet = async (setId: string) => {
-    if (!user) return;
+    if (!user || setId === activeSetId) {
+      setIsRoutineDropdownOpen(false);
+      return;
+    }
+
+    const previousSetId = activeSetId;
+
+    // Optimistic Update: Instantly update active state & close dropdown
+    setActiveSetId(setId);
+    setHabitSets((prev) =>
+      prev.map((s) => ({ ...s, isActive: s.id === setId }))
+    );
+    setIsRoutineDropdownOpen(false);
+
     try {
       await setActiveHabitSet(user.uid, setId);
-      setActiveSetId(setId);
-      setHabitSets((prev) =>
-        prev.map((s) => ({ ...s, isActive: s.id === setId }))
-      );
       showToast('Activated routine preset', 'success');
     } catch (err) {
+      console.error('Error activating habit set:', err);
+      // Revert on failure
+      setActiveSetId(previousSetId);
+      setHabitSets((prev) =>
+        prev.map((s) => ({ ...s, isActive: s.id === previousSetId }))
+      );
       showToast('Failed to change active routine preset', 'error');
     }
   };
@@ -426,127 +447,145 @@ export function HabitsPage() {
     <div className="min-h-screen pt-3 md:pt-6 pb-6 md:pb-12">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6">
         {/* Top Bar Header */}
-        <div className="mb-6">
-          {/* Desktop/Tablet Header: Everything in one row */}
-          <div className="hidden sm:flex items-center justify-between gap-3 w-full">
-            <div className="min-w-0 pr-2">
-              <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
-                Hello, {userDisplayName}
-              </h1>
-              <p className="mt-0.5 text-sm text-gray-500 font-medium">Build better routines.</p>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-              {/* View Toggle */}
-              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${
-                    viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  aria-pressed={viewMode === 'list'}
-                  aria-label="List view"
-                >
-                  List
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition ${
-                    viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                  aria-pressed={viewMode === 'table'}
-                  aria-label="Table view"
-                >
-                  Table
-                </button>
-              </div>
-
-              {/* Weekly Timetable Button */}
-              <button
-                onClick={() => setIsWeeklyModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
-              >
-                <CalendarRange className="w-4 h-4 text-purple-600" />
-                <span>Weekly Timetable</span>
-              </button>
-
-              {/* Add Habit Button */}
-              <button
-                onClick={() => {
-                  setHabitTitle('');
-                  setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                  setStartTime('09:00');
-                  setEndTime('10:00');
-                  setHabitSetId(activeSetId);
-                  setError(null);
-                  setIsAddModalOpen(true);
-                }}
-                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Habit
-              </button>
-            </div>
+        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-3 w-full">
+          <div className="min-w-0 pr-2">
+            <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
+              Hello, {userDisplayName}
+            </h1>
+            <p className="mt-0.5 text-sm text-gray-500 font-medium hidden sm:block">Build better routines.</p>
           </div>
 
-          {/* Mobile Header Layout */}
-          <div className="sm:hidden flex flex-col gap-3.5 w-full">
-            <div className="flex items-center justify-between gap-2 w-full">
-              <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
-                Hello, {userDisplayName}
-              </h1>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  onClick={() => setIsWeeklyModalOpen(true)}
-                  className="inline-flex items-center justify-center p-2 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs text-xs font-semibold"
-                  title="Weekly Timetable"
-                >
-                  <CalendarRange className="w-4 h-4 text-purple-600" />
-                </button>
-                <button
-                  onClick={() => {
-                    setHabitTitle('');
-                    setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                    setStartTime('09:00');
-                    setEndTime('10:00');
-                    setHabitSetId(activeSetId);
-                    setError(null);
-                    setIsAddModalOpen(true);
-                  }}
-                  className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Habit
-                </button>
-              </div>
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+            {/* Weekly Timetable Button */}
+            <button
+              onClick={() => setIsWeeklyModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+            >
+              <CalendarRange className="w-4 h-4 text-purple-600" />
+              <span className="hidden sm:inline">Weekly Timetable</span>
+            </button>
+
+            {/* Add Habit Button */}
+            <button
+              onClick={() => {
+                setHabitTitle('');
+                setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                setStartTime('09:00');
+                setEndTime('10:00');
+                setHabitSetId(activeSetId);
+                setError(null);
+                setIsAddModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Habit
+            </button>
+          </div>
+        </div>
+
+        {/* Unified Control Bar: Routine Preset Selector & View Toggle */}
+        <div className="relative z-30 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-3 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 bg-white border border-purple-200/80 rounded-xl p-1 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                viewMode === 'list' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'
+              }`}
+              aria-pressed={viewMode === 'list'}
+              aria-label="List view"
+            >
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                viewMode === 'table' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'
+              }`}
+              aria-pressed={viewMode === 'table'}
+              aria-label="Table view"
+            >
+              Table
+            </button>
+          </div>
+
+          {/* Routine Selector & Manage Button */}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className="relative routine-dropdown-container flex-1 min-w-0">
+              <button
+                type="button"
+                onClick={() => setIsRoutineDropdownOpen(!isRoutineDropdownOpen)}
+                className="w-full flex items-center justify-between min-h-[36px] sm:min-h-[38px] bg-white border border-purple-200 hover:border-purple-400 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-900 shadow-2xs hover:shadow-xs transition-all font-semibold focus:outline-none"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Layers className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <span className="text-gray-500 font-normal hidden sm:inline">Routine:</span>
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: activeSet?.color || '#C084FC' }}
+                    />
+                    <span className="font-bold text-gray-900 truncate">{activeSet?.name || ''}</span>
+                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold">
+                      Active
+                    </span>
+                  </div>
+                </div>
+                <ChevronDown className={`ml-2 h-4 w-4 text-purple-500 flex-shrink-0 transition-transform duration-200 ${isRoutineDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isRoutineDropdownOpen && (
+                <div className="absolute left-0 top-full mt-1.5 z-[100] w-64 bg-white border-2 border-purple-300 rounded-xl shadow-[0_16px_36px_rgba(120,87,255,0.35)] py-1.5 modal-enter">
+                  <div className="px-3 py-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    Switch Active Routine
+                  </div>
+                  {sortedHabitSets.map((set) => {
+                    const isActive = set.id === activeSetId;
+                    return (
+                      <button
+                        key={set.id}
+                        type="button"
+                        onClick={() => {
+                          handleSelectActiveSet(set.id);
+                          setIsRoutineDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3.5 py-2 text-xs sm:text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
+                          isActive ? 'bg-purple-50 text-purple-900 font-bold' : 'text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: set.color || '#C084FC' }}
+                          />
+                          <span className="truncate">{set.name}</span>
+                        </div>
+                        {isActive && (
+                          <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">
+                            Active
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full shadow-sm">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
-                  viewMode === 'list' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                aria-pressed={viewMode === 'list'}
-                aria-label="List view"
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex-1 px-3 py-2 rounded-md text-xs font-semibold transition ${
-                  viewMode === 'table' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-50'
-                }`}
-                aria-pressed={viewMode === 'table'}
-                aria-label="Table view"
-              >
-                Table
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsManageSetsModalOpen(true)}
+              className="inline-flex min-h-[36px] sm:min-h-[38px] items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition shadow-2xs whitespace-nowrap"
+            >
+              <Settings2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Manage Presets</span>
+              <span className="sm:hidden">Manage</span>
+            </button>
           </div>
         </div>
 
@@ -704,80 +743,6 @@ export function HabitsPage() {
             </div>,
             document.body
           )}
-
-        {/* Sleek Compact Routine Bar */}
-        <div className="relative z-30 mb-4 flex items-center justify-between gap-2 bg-white/80 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border border-purple-100/90 shadow-xs">
-          <div className="relative routine-dropdown-container flex-1 min-w-0">
-            <button
-              type="button"
-              onClick={() => setIsRoutineDropdownOpen(!isRoutineDropdownOpen)}
-              className="w-full flex items-center justify-between min-h-[38px] bg-white border border-purple-200 hover:border-purple-400 rounded-xl px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gray-900 shadow-xs hover:shadow-sm transition-all font-semibold focus:outline-none"
-            >
-              <div className="flex items-center gap-2 truncate">
-                <Layers className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                <span className="text-gray-500 font-normal hidden sm:inline">Routine:</span>
-                <div className="flex items-center gap-1.5 truncate">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: activeSet?.color || '#C084FC' }}
-                  />
-                  <span className="font-bold text-gray-900 truncate">{activeSet?.name || 'General Routine'}</span>
-                  <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold">
-                    Active
-                  </span>
-                </div>
-              </div>
-              <ChevronDown className={`ml-2 h-4 w-4 text-purple-500 flex-shrink-0 transition-transform duration-200 ${isRoutineDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isRoutineDropdownOpen && (
-              <div className="absolute left-0 top-full mt-1.5 z-[100] w-64 bg-white border-2 border-purple-300 rounded-xl shadow-[0_16px_36px_rgba(120,87,255,0.35)] py-1.5 modal-enter">
-                <div className="px-3 py-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                  Switch Active Routine
-                </div>
-                {habitSets.map((set) => {
-                  const isActive = set.id === activeSetId;
-                  return (
-                    <button
-                      key={set.id}
-                      type="button"
-                      onClick={() => {
-                        handleSelectActiveSet(set.id);
-                        setIsRoutineDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2 text-xs sm:text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
-                        isActive ? 'bg-purple-50 text-purple-900 font-bold' : 'text-gray-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 truncate">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: set.color || '#C084FC' }}
-                        />
-                        <span className="truncate">{set.name}</span>
-                      </div>
-                      {isActive && (
-                        <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">
-                          Active
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsManageSetsModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition shadow-xs whitespace-nowrap"
-          >
-            <Settings2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Manage Presets</span>
-            <span className="sm:hidden">Manage</span>
-          </button>
-        </div>
 
         {/* Content Section: Loading / Error / Empty / Table / List */}
         {loading ? (

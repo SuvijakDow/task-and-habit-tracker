@@ -99,6 +99,12 @@ export function AnalyticsPage() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isRoutineDropdownOpen]);
 
+  const sortedHabitSets = useMemo(() => {
+    return [...habitSets].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+  }, [habitSets]);
+
   const selectedSet = useMemo(() => {
     return habitSets.find((s) => s.id === selectedSetId) || habitSets[0];
   }, [habitSets, selectedSetId]);
@@ -206,7 +212,7 @@ export function AnalyticsPage() {
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: selectedSet?.color || '#C084FC' }}
                   />
-                  <span className="font-bold text-gray-900 truncate">{selectedSet?.name || 'General Routine'}</span>
+                  <span className="font-bold text-gray-900 truncate">{selectedSet?.name || ''}</span>
                   {selectedSet?.isActive && (
                     <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold hidden md:inline-block">
                       Active
@@ -222,7 +228,7 @@ export function AnalyticsPage() {
                 <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   Select Routine
                 </div>
-                {habitSets.map((set) => {
+                {sortedHabitSets.map((set) => {
                   const isSelected = set.id === selectedSetId;
                   return (
                     <button
@@ -340,6 +346,7 @@ export function AnalyticsPage() {
             <HabitAnalyticsCard
               key={habit.id}
               habit={habit}
+              habitSets={habitSets}
               setResetTargetHabit={setResetTargetHabit}
               isResetting={isResetting}
             />
@@ -380,14 +387,21 @@ export function AnalyticsPage() {
   );
 }
 
-function HabitAnalyticsCard({ habit, setResetTargetHabit, isResetting }: { habit: DailyHabit, setResetTargetHabit: (habit: DailyHabit) => void, isResetting: boolean }) {
+function HabitAnalyticsCard({ habit, habitSets, setResetTargetHabit, isResetting }: { habit: DailyHabit, habitSets: HabitSet[], setResetTargetHabit: (habit: DailyHabit) => void, isResetting: boolean }) {
   const [showFullHistory, setShowFullHistory] = useState(false);
   
-  const scheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-  const streak = calculateStreak(habit.completedDates, scheduledDays);
+  const parentSet = habitSets.find((s) => s.id === (habit.setId || habitSets[0]?.id)) || habitSets[0];
+  const isPresetActive = parentSet ? parentSet.isActive : true;
+
+  const rawScheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+  // Keep streak & consistency calculations using raw scheduled days so past progress & scores are preserved
+  const streak = calculateStreak(habit.completedDates, rawScheduledDays);
   const totalCompletions = habit.completedDates.length;
   const startDate = habit.trackingStartDate || habit.createdAt;
-  const consistency = calculateConsistency(habit.completedDates, scheduledDays, startDate);
+  const consistency = calculateConsistency(habit.completedDates, rawScheduledDays, startDate);
+  
+  // For visual display: if preset is inactive, uncompleted days show as Not Scheduled
+  const displayScheduledDays = isPresetActive ? rawScheduledDays : [];
   const past7Days = getPast7DaysStatus(habit.completedDates);
 
   const formatDate = (date: Date) => {
@@ -416,9 +430,17 @@ function HabitAnalyticsCard({ habit, setResetTargetHabit, isResetting }: { habit
       {/* Habit Title & Reset */}
       <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
         <div className="min-w-0">
-          <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 truncate">
-            {habit.title}
-          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 truncate">
+              {habit.title}
+            </h2>
+            {!isPresetActive && (
+              <span className="text-[10px] sm:text-xs bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Inactive Routine
+              </span>
+            )}
+          </div>
           <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 flex items-center gap-1 font-medium">
             <span>🗓️</span> Tracking since: {formatDate(habit.trackingStartDate || habit.createdAt)} <span className="text-purple-600/80 ml-0.5">{getDaysAgoText(habit.trackingStartDate || habit.createdAt)}</span>
           </p>
@@ -478,7 +500,7 @@ function HabitAnalyticsCard({ habit, setResetTargetHabit, isResetting }: { habit
           <ContributionHeatmap 
             startDate={startDate}
             completedDates={habit.completedDates}
-            scheduledDays={scheduledDays}
+            scheduledDays={displayScheduledDays}
           />
         ) : (
           <div className="flex justify-between mt-4">
@@ -491,7 +513,7 @@ function HabitAnalyticsCard({ habit, setResetTargetHabit, isResetting }: { habit
               trackingStartObj.setHours(0, 0, 0, 0);
               const isBeforeTrackingStart = localDate < trackingStartObj;
               
-              const isScheduled = isBeforeTrackingStart ? false : scheduledDays.includes(dayOfWeek);
+              const isScheduled = isBeforeTrackingStart ? false : displayScheduledDays.includes(dayOfWeek);
 
               const todayObj = new Date();
               todayObj.setHours(0, 0, 0, 0);

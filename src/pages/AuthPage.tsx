@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, CheckSquare } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { normalizeProfilePhotoURL } from '@/services/userService';
 const MainPage = lazy(() => import('./MainPage').then((m) => ({ default: m.MainPage })));
@@ -229,14 +229,19 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-4 sm:py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-dvh w-full flex items-center justify-center px-4 py-6 sm:py-10">
+      <div className="w-full max-w-md my-auto">
         {/* Logo / Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-purple-800 mb-2 tracking-tight">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 text-white shadow-[0_10px_25px_rgba(168,85,247,0.4)] mb-3 transition-transform hover:scale-105">
+            <CheckSquare className="w-7 h-7 sm:w-9 sm:h-9" />
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-700 via-pink-600 to-amber-500 drop-shadow-xs">
             TaskTracker
           </h1>
-          <p className="text-purple-900/60 font-medium">Your minimal task and habit companion</p>
+          <p className="mt-2 text-xs sm:text-sm font-semibold text-purple-900/70 bg-purple-100/70 border border-purple-200/50 px-3.5 py-1 rounded-full inline-block shadow-2xs">
+            Your minimal task & habit companion
+          </p>
         </div>
 
         {/* Card */}

@@ -27,6 +27,12 @@ export function ManageTaskPresetsModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const colors = ['#FCA5A5', '#FCD34D', '#86EFAC', '#67E8F9', '#93C5FD', '#C4B5FD', '#F0ABFC', '#FDBA74'];
 
+  const sortedPresets = React.useMemo(() => {
+    return [...presets].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+  }, [presets]);
+
   if (!isOpen) return null;
 
   const createPreset = async (event: React.FormEvent) => {
@@ -65,7 +71,7 @@ export function ManageTaskPresetsModal({
           <button onClick={onClose} aria-label="Close presets" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
         <div className="space-y-3 p-5">
-          {presets.map((preset) => {
+          {sortedPresets.map((preset) => {
             const active = preset.id === activePresetId;
             const isEditing = preset.id === editingId;
             if (isEditing) return <div key={preset.id} className="space-y-3 rounded-xl border-2 border-purple-400 bg-white p-3">
