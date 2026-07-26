@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, FolderTree } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,7 @@ import {
   deleteTask,
 } from '@/services/taskService';
 import TasksTable from '@/components/TasksTable';
+import { CategoriesModal } from '@/components/CategoriesModal';
 import {
   getUserCategories,
 } from '@/services/categoryService';
@@ -81,6 +82,7 @@ export function TasksPage() {
   const [error, setError] = useState<string | null>(null);
   // View mode: 'list' or 'table'
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -451,6 +453,15 @@ export function TasksPage() {
                 </button>
               </div>
 
+              {/* Categories Button */}
+              <button
+                onClick={() => setIsCategoriesModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
+              >
+                <FolderTree className="w-4 h-4 text-purple-600" />
+                Categories
+              </button>
+
               {/* Add Task Button */}
               <button
                 onClick={() => {
@@ -472,29 +483,38 @@ export function TasksPage() {
             </div>
           </div>
 
-          {/* Layout for mobile (below 640px): Hello & Add Task on Row 1, Toggle on Row 2 */}
+          {/* Layout for mobile (below 640px): Hello & Action Buttons on Row 1, Toggle on Row 2 */}
           <div className="sm:hidden flex flex-col gap-3.5 w-full">
-            <div className="flex items-center justify-between gap-3 w-full">
+            <div className="flex items-center justify-between gap-2 w-full">
               <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
                 Hello, {userDisplayName}
               </h1>
-              <button
-                onClick={() => {
-                  setFormData({
-                    title: '',
-                    description: '',
-                    category: getDefaultCategoryValue(),
-                    dueDate: '',
-                  });
-                  setIsModalOpen(true);
-                }}
-                className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Task
-              </button>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => setIsCategoriesModalOpen(true)}
+                  className="inline-flex items-center justify-center p-2 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs text-xs font-semibold"
+                  title="Manage Categories"
+                >
+                  <FolderTree className="w-4 h-4 text-purple-600" />
+                </button>
+                <button
+                  onClick={() => {
+                    setFormData({
+                      title: '',
+                      description: '',
+                      category: getDefaultCategoryValue(),
+                      dueDate: '',
+                    });
+                    setIsModalOpen(true);
+                  }}
+                  className="inline-flex items-center justify-center gap-1 px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-md text-xs font-semibold whitespace-nowrap"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Task
+                </button>
+              </div>
             </div>
 
             {/* View Toggle on Row 2 */}
@@ -908,8 +928,14 @@ export function TasksPage() {
           </div>,
           document.body
         )}
-      </div>
 
+        {/* Categories Modal */}
+        <CategoriesModal
+          isOpen={isCategoriesModalOpen}
+          onClose={() => setIsCategoriesModalOpen(false)}
+          onCategoriesUpdated={loadCategories}
+        />
+      </div>
     </div>
   );
 }

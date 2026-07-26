@@ -1,17 +1,14 @@
 import { ComponentType, useState, lazy, Suspense } from 'react';
 import {
   Activity,
-  FolderTree,
   ListChecks,
   TrendingUp,
 } from 'lucide-react';
 const TasksPage = lazy(() => import('@/pages/TasksPage').then((m) => ({ default: m.TasksPage })));
 const HabitsPage = lazy(() => import('@/pages/HabitsPage').then((m) => ({ default: m.HabitsPage })));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
-const CategoriesPage = lazy(() => import('@/pages/CategoriesPage').then((m) => ({ default: m.CategoriesPage })));
 
-
-type Page = 'tasks' | 'habits' | 'categories' | 'analytics';
+type Page = 'tasks' | 'habits' | 'analytics';
 
 export function MainPage() {
   const [currentPage, setCurrentPage] = useState<Page>('tasks');
@@ -25,7 +22,6 @@ export function MainPage() {
   }> = [
     { key: 'tasks', label: 'Tasks', mobileLabel: 'Tasks', icon: ListChecks, iconClass: 'text-fuchsia-500' },
     { key: 'habits', label: 'Daily Habits', mobileLabel: 'Habits', icon: Activity, iconClass: 'text-pink-500' },
-    { key: 'categories', label: 'Categories', mobileLabel: 'Groups', icon: FolderTree, iconClass: 'text-indigo-500' },
     { key: 'analytics', label: 'Analytics', mobileLabel: 'Stats', icon: TrendingUp, iconClass: 'text-purple-500' },
   ];
 
@@ -33,7 +29,6 @@ export function MainPage() {
     <>
       {currentPage === 'tasks' && <TasksPage />}
       {currentPage === 'habits' && <HabitsPage />}
-      {currentPage === 'categories' && <CategoriesPage />}
       {currentPage === 'analytics' && <AnalyticsPage />}
     </>
   );
@@ -42,7 +37,7 @@ export function MainPage() {
     <div>
       {/* Navigation Tabs */}
       <div className="hidden md:block sticky top-0 z-20 border-y border-white/60 bg-white/68 backdrop-blur-xl shadow-[0_10px_28px_rgba(124,58,237,0.12)] nav-animated">
-        <nav className="hidden md:grid grid-cols-4 items-center gap-2 px-3 py-2">
+        <nav className="hidden md:grid grid-cols-3 items-center gap-2 px-3 py-2 max-w-4xl mx-auto">
           {navItems.map((item) => (
             <button
               key={item.key}
@@ -62,7 +57,7 @@ export function MainPage() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-white/65 bg-white/88 backdrop-blur-sm shadow-[0_-6px_20px_rgba(124,58,237,0.14)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
-        <div className="grid grid-cols-4 gap-1 px-2">
+        <div className="grid grid-cols-3 gap-1 px-2">
           {navItems.map((item) => (
             <button
               key={item.key}
