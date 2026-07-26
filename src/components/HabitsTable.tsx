@@ -115,33 +115,36 @@ export default function HabitsTable({
   return (
     <div className="space-y-6">
       {/* Filter and Control Bar */}
-      <div className="glass-card p-3 sm:p-4">
-        <div className="flex flex-col lg:flex-row gap-3">
+      <div className="glass-card p-2.5 sm:p-4">
+        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search habits..."
-            className="min-h-[40px] flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
+            className="min-h-[36px] sm:min-h-[40px] flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
           />
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={toggleSelectAllFiltered}
-            className="px-3 py-1.5 text-sm rounded-lg bg-white border border-gray-200 hover:bg-gray-50 font-medium"
+            className="px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg bg-white border border-gray-200 hover:bg-gray-50 font-medium transition"
           >
             {allFilteredSelected ? 'Unselect filtered' : 'Select filtered'}
           </button>
-          <span className="text-sm text-gray-600">{selectedIds.size} selected</span>
-          <button
-            type="button"
-            disabled={selectedIds.size === 0 || isBulkRunning}
-            onClick={() => setIsBulkDeleteConfirmOpen(true)}
-            className="px-3 py-1.5 text-sm rounded-lg bg-rose-600 text-white font-medium disabled:opacity-50"
-          >
-            Delete selected
-          </button>
+          <span className="text-xs sm:text-sm text-gray-500 font-medium px-1">{selectedIds.size} selected</span>
+
+          {selectedIds.size > 0 && (
+            <button
+              type="button"
+              disabled={selectedIds.size === 0 || isBulkRunning}
+              onClick={() => setIsBulkDeleteConfirmOpen(true)}
+              className="px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700 disabled:opacity-50 transition"
+            >
+              Delete selected ({selectedIds.size})
+            </button>
+          )}
         </div>
       </div>
 
