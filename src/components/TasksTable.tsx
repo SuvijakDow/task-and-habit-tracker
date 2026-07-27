@@ -261,7 +261,7 @@ export default function TasksTable({
             <thead className={`${headerBg} text-white`}>
               <tr>
                 <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
-                <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[calc(100vw-72px)] sm:min-w-[220px] border-r border-white/15">Title</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-white/15">Title</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Category</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">
                   <span className="inline-flex items-center gap-2">
@@ -326,7 +326,7 @@ export default function TasksTable({
                           </svg>
                         </button>
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} min-w-[calc(100vw-72px)] sm:min-w-[220px] border-r border-purple-100/70`}>
+                      <td className={`px-3.5 ${tdPaddingClass} min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-purple-100/70`}>
                         <div className="font-medium text-gray-900 break-words">{t.title}</div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
                         {t.subtasks && t.subtasks.length > 0 && (() => {
