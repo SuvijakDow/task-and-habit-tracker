@@ -26,24 +26,17 @@ export const formatDueDateDisplay = (date: Date | string | null | undefined): st
   return format(d, 'd MMM yyyy');
 };
 
-export interface DeadlineStatus {
-  text: string;
-  className: string;
-}
-
-export const getDeadlineStatus = (dueDate: Date | string | null | undefined): DeadlineStatus | null => {
-  if (!dueDate) return null;
-
-  const d = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
-  if (isNaN(d.getTime())) return null;
+export const getDeadlineStatus = (dueDateValue?: Date | string | null, isCompleted?: boolean) => {
+  if (!dueDateValue || isCompleted) return null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const targetDate = new Date(d);
-  targetDate.setHours(0, 0, 0, 0);
+  const dueDate = typeof dueDateValue === 'string' ? new Date(dueDateValue) : dueDateValue;
+  if (isNaN(dueDate.getTime())) return null;
+  dueDate.setHours(0, 0, 0, 0);
 
-  const diffTime = targetDate.getTime() - today.getTime();
+  const diffTime = dueDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
@@ -56,20 +49,13 @@ export const getDeadlineStatus = (dueDate: Date | string | null | undefined): De
 
   if (diffDays === 0) {
     return {
-      text: 'Due Today',
-      className: 'text-amber-700 bg-amber-50 border-amber-200',
-    };
-  }
-
-  if (diffDays === 1) {
-    return {
-      text: 'Due Tomorrow',
-      className: 'text-blue-700 bg-blue-50 border-blue-200',
+      text: 'Due today',
+      className: 'text-amber-600 bg-amber-50 border-amber-200',
     };
   }
 
   return {
-    text: `${diffDays} days left`,
-    className: 'text-purple-700 bg-purple-50 border-purple-200',
+    text: `${diffDays} day${diffDays > 1 ? 's' : ''} left`,
+    className: 'text-green-600 bg-green-50 border-green-200',
   };
 };

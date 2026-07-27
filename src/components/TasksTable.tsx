@@ -87,8 +87,6 @@ export default function TasksTable({
     return matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
   };
 
-
-
   const matchesQuickFilter = (task: Task): boolean => {
     if (quickFilter === 'all') return true;
     if (!task.dueDate) return false;
@@ -395,7 +393,7 @@ export default function TasksTable({
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           (() => {
-                            const deadlineStatus = getDeadlineStatus(t.dueDate);
+                            const deadlineStatus = getDeadlineStatus(t.dueDate, t.isCompleted);
                             return deadlineStatus ? (
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${deadlineStatus.className}`}>
                                 {deadlineStatus.text}
