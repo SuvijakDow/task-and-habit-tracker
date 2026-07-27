@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarDays, ChevronDown, FolderTree, Layers, Settings2 } from 'lucide-react';
+import { CalendarDays, ChevronDown, FolderTree, Layers, Settings2, ListChecks, Plus, X } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
-import { Category, Task, TaskPreset } from '@/types';
+import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   createTask,
@@ -99,25 +99,43 @@ export function TasksPage() {
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
   
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    category: string;
+    dueDate: string;
+    setId: string;
+    subtasks: Subtask[];
+  }>({
     title: '',
     description: '',
     category: DEFAULT_TASK_CATEGORY_NAME,
     dueDate: '',
     setId: '',
+    subtasks: [],
   });
+  const [subtaskInputText, setSubtaskInputText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Edit state
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<{
+    title: string;
+    description: string;
+    category: string;
+    dueDate: string;
+    setId: string;
+    subtasks: Subtask[];
+  }>({
     title: '',
     description: '',
     category: DEFAULT_TASK_CATEGORY_NAME,
     dueDate: '',
     setId: '',
+    subtasks: [],
   });
+  const [editSubtaskInputText, setEditSubtaskInputText] = useState('');
 
   // Delete confirmation state
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
@@ -222,6 +240,64 @@ export function TasksPage() {
     }
   };
 
+  // Add modal subtask handlers
+  const handleAddModalSubtask = () => {
+    if (!subtaskInputText.trim()) return;
+    const newSt: Subtask = {
+      id: 'subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      title: subtaskInputText.trim(),
+      isCompleted: false,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      subtasks: [...prev.subtasks, newSt],
+    }));
+    setSubtaskInputText('');
+  };
+
+  const handleRemoveModalSubtask = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.filter((st) => st.id !== id),
+    }));
+  };
+
+  const handleToggleModalSubtask = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, isCompleted: !st.isCompleted } : st)),
+    }));
+  };
+
+  // Edit modal subtask handlers
+  const handleAddEditSubtask = () => {
+    if (!editSubtaskInputText.trim()) return;
+    const newSt: Subtask = {
+      id: 'subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      title: editSubtaskInputText.trim(),
+      isCompleted: false,
+    };
+    setEditFormData((prev) => ({
+      ...prev,
+      subtasks: [...prev.subtasks, newSt],
+    }));
+    setEditSubtaskInputText('');
+  };
+
+  const handleRemoveEditSubtask = (id: string) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.filter((st) => st.id !== id),
+    }));
+  };
+
+  const handleToggleEditSubtask = (id: string) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, isCompleted: !st.isCompleted } : st)),
+    }));
+  };
+
   const retryLoadData = async () => {
     await Promise.all([loadTasks(), loadCategories(), loadPresets()]);
   };
@@ -248,10 +324,12 @@ export function TasksPage() {
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         isCompleted: false,
         setId: formData.setId || activePresetId || undefined,
+        subtasks: formData.subtasks || [],
       });
 
       // Reset form and close modal
-      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId });
+      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [] });
+      setSubtaskInputText('');
       setIsModalOpen(false);
 
       // Reload tasks
@@ -271,24 +349,71 @@ export function TasksPage() {
       playSuccessSound();
     }
 
-    // Optimistic update: instantly reflect the change in UI
+    let updatedSubtasks: Subtask[] = [];
+
+    // Optimistic update: instantly reflect change in UI for main task AND all subtasks
     setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId ? { ...t, isCompleted: newStatus } : t
-      )
+      prev.map((t) => {
+        if (t.id === taskId) {
+          updatedSubtasks = (t.subtasks || []).map((st) => ({ ...st, isCompleted: newStatus }));
+          return {
+            ...t,
+            isCompleted: newStatus,
+            subtasks: updatedSubtasks,
+          };
+        }
+        return t;
+      })
     );
 
     try {
-      await updateTask(taskId, { isCompleted: newStatus });
+      await updateTask(taskId, { isCompleted: newStatus, subtasks: updatedSubtasks });
     } catch (err) {
-      // Revert to previous state on failure
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, isCompleted: currentStatus } : t
-        )
-      );
       showToast('Task update failed. Please try again.', 'error');
       console.error('Error updating task:', err);
+      await loadTasks();
+    }
+  }, []);
+
+  const handleToggleTaskSubtask = useCallback(async (taskId: string, subtaskId: string) => {
+    let updatedSubtasks: Subtask[] = [];
+    let isTaskNowComplete = false;
+    let wasAlreadyComplete = false;
+
+    setTasks((prevTasks) =>
+      prevTasks.map((t) => {
+        if (t.id === taskId) {
+          wasAlreadyComplete = t.isCompleted;
+          const currentSubtasks = t.subtasks || [];
+          updatedSubtasks = currentSubtasks.map((st) =>
+            st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
+          );
+          isTaskNowComplete = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
+          return {
+            ...t,
+            subtasks: updatedSubtasks,
+            isCompleted: isTaskNowComplete ? true : t.isCompleted,
+          };
+        }
+        return t;
+      })
+    );
+
+    if (isTaskNowComplete && !wasAlreadyComplete) {
+      playSuccessSound();
+      showToast('All subtasks completed! Task marked as done 🎉', 'success');
+    }
+
+    try {
+      const updates: Partial<Task> = { subtasks: updatedSubtasks };
+      if (isTaskNowComplete && !wasAlreadyComplete) {
+        updates.isCompleted = true;
+      }
+      await updateTask(taskId, updates);
+    } catch (err) {
+      console.error('Error toggling subtask:', err);
+      showToast('Subtask update failed.', 'error');
+      await loadTasks();
     }
   }, []);
 
@@ -344,7 +469,9 @@ export function TasksPage() {
         ? task.dueDate.toISOString().split('T')[0]
         : '',
       setId: task.setId || presets[0]?.id || activePresetId,
+      subtasks: task.subtasks || [],
     });
+    setEditSubtaskInputText('');
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -368,6 +495,7 @@ export function TasksPage() {
         category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
         setId: editFormData.setId || activePresetId || undefined,
+        subtasks: editFormData.subtasks || [],
       });
 
       setTasks(
@@ -382,6 +510,7 @@ export function TasksPage() {
                   ? new Date(editFormData.dueDate)
                   : null,
                 setId: editFormData.setId || activePresetId || undefined,
+                subtasks: editFormData.subtasks || [],
               }
             : t
         )
@@ -398,7 +527,8 @@ export function TasksPage() {
 
   const handleCancelEdit = () => {
     setEditingTaskId(null);
-    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId });
+    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [] });
+    setEditSubtaskInputText('');
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -569,7 +699,9 @@ export function TasksPage() {
                   category: getDefaultCategoryValue(),
                   dueDate: '',
                   setId: activePresetId,
+                  subtasks: [],
                 });
+                setSubtaskInputText('');
                 setIsModalOpen(true);
               }}
               className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
@@ -760,6 +892,77 @@ export function TasksPage() {
                   />
                 </div>
 
+                {/* Subtasks Section */}
+                <div className="space-y-2 pt-1 border-t border-purple-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Subtasks (Checklist)
+                      {formData.subtasks.length > 0 && (
+                        <span className="ml-2 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60">
+                          {formData.subtasks.filter((s) => s.isCompleted).length}/{formData.subtasks.length}
+                        </span>
+                      )}
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={subtaskInputText}
+                      onChange={(e) => setSubtaskInputText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddModalSubtask();
+                        }
+                      }}
+                      placeholder="Type subtask title and press Enter..."
+                      className="flex-1 min-h-[40px] rounded-lg border border-purple-200 bg-white/90 px-3 py-2 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddModalSubtask}
+                      disabled={isSubmitting || !subtaskInputText.trim()}
+                      className="min-h-[40px] px-3.5 text-xs font-semibold text-purple-700 bg-purple-100/70 border border-purple-200 hover:bg-purple-200/80 disabled:opacity-50 rounded-lg transition inline-flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add
+                    </button>
+                  </div>
+
+                  {formData.subtasks.length > 0 && (
+                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 mt-2">
+                      {formData.subtasks.map((st) => (
+                        <div
+                          key={st.id}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-purple-50/40 border border-purple-100 group"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={st.isCompleted}
+                              onChange={() => handleToggleModalSubtask(st.id)}
+                              className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-400 cursor-pointer"
+                            />
+                            <span className={`text-xs sm:text-sm truncate ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
+                              {st.title}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveModalSubtask(st.id)}
+                            className="text-gray-400 hover:text-rose-600 text-xs p-1 rounded transition opacity-80 group-hover:opacity-100"
+                            title="Remove subtask"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Buttons */}
                 <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                   <button
@@ -817,7 +1020,9 @@ export function TasksPage() {
                   category: getDefaultCategoryValue(),
                   dueDate: '',
                   setId: activePresetId,
+                  subtasks: [],
                 });
+                setSubtaskInputText('');
                 setIsModalOpen(true);
               }}
               className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
@@ -833,6 +1038,7 @@ export function TasksPage() {
                   tasks={visibleTasks}
                   categories={categories}
                   onToggleCompletion={handleToggleCompletion}
+                  onToggleSubtask={handleToggleTaskSubtask}
                   onEdit={handleEditTask}
                   onDelete={handleDeleteTask}
                   onBulkSetCompletion={handleBulkSetCompletion}
@@ -858,6 +1064,7 @@ export function TasksPage() {
                           task={task}
                           categories={categories}
                           onToggleCompletion={handleToggleCompletion}
+                          onToggleSubtask={handleToggleTaskSubtask}
                           onEdit={handleEditTask}
                           onDelete={handleDeleteTask}
                         />
@@ -879,6 +1086,7 @@ export function TasksPage() {
                           task={task}
                           categories={categories}
                           onToggleCompletion={handleToggleCompletion}
+                          onToggleSubtask={handleToggleTaskSubtask}
                           onEdit={handleEditTask}
                           onDelete={handleDeleteTask}
                         />
@@ -995,6 +1203,77 @@ export function TasksPage() {
                   />
                 </div>
 
+                {/* Subtasks Section */}
+                <div className="space-y-2 pt-1 border-t border-purple-100">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      Subtasks (Checklist)
+                      {editFormData.subtasks.length > 0 && (
+                        <span className="ml-2 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60">
+                          {editFormData.subtasks.filter((s) => s.isCompleted).length}/{editFormData.subtasks.length}
+                        </span>
+                      )}
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editSubtaskInputText}
+                      onChange={(e) => setEditSubtaskInputText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddEditSubtask();
+                        }
+                      }}
+                      placeholder="Type subtask title and press Enter..."
+                      className="flex-1 min-h-[40px] rounded-lg border border-purple-200 bg-white/90 px-3 py-2 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddEditSubtask}
+                      disabled={isSubmitting || !editSubtaskInputText.trim()}
+                      className="min-h-[40px] px-3.5 text-xs font-semibold text-purple-700 bg-purple-100/70 border border-purple-200 hover:bg-purple-200/80 disabled:opacity-50 rounded-lg transition inline-flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add
+                    </button>
+                  </div>
+
+                  {editFormData.subtasks.length > 0 && (
+                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 mt-2">
+                      {editFormData.subtasks.map((st) => (
+                        <div
+                          key={st.id}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-purple-50/40 border border-purple-100 group"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={st.isCompleted}
+                              onChange={() => handleToggleEditSubtask(st.id)}
+                              className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-400 cursor-pointer"
+                            />
+                            <span className={`text-xs sm:text-sm truncate ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
+                              {st.title}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEditSubtask(st.id)}
+                            className="text-gray-400 hover:text-rose-600 text-xs p-1 rounded transition opacity-80 group-hover:opacity-100"
+                            title="Remove subtask"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Buttons */}
                 <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
                   <button
@@ -1079,17 +1358,24 @@ interface TaskItemProps {
   task: Task;
   categories: Category[];
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
+  onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
 }
 
-function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: TaskItemProps) {
+function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit }: TaskItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const matchedCategory = findCategoryByTaskValue(categories, task.category);
   const categoryName = matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
   const categoryColor = isValidHexColor(matchedCategory?.color || '')
     ? (matchedCategory?.color as string)
     : DEFAULT_TASK_CATEGORY_COLOR;
   const categoryTextColor = getReadableCategoryTextColor(categoryColor);
+
+  const subtasks = task.subtasks || [];
+  const totalSubtasks = subtasks.length;
+  const completedSubtasks = subtasks.filter((s) => s.isCompleted).length;
+  const progressPercent = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
 
   return (
     <div
@@ -1157,7 +1443,70 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
                 </p>
               </div>
             )}
+
+            {totalSubtasks > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50/90 text-purple-700 border border-purple-200/70 hover:bg-purple-100/80 transition cursor-pointer shadow-2xs"
+              >
+                <ListChecks className="w-3.5 h-3.5 text-purple-600" />
+                <span>
+                  Subtasks {completedSubtasks}/{totalSubtasks}
+                </span>
+                <div className="w-12 sm:w-16 h-1.5 bg-purple-200/80 rounded-full overflow-hidden ml-1">
+                  <div
+                    className="h-full bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <span className="text-[10px] font-bold text-purple-600 ml-0.5">{progressPercent}%</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-purple-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+              </button>
+            )}
           </div>
+
+          {/* Expandable Subtask Checklist Box */}
+          {totalSubtasks > 0 && isExpanded && (
+            <div className="mt-3 p-3 sm:p-3.5 rounded-xl bg-purple-50/40 border border-purple-100/80 space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-purple-800/80 px-1 pb-1 border-b border-purple-100/70">
+                <span className="flex items-center gap-1.5">
+                  <ListChecks className="w-3.5 h-3.5 text-purple-600" />
+                  Checklist ({completedSubtasks}/{totalSubtasks})
+                </span>
+                <span>{progressPercent}% Complete</span>
+              </div>
+              <div className="space-y-1.5 pt-0.5">
+                {subtasks.map((st) => (
+                  <div
+                    key={st.id}
+                    onClick={() => onToggleSubtask?.(task.id, st.id)}
+                    className="flex items-center justify-between gap-2.5 p-2 rounded-lg bg-white/90 hover:bg-white border border-purple-100/70 transition cursor-pointer shadow-2xs group/st"
+                  >
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={st.isCompleted}
+                        className={`h-4 w-4 rounded border transition duration-150 flex items-center justify-center shrink-0 ${
+                          st.isCompleted
+                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-xs'
+                            : 'bg-white border-purple-300 text-transparent group-hover/st:border-purple-400'
+                        }`}
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                      <span className={`text-xs sm:text-sm ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
+                        {st.title}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex-shrink-0 flex flex-row gap-1 sm:gap-2 opacity-65 group-hover:opacity-100 transition-opacity">

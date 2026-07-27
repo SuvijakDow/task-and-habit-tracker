@@ -1,3 +1,9 @@
+export interface Subtask {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
 export interface Task {
   id: string;
   userId: string;
@@ -7,6 +13,7 @@ export interface Task {
   setId?: string; // Id of the TaskPreset it belongs to
   dueDate: Date | null;
   isCompleted: boolean;
+  subtasks?: Subtask[];
   createdAt: Date;
   updatedAt: Date;
 }

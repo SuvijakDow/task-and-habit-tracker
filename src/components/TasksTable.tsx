@@ -41,6 +41,7 @@ interface Props {
   tasks: Task[];
   categories: Category[];
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
+  onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onBulkSetCompletion: (taskIds: string[], isCompleted: boolean) => Promise<void>;
@@ -51,6 +52,7 @@ export default function TasksTable({
   tasks,
   categories,
   onToggleCompletion,
+  onToggleSubtask,
   onEdit,
   onDelete,
   onBulkSetCompletion,
@@ -316,6 +318,28 @@ export default function TasksTable({
                       <td className={`px-3.5 ${tdPaddingClass} min-w-[220px]`}>
                         <div className="font-medium text-gray-900 break-words">{t.title}</div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
+                        {t.subtasks && t.subtasks.length > 0 && (
+                          <div className="mt-1.5 space-y-1">
+                            <div className="text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-200/80 px-1.5 py-0.5 rounded-md inline-block">
+                              {t.subtasks.filter((s) => s.isCompleted).length}/{t.subtasks.length} subtasks
+                            </div>
+                            <div className="space-y-1 pt-0.5">
+                              {t.subtasks.map((st) => (
+                                <div key={st.id} className="flex items-center gap-1.5 text-xs text-gray-700">
+                                  <input
+                                    type="checkbox"
+                                    checked={st.isCompleted}
+                                    onChange={() => onToggleSubtask?.(t.id, st.id)}
+                                    className="h-3 w-3 text-purple-600 rounded border-gray-300 focus:ring-purple-400 cursor-pointer"
+                                  />
+                                  <span className={st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}>
+                                    {st.title}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {(() => {

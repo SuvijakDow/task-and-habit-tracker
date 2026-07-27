@@ -31,6 +31,7 @@ export const createTask = async (
     const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
       userId,
       ...taskData,
+      subtasks: taskData.subtasks || [],
       category: normalizeTaskCategory(taskData.category),
       dueDate: taskData.dueDate ? Timestamp.fromDate(taskData.dueDate) : null,
       createdAt: Timestamp.now(),
@@ -59,6 +60,7 @@ export const getUserTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
+        subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
         createdAt: task.createdAt.toDate(),
@@ -178,6 +180,10 @@ export const updateTask = async (
 
     if (updates.category !== undefined) {
       dataToUpdate.category = normalizeTaskCategory(updates.category);
+    }
+
+    if (updates.subtasks !== undefined) {
+      dataToUpdate.subtasks = updates.subtasks;
     }
     
     await updateDoc(docRef, dataToUpdate);
