@@ -180,10 +180,6 @@ export default function HabitsTable({
                   const todayDayIndex = new Date().getDay();
                   const isDueToday = habit.scheduledDays.includes(todayDayIndex);
 
-                  const rowBorderClass = !isCompletedToday && isDueToday
-                    ? 'border-l-4 border-l-purple-600 font-semibold'
-                    : '';
-
                   const rowBgClass = isSelected
                     ? 'bg-purple-100/90 hover:bg-purple-100'
                     : isCompletedToday
@@ -191,9 +187,12 @@ export default function HabitsTable({
                     : 'hover:bg-purple-50/30';
 
                   return (
-                    <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBorderClass} ${rowBgClass}`}>
+                    <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBgClass}`}>
                       {/* Done Checkbox */}
-                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
+                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap relative">
+                        {!isCompletedToday && isDueToday && (
+                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-purple-600 to-pink-500 shadow-2xs" />
+                        )}
                         <button
                           type="button"
                           role="checkbox"

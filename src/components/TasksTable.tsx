@@ -294,16 +294,22 @@ export default function TasksTable({
 
                   let statusRowClass = 'hover:bg-gray-50';
                   if (deadlineType === 'overdue') {
-                    statusRowClass = 'border-l-4 border-l-rose-500 hover:bg-rose-50/20';
+                    statusRowClass = 'hover:bg-rose-50/20';
                   } else if (deadlineType === 'today') {
-                    statusRowClass = 'border-l-4 border-l-amber-500 hover:bg-amber-50/20';
+                    statusRowClass = 'hover:bg-amber-50/20';
                   }
 
                   const rowBgClass = isSelected ? selectedBg : statusRowClass;
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center relative`}>
+                        {deadlineType === 'overdue' && (
+                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-rose-500 shadow-2xs" />
+                        )}
+                        {deadlineType === 'today' && (
+                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-amber-500 shadow-2xs" />
+                        )}
                         <button
                           type="button"
                           role="checkbox"
