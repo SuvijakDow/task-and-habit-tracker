@@ -277,28 +277,20 @@ export default function TasksTable({
     return (
       <div className={`border ${borderColor} rounded-xl overflow-hidden bg-white shadow-sm`}>
         <div className="overflow-x-auto">
-          <table className="min-w-[980px] w-full text-sm table-fixed">
-            <colgroup>
-              <col style={{ width: '35%' }} />
-              <col style={{ width: '15%' }} />
-              <col style={{ width: '12%' }} />
-              <col style={{ width: '15%' }} />
-              <col style={{ width: '6%' }} />
-              <col style={{ width: '17%' }} />
-            </colgroup>
+          <table className="min-w-[640px] sm:min-w-full w-full text-sm">
             <thead className={`${headerBg} text-white`}>
               <tr>
-                <th className="px-3 py-2.5 text-left font-semibold">Title</th>
-                <th className="px-3 py-2.5 text-left font-semibold">Category</th>
-                <th className="px-3 py-2.5 text-left font-semibold">
+                <th className="px-3.5 py-2.5 text-left font-semibold w-full">Title</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Category</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">
                   <span className="inline-flex items-center gap-2">
                     Due
                     <CalendarDays className={`h-4 w-4 ${iconColor}`} />
                   </span>
                 </th>
-                <th className="px-3 py-2.5 text-left font-semibold">Status</th>
-                <th className="px-3 py-2.5 text-center font-semibold">Done</th>
-                <th className="px-3 py-2.5 text-right font-semibold">Actions</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Status</th>
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px">Done</th>
+                <th className="px-3.5 py-2.5 text-right font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -320,11 +312,11 @@ export default function TasksTable({
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
-                      <td className={`px-3 ${tdPaddingClass} max-w-[35%]`}>
-                        <div className="font-medium truncate">{t.title}</div>
-                        {t.description && <div className="text-xs text-gray-500 truncate">{t.description}</div>}
+                      <td className={`px-3.5 ${tdPaddingClass}`}>
+                        <div className="font-medium text-gray-900 break-words">{t.title}</div>
+                        {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
                       </td>
-                      <td className={`px-3 ${tdPaddingClass}`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {(() => {
                           const matchedCategory = getCategory(t.category);
                           const categoryName = matchedCategory?.name || t.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -347,14 +339,14 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-                      <td className={`px-3 ${tdPaddingClass}`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           <div className="text-sm text-gray-700">{new Date(t.dueDate).toLocaleDateString()}</div>
                         ) : (
                           <div className="text-sm text-gray-400">—</div>
                         )}
                       </td>
-                      <td className={`px-3 ${tdPaddingClass}`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           (() => {
                             const deadlineStatus = getDeadlineStatus(t);
@@ -370,7 +362,7 @@ export default function TasksTable({
                           <div className="text-sm text-gray-400">—</div>
                         )}
                       </td>
-                      <td className={`px-3 ${tdPaddingClass} text-center`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center`}>
                         <button
                           type="button"
                           role="checkbox"
@@ -387,7 +379,7 @@ export default function TasksTable({
                           </svg>
                         </button>
                       </td>
-                      <td className={`px-3 ${tdPaddingClass} text-right`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-right`}>
                         <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           <button
                             onClick={() => toggleSelected(t.id)}

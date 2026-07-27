@@ -154,23 +154,15 @@ export default function HabitsTable({
       {/* Table & Pagination Card Container */}
       <div className="border border-purple-200 rounded-xl overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-[920px] w-full text-sm table-fixed">
-            <colgroup>
-              <col style={{ width: '28%' }} />
-              <col style={{ width: '20%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '18%' }} />
-            </colgroup>
+          <table className="min-w-[640px] sm:min-w-full w-full text-sm">
             <thead className="bg-purple-600 text-white">
               <tr>
-                <th className="px-3.5 py-3 text-left font-semibold">Habit Title</th>
-                <th className="px-3.5 py-3 text-left font-semibold">Schedule</th>
-                <th className="px-3.5 py-3 text-left font-semibold">Time</th>
-                <th className="px-3.5 py-3 text-center font-semibold">Streak</th>
-                <th className="px-3.5 py-3 text-center font-semibold">Done</th>
-                <th className="px-3.5 py-3 text-right font-semibold">Actions</th>
+                <th className="px-3.5 py-3 text-left font-semibold w-full">Habit Title</th>
+                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Schedule</th>
+                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Time</th>
+                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Streak</th>
+                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Done</th>
+                <th className="px-3.5 py-3 text-right font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -194,21 +186,21 @@ export default function HabitsTable({
                   return (
                     <tr key={habit.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
                       {/* Title */}
-                      <td className="px-3.5 py-3 align-middle max-w-[28%]">
-                        <span className={`font-medium truncate block ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                      <td className="px-3.5 py-3 align-middle">
+                        <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                           {habit.title}
                         </span>
                       </td>
 
                       {/* Schedule */}
-                      <td className="px-3.5 py-3 align-middle">
+                      <td className="px-3.5 py-3 align-middle whitespace-nowrap">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700">
                           {formatScheduledDays(habit.scheduledDays)}
                         </span>
                       </td>
 
                       {/* Time */}
-                      <td className="px-3.5 py-3 align-middle">
+                      <td className="px-3.5 py-3 align-middle whitespace-nowrap">
                         <div
                           className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
                           style={{ backgroundColor: getHabitColorHex(habit, habits) }}
@@ -221,7 +213,7 @@ export default function HabitsTable({
                       </td>
 
                       {/* Streak */}
-                      <td className="px-3.5 py-3 align-middle text-center">
+                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-white border border-purple-200 px-2 py-0.5 rounded-md shadow-xs">
                           <Flame className="h-3.5 w-3.5 text-pink-500" />
                           {streak}
@@ -229,7 +221,7 @@ export default function HabitsTable({
                       </td>
 
                       {/* Done Checkbox */}
-                      <td className="px-3.5 py-3 align-middle text-center">
+                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
                         <button
                           type="button"
                           role="checkbox"
@@ -249,7 +241,7 @@ export default function HabitsTable({
                       </td>
 
                       {/* Actions */}
-                      <td className="px-3.5 py-3 align-middle text-right">
+                      <td className="px-3.5 py-3 align-middle text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           <button
                             onClick={() => toggleSelected(habit.id)}
