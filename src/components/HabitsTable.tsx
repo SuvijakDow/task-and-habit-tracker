@@ -226,57 +226,57 @@ export default function HabitsTable({
                           const percent = Math.min(100, Math.round((currentProgress / target) * 100));
 
                           return (
-                            <div className="flex flex-col gap-1 mt-1.5 p-1.5 rounded-lg bg-purple-50/70 border border-purple-100/90 shadow-2xs">
-                              <div className="flex items-center justify-between gap-1.5">
-                                <div className="inline-flex items-center gap-0.5 bg-white border border-purple-200/90 rounded-md p-0.5 shadow-2xs">
-                                  <button
-                                    type="button"
-                                    onClick={() => onProgressChange?.(habit.id, currentProgress - 1)}
-                                    className="w-4 h-4 rounded bg-purple-100/80 text-purple-800 font-bold hover:bg-purple-200 flex items-center justify-center text-xs transition disabled:opacity-40"
-                                    disabled={currentProgress <= 0}
-                                  >
-                                    -
-                                  </button>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={currentProgress === 0 ? '' : currentProgress}
-                                    placeholder="0"
-                                    onChange={(e) => {
-                                      const raw = e.target.value.replace(/[^0-9]/g, '');
-                                      if (raw === '') {
-                                        onProgressChange?.(habit.id, 0);
-                                      } else {
-                                        const parsed = parseInt(raw, 10);
-                                        const val = Math.min(target, Math.max(0, parsed));
-                                        onProgressChange?.(habit.id, val);
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="h-5 text-center text-[11px] font-bold text-purple-900 bg-purple-50/90 rounded border border-purple-200/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 px-1 transition-all"
-                                    style={{ width: `${Math.max(2.2, String(currentProgress).length + 1.5)}ch` }}
-                                  />
-                                  <span className="text-[11px] font-bold text-purple-900 whitespace-nowrap">
-                                    / {target} {habit.targetUnit || ''}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => onProgressChange?.(habit.id, currentProgress + 1)}
-                                    className="w-4 h-4 rounded bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold hover:opacity-90 flex items-center justify-center text-xs transition disabled:opacity-40"
-                                    disabled={currentProgress >= target}
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                                <span className="text-[10px] font-bold text-purple-800">{percent}%</span>
+                            <div className="flex items-center gap-1.5 mt-1.5 p-1 rounded-lg bg-purple-50/70 border border-purple-100/90 shadow-2xs">
+                              <div className="inline-flex items-center gap-0.5 bg-white border border-purple-200/90 rounded-md p-0.5 shadow-2xs shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => onProgressChange?.(habit.id, currentProgress - 1)}
+                                  className="w-4 h-4 rounded bg-purple-100/80 text-purple-800 font-bold hover:bg-purple-200 flex items-center justify-center text-xs transition disabled:opacity-40"
+                                  disabled={currentProgress <= 0}
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  value={currentProgress === 0 ? '' : currentProgress}
+                                  placeholder="0"
+                                  onChange={(e) => {
+                                    const raw = e.target.value.replace(/[^0-9]/g, '');
+                                    if (raw === '') {
+                                      onProgressChange?.(habit.id, 0);
+                                    } else {
+                                      const parsed = parseInt(raw, 10);
+                                      const val = Math.min(target, Math.max(0, parsed));
+                                      onProgressChange?.(habit.id, val);
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-5 text-center text-[11px] font-bold text-purple-900 bg-purple-50/90 rounded border border-purple-200/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 px-1 transition-all"
+                                  style={{ width: `${Math.max(2.2, String(currentProgress).length + 1.5)}ch` }}
+                                />
+                                <span className="text-[11px] font-bold text-purple-900 whitespace-nowrap">
+                                  / {target} {habit.targetUnit || ''}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => onProgressChange?.(habit.id, currentProgress + 1)}
+                                  className="w-4 h-4 rounded bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold hover:opacity-90 flex items-center justify-center text-xs transition disabled:opacity-40"
+                                  disabled={currentProgress >= target}
+                                >
+                                  +
+                                </button>
                               </div>
-                              <div className="w-full h-1 bg-purple-200/70 rounded-full overflow-hidden">
+
+                              <div className="flex-1 h-1.5 bg-purple-200/70 rounded-full overflow-hidden min-w-[30px]">
                                 <div
                                   className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 rounded-full transition-all duration-300"
                                   style={{ width: `${percent}%` }}
                                 />
                               </div>
+
+                              <span className="text-[10px] font-bold text-purple-800 shrink-0">{percent}%</span>
                             </div>
                           );
                         })()}
