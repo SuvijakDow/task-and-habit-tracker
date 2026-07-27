@@ -1646,7 +1646,7 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
             )}
 
             {(() => {
-              const deadlineStatus = getDeadlineStatus(task.dueDate, task.isCompleted);
+              const deadlineStatus = getDeadlineStatus(task.dueDate);
               return deadlineStatus ? (
                 <span className={`inline-flex items-center text-[9px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border ${deadlineStatus.className}`}>
                   {deadlineStatus.text}

@@ -393,7 +393,7 @@ export default function TasksTable({
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           (() => {
-                            const deadlineStatus = getDeadlineStatus(t.dueDate, t.isCompleted);
+                            const deadlineStatus = getDeadlineStatus(t.dueDate);
                             return deadlineStatus ? (
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${deadlineStatus.className}`}>
                                 {deadlineStatus.text}

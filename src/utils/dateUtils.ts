@@ -26,17 +26,29 @@ export const formatDueDateDisplay = (date: Date | string | null | undefined): st
   return format(d, 'd MMM yyyy');
 };
 
-export const getDeadlineStatus = (dueDateValue?: Date | string | null, isCompleted?: boolean) => {
-  if (!dueDateValue || isCompleted) return null;
+export const getDeadlineStatus = (dueDateValue?: any) => {
+  if (!dueDateValue) return null;
+
+  let dueDate: Date;
+  if (dueDateValue instanceof Date) {
+    dueDate = dueDateValue;
+  } else if (dueDateValue && typeof dueDateValue === 'object' && typeof dueDateValue.toDate === 'function') {
+    dueDate = dueDateValue.toDate();
+  } else if (typeof dueDateValue === 'string' || typeof dueDateValue === 'number') {
+    dueDate = new Date(dueDateValue);
+  } else {
+    return null;
+  }
+
+  if (isNaN(dueDate.getTime())) return null;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const dueDate = typeof dueDateValue === 'string' ? new Date(dueDateValue) : dueDateValue;
-  if (isNaN(dueDate.getTime())) return null;
-  dueDate.setHours(0, 0, 0, 0);
+  const targetDate = new Date(dueDate);
+  targetDate.setHours(0, 0, 0, 0);
 
-  const diffTime = dueDate.getTime() - today.getTime();
+  const diffTime = targetDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
