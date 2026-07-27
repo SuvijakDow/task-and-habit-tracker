@@ -261,15 +261,15 @@ export default function TasksTable({
             <thead className={`${headerBg} text-white`}>
               <tr>
                 <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
-                <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[220px]">Title</th>
-                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Category</th>
-                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">
+                <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[220px] border-r border-white/15">Title</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Category</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">
                   <span className="inline-flex items-center gap-2">
                     Due
                     <CalendarDays className={`h-4 w-4 ${iconColor}`} />
                   </span>
                 </th>
-                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Status</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Status</th>
                 <th className="px-3.5 py-2.5 text-right font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
@@ -326,7 +326,7 @@ export default function TasksTable({
                           </svg>
                         </button>
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} min-w-[220px]`}>
+                      <td className={`px-3.5 ${tdPaddingClass} min-w-[220px] border-r border-purple-100/70`}>
                         <div className="font-medium text-gray-900 break-words">{t.title}</div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
                         {t.subtasks && t.subtasks.length > 0 && (() => {
@@ -394,7 +394,7 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70`}>
                         {(() => {
                           const matchedCategory = getCategory(t.category);
                           const categoryName = matchedCategory?.name || t.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -417,7 +417,7 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70`}>
                         {t.dueDate ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700 whitespace-nowrap shadow-2xs">
                             <CalendarDays className="w-3.5 h-3.5 text-purple-600" />
@@ -427,7 +427,7 @@ export default function TasksTable({
                           <span className="text-xs text-gray-400 font-medium">—</span>
                         )}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70`}>
                         {t.dueDate ? (
                           (() => {
                             const deadlineStatus = getDeadlineStatus(t.dueDate);

@@ -158,10 +158,10 @@ export default function HabitsTable({
             <thead className="bg-purple-600 text-white">
               <tr>
                 <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
-                <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px]">Habit Title</th>
-                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Schedule</th>
-                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Time</th>
-                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Streak</th>
+                <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px] border-r border-white/15">Habit Title</th>
+                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Schedule</th>
+                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Time</th>
+                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Streak</th>
                 <th className="px-3.5 py-3 text-right font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
@@ -212,14 +212,14 @@ export default function HabitsTable({
                       </td>
 
                       {/* Title */}
-                      <td className="px-3.5 py-3 align-middle min-w-[220px]">
+                      <td className="px-3.5 py-3 align-middle min-w-[220px] border-r border-purple-100/70">
                         <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                           {habit.title}
                         </span>
                       </td>
 
                       {/* Schedule */}
-                      <td className="px-3.5 py-3 align-middle whitespace-nowrap">
+                      <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700">
                           {formatScheduledDays(habit.scheduledDays)}
                         </span>
@@ -231,7 +231,7 @@ export default function HabitsTable({
                       </td>
 
                       {/* Time */}
-                      <td className="px-3.5 py-3 align-middle whitespace-nowrap">
+                      <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
                         <div
                           className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
                           style={{ backgroundColor: getHabitColorHex(habit, habits) }}
@@ -244,7 +244,7 @@ export default function HabitsTable({
                       </td>
 
                       {/* Streak */}
-                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
+                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap border-r border-purple-100/70">
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-white border border-purple-200 px-2 py-0.5 rounded-md shadow-xs">
                           <Flame className="h-3.5 w-3.5 text-pink-500" />
                           {streak}
