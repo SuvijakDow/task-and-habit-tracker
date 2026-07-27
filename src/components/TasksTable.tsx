@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
 import { CalendarDays, ChevronDown, ListChecks, RefreshCw, Search } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
-import { formatDueDateDisplay } from '@/utils/dateUtils';
+import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -87,38 +87,7 @@ export default function TasksTable({
     return matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
   };
 
-  const getDeadlineStatus = (task: Task) => {
-    if (!task.dueDate) return null;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = new Date(task.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      const overdueDays = Math.abs(diffDays);
-      return {
-        text: `Overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}`,
-        className: 'text-red-600 bg-red-50 border-red-200',
-      };
-    }
-
-    if (diffDays === 0) {
-      return {
-        text: 'Due today',
-        className: 'text-amber-600 bg-amber-50 border-amber-200',
-      };
-    }
-
-    return {
-      text: `${diffDays} day${diffDays > 1 ? 's' : ''} left`,
-      className: 'text-green-600 bg-green-50 border-green-200',
-    };
-  };
 
   const matchesQuickFilter = (task: Task): boolean => {
     if (quickFilter === 'all') return true;
@@ -426,7 +395,7 @@ export default function TasksTable({
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           (() => {
-                            const deadlineStatus = getDeadlineStatus(t);
+                            const deadlineStatus = getDeadlineStatus(t.dueDate);
                             return deadlineStatus ? (
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${deadlineStatus.className}`}>
                                 {deadlineStatus.text}

@@ -18,7 +18,7 @@ import {
 import { showToast } from '@/components/Toast';
 import { playSuccessSound } from '@/utils/audio';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
-import { formatDueDateDisplay } from '@/utils/dateUtils';
+import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import {
   createTaskPreset,
   deleteTaskPreset,
@@ -1639,10 +1639,20 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
             </span>
 
             {task.dueDate && (
-              <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium px-2 py-0.5 rounded-md bg-purple-50/90 text-purple-700 border border-purple-200/70">
-                <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
-                <span className="sm:whitespace-nowrap">{formatDueDateDisplay(task.dueDate)}</span>
-              </span>
+              <>
+                <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium px-2 py-0.5 rounded-md bg-purple-50/90 text-purple-700 border border-purple-200/70">
+                  <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
+                  <span className="sm:whitespace-nowrap">{formatDueDateDisplay(task.dueDate)}</span>
+                </span>
+                {!task.isCompleted && (() => {
+                  const status = getDeadlineStatus(task.dueDate);
+                  return status ? (
+                    <span className={`inline-flex items-center text-[9px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border ${status.className}`}>
+                      {status.text}
+                    </span>
+                  ) : null;
+                })()}
+              </>
             )}
 
             {totalSubtasks > 0 && (
