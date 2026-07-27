@@ -177,11 +177,16 @@ export default function HabitsTable({
                   const isCompletedToday = habit.completedDates.includes(todayDate);
                   const streak = habit.completedDates.length;
                   const isSelected = selectedIds.has(habit.id);
+                  const todayDayIndex = new Date().getDay();
+                  const isDueToday = habit.scheduledDays.includes(todayDayIndex);
+
                   const rowBgClass = isSelected
                     ? 'bg-purple-100/90 hover:bg-purple-100'
                     : isCompletedToday
-                    ? 'bg-purple-50/40 hover:bg-purple-50/70'
-                    : 'hover:bg-gray-50';
+                    ? 'bg-emerald-50/40 hover:bg-emerald-50/70'
+                    : isDueToday
+                    ? 'bg-purple-50/80 hover:bg-purple-100/70 font-semibold'
+                    : 'opacity-65 hover:opacity-100 hover:bg-gray-50';
 
                   return (
                     <tr key={habit.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
@@ -197,6 +202,11 @@ export default function HabitsTable({
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700">
                           {formatScheduledDays(habit.scheduledDays)}
                         </span>
+                        {isDueToday && !isCompletedToday && (
+                          <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-2xs">
+                            Today
+                          </span>
+                        )}
                       </td>
 
                       {/* Time */}

@@ -851,13 +851,19 @@ export function HabitsPage() {
                 {habitsToDisplay.map((habit) => {
                   const isCompletedToday = habit.completedDates.includes(todayDate);
                   const streak = habit.completedDates.length;
+                  const todayDayIndex = new Date().getDay();
+                  const isDueToday = habit.scheduledDays.includes(todayDayIndex);
+
+                  const cardStyleClass = isCompletedToday
+                    ? 'bg-gradient-to-r from-emerald-50/60 via-white/80 to-purple-50/40 border border-emerald-200/80'
+                    : isDueToday
+                    ? 'bg-gradient-to-r from-purple-50/90 via-white to-pink-50/50 border-l-4 border-l-purple-600 border border-purple-300/90 shadow-md ring-1 ring-purple-400/20'
+                    : 'bg-white/40 border border-gray-200/60 opacity-60 hover:opacity-95';
 
                   return (
                     <div key={habit.id}>
                       <div
-                        className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${
-                          isCompletedToday ? 'bg-gradient-to-r from-white/55 to-pink-50/60' : ''
-                        } hover:shadow-md sm:hover:shadow-2xl`}
+                        className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${cardStyleClass} hover:shadow-md sm:hover:shadow-2xl`}
                       >
                         <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
                           <button
@@ -884,6 +890,12 @@ export function HabitsPage() {
                           >
                             {habit.title}
                           </span>
+
+                          {isDueToday && !isCompletedToday && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-2xs shrink-0">
+                              <Activity className="w-3 h-3 text-amber-300 animate-pulse" /> Today
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-row items-center justify-between w-full gap-3">
