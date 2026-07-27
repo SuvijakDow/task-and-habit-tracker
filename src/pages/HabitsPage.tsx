@@ -1045,7 +1045,7 @@ export function HabitsPage() {
                                   className="h-6 text-center text-xs font-bold text-purple-900 bg-purple-50/90 rounded border border-purple-200/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 px-1 transition-all"
                                   style={{ width: `${Math.max(2.2, String(currentProgress).length + 1.6)}ch` }}
                                 />
-                                <span className="text-xs font-bold text-purple-900 whitespace-nowrap">
+                                <span className="text-xs font-bold text-purple-900 whitespace-nowrap pl-0.5 pr-1.5">
                                   / {target} {habit.targetUnit || ''}
                                 </span>
                               </div>

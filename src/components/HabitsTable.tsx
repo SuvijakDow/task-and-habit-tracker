@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
-import { Check, Clock, Flame, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Activity, Calendar, Check, Clock, Flame, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { getHabitColorHex } from '@/services/habitService';
 
 const formatScheduledDays = (days: number[]): string => {
@@ -30,8 +30,6 @@ export default function HabitsTable({
   onDelete,
   onBulkDelete,
 }: Props) {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkRunning, setIsBulkRunning] = useState(false);
@@ -47,13 +45,6 @@ export default function HabitsTable({
     () => habits.filter(matchesFilters),
     [habits, searchQuery]
   );
-
-  const totalPages = Math.max(1, Math.ceil(filteredHabits.length / pageSize));
-  const pagedHabits = filteredHabits.slice((page - 1) * pageSize, page * pageSize);
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
 
   useEffect(() => {
     setSelectedIds((prev) => {
@@ -115,6 +106,258 @@ export default function HabitsTable({
       setIsBulkRunning(false);
     }
   };
+  const todayDayIndex = new Date().getDay();
+  const todayHabits = useMemo(
+    () => filteredHabits.filter((h) => h.scheduledDays.includes(todayDayIndex)),
+    [filteredHabits, todayDayIndex]
+  );
+  const otherHabits = useMemo(
+    () => filteredHabits.filter((h) => !h.scheduledDays.includes(todayDayIndex)),
+    [filteredHabits, todayDayIndex]
+  );
+
+  const renderTable = (
+    sectionTitle: string,
+    icon: React.ReactNode,
+    habitsList: DailyHabit[],
+    theme: 'pink' | 'purple'
+  ) => {
+    const isPink = theme === 'pink';
+    const headerBgClass = isPink
+      ? 'bg-gradient-to-r from-pink-600 via-fuchsia-600 to-purple-600 text-white'
+      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white';
+    const containerBorderClass = isPink
+      ? 'border border-pink-300/90 rounded-xl overflow-hidden bg-white shadow-sm'
+      : 'border border-purple-200/90 rounded-xl overflow-hidden bg-white shadow-sm';
+    const doneColBorderClass = isPink ? 'border-r-2 border-pink-300' : 'border-r-2 border-purple-200';
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className={`text-xs sm:text-sm font-bold flex items-center gap-2 ${isPink ? 'text-pink-900' : 'text-purple-900'}`}>
+            {icon}
+            {sectionTitle}
+            <span className={`px-2 py-0.5 text-xs font-bold rounded-full border ${isPink ? 'bg-pink-100 text-pink-800 border-pink-200' : 'bg-purple-100 text-purple-800 border-purple-200'}`}>
+              {habitsList.length}
+            </span>
+          </h3>
+        </div>
+
+        <div className={containerBorderClass}>
+          <div className="overflow-x-auto">
+            <table className="min-w-[700px] w-full text-sm">
+              <thead className={headerBgClass}>
+                <tr>
+                  <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
+                  <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[calc(100vw-72px)] sm:min-w-[220px] border-r border-white/15">Habit Title</th>
+                  <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Schedule</th>
+                  <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Time</th>
+                  <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Streak</th>
+                  <th className="px-3.5 py-3 text-right font-semibold whitespace-nowrap w-px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {habitsList.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-6 text-center text-gray-500 text-xs">
+                      No habits in this section.
+                    </td>
+                  </tr>
+                ) : (
+                  habitsList.map((habit) => {
+                    const isCompletedToday = habit.completedDates.includes(todayDate);
+                    const streak = habit.completedDates.length;
+                    const isSelected = selectedIds.has(habit.id);
+                    const isDueToday = habit.scheduledDays.includes(todayDayIndex);
+
+                    const rowBgClass = isSelected
+                      ? 'bg-purple-100/90 hover:bg-purple-100'
+                      : isCompletedToday
+                      ? 'bg-emerald-50/40 hover:bg-emerald-50/70'
+                      : isPink
+                      ? 'bg-gradient-to-r from-pink-50/20 via-white to-purple-50/10 hover:bg-pink-50/40'
+                      : 'hover:bg-purple-50/30';
+
+                    return (
+                      <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBgClass}`}>
+                        {/* Done Checkbox */}
+                        <td className={`px-3.5 py-3 align-middle text-center whitespace-nowrap relative ${doneColBorderClass}`}>
+                          {!isCompletedToday && isDueToday && (
+                            <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-purple-600 to-pink-500 shadow-2xs" />
+                          )}
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={isCompletedToday}
+                            aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
+                            onClick={() => onToggleCompletion(habit.id, isCompletedToday)}
+                            className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${
+                              isCompletedToday
+                                ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
+                                : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                            }`}
+                          >
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                        </td>
+
+                        {/* Title */}
+                        <td className="px-3.5 py-3 align-middle min-w-[calc(100vw-72px)] sm:min-w-[220px] border-r border-purple-100/70">
+                          <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                            {habit.title}
+                          </span>
+                          {habit.targetValue && habit.targetValue > 0 && (() => {
+                            const currentProgress = habit.dailyProgress?.[todayDate] ?? (isCompletedToday ? habit.targetValue : 0);
+                            const target = habit.targetValue;
+                            const percent = Math.min(100, Math.round((currentProgress / target) * 100));
+
+                            return (
+                              <div className="flex items-center gap-1.5 mt-1.5 p-1 rounded-lg bg-purple-50/70 border border-purple-100/90 shadow-2xs">
+                                <div className="inline-flex items-center gap-1 bg-white border border-purple-200/90 rounded-md p-0.5 shadow-2xs shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => onProgressChange?.(habit.id, currentProgress - 1)}
+                                    className="w-4 h-4 rounded bg-purple-100/80 text-purple-800 font-bold hover:bg-purple-200 flex items-center justify-center text-xs transition disabled:opacity-40"
+                                    disabled={currentProgress <= 0}
+                                  >
+                                    -
+                                  </button>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={currentProgress === 0 ? '' : currentProgress}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                                      if (raw === '') {
+                                        onProgressChange?.(habit.id, 0);
+                                      } else {
+                                        const parsed = parseInt(raw, 10);
+                                        const val = Math.min(target, Math.max(0, parsed));
+                                        onProgressChange?.(habit.id, val);
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-5 text-center text-[11px] font-bold text-purple-900 bg-purple-50/90 rounded border border-purple-200/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 px-1 transition-all"
+                                    style={{ width: `${Math.max(2.2, String(currentProgress).length + 1.5)}ch` }}
+                                  />
+                                  <span className="text-[11px] font-bold text-purple-900 whitespace-nowrap pl-0.5 pr-1.5">
+                                    / {target} {habit.targetUnit || ''}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => onProgressChange?.(habit.id, currentProgress + 1)}
+                                    className="w-4 h-4 rounded bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold hover:opacity-90 flex items-center justify-center text-xs transition disabled:opacity-40"
+                                    disabled={currentProgress >= target}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                <div className="flex-1 h-1.5 bg-purple-200/70 rounded-full overflow-hidden min-w-[30px]">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 rounded-full transition-all duration-300"
+                                    style={{ width: `${percent}%` }}
+                                  />
+                                </div>
+
+                                <span className="text-[10px] font-bold text-purple-800 shrink-0">{percent}%</span>
+                              </div>
+                            );
+                          })()}
+                        </td>
+
+                        {/* Schedule */}
+                        <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700">
+                            {formatScheduledDays(habit.scheduledDays)}
+                          </span>
+                          {isDueToday && !isCompletedToday && (
+                            <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-2xs">
+                              Today
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Time */}
+                        <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
+                            style={{ backgroundColor: getHabitColorHex(habit, habits) }}
+                          >
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
+                            <span>
+                              {habit.startTime} - {habit.endTime}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Streak */}
+                        <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap border-r border-purple-100/70">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-white border border-purple-200 px-2 py-0.5 rounded-md shadow-xs">
+                            <Flame className="h-3.5 w-3.5 text-pink-500" />
+                            {streak}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-3.5 py-3 align-middle text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => toggleSelected(habit.id)}
+                              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1 shadow-2xs ${
+                                isSelected
+                                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-xs'
+                                  : 'bg-purple-50/80 hover:bg-purple-100/90 text-purple-700 border border-purple-200/80'
+                              }`}
+                              title={isSelected ? 'Deselect habit' : 'Select habit for bulk actions'}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <Check className="w-3 h-3 text-white stroke-[3]" />
+                                  <span>Selected</span>
+                                </>
+                              ) : (
+                                <span>Select</span>
+                              )}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => onEdit(habit)}
+                              className="h-7 w-7 rounded-lg bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 border border-gray-200/80 hover:border-blue-200 transition-all flex items-center justify-center shadow-2xs"
+                              title="Edit habit"
+                              aria-label={`Edit ${habit.title}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => onDelete(habit.id)}
+                              className="h-7 w-7 rounded-lg bg-white hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/80 hover:border-rose-200 transition-all flex items-center justify-center shadow-2xs"
+                              title="Delete habit"
+                              aria-label={`Delete ${habit.title}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -155,252 +398,22 @@ export default function HabitsTable({
         </div>
       </div>
 
-      {/* Table & Pagination Card Container */}
-      <div className="border border-purple-200 rounded-xl overflow-hidden bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="min-w-[700px] w-full text-sm">
-            <thead className="bg-purple-600 text-white">
-              <tr>
-                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
-                <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px] border-r border-white/15">Habit Title</th>
-                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Schedule</th>
-                <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Time</th>
-                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Streak</th>
-                <th className="px-3.5 py-3 text-right font-semibold whitespace-nowrap w-px">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedHabits.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                    No habits found.
-                  </td>
-                </tr>
-              ) : (
-                pagedHabits.map((habit) => {
-                  const isCompletedToday = habit.completedDates.includes(todayDate);
-                  const streak = habit.completedDates.length;
-                  const isSelected = selectedIds.has(habit.id);
-                  const todayDayIndex = new Date().getDay();
-                  const isDueToday = habit.scheduledDays.includes(todayDayIndex);
+      {/* Table Sections */}
+      <div className="space-y-6">
+        {renderTable(
+          "Today's Scheduled Habits",
+          <Activity className="w-4 h-4 text-pink-600 animate-pulse" />,
+          todayHabits,
+          'pink'
+        )}
 
-                  const rowBgClass = isSelected
-                    ? 'bg-purple-100/90 hover:bg-purple-100'
-                    : isCompletedToday
-                    ? 'bg-emerald-50/40 hover:bg-emerald-50/70'
-                    : 'hover:bg-purple-50/30';
-
-                  return (
-                    <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBgClass}`}>
-                      {/* Done Checkbox */}
-                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap relative border-r-2 border-purple-200">
-                        {!isCompletedToday && isDueToday && (
-                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-purple-600 to-pink-500 shadow-2xs" />
-                        )}
-                        <button
-                          type="button"
-                          role="checkbox"
-                          aria-checked={isCompletedToday}
-                          aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
-                          onClick={() => onToggleCompletion(habit.id, isCompletedToday)}
-                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${
-                            isCompletedToday
-                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                              : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                          }`}
-                        >
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                      </td>
-
-                      {/* Title */}
-                      <td className="px-3.5 py-3 align-middle min-w-[220px] border-r border-purple-100/70">
-                        <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                          {habit.title}
-                        </span>
-                        {habit.targetValue && habit.targetValue > 0 && (() => {
-                          const currentProgress = habit.dailyProgress?.[todayDate] ?? (isCompletedToday ? habit.targetValue : 0);
-                          const target = habit.targetValue;
-                          const percent = Math.min(100, Math.round((currentProgress / target) * 100));
-
-                          return (
-                            <div className="flex items-center gap-1.5 mt-1.5 p-1 rounded-lg bg-purple-50/70 border border-purple-100/90 shadow-2xs">
-                              <div className="inline-flex items-center gap-0.5 bg-white border border-purple-200/90 rounded-md p-0.5 shadow-2xs shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => onProgressChange?.(habit.id, currentProgress - 1)}
-                                  className="w-4 h-4 rounded bg-purple-100/80 text-purple-800 font-bold hover:bg-purple-200 flex items-center justify-center text-xs transition disabled:opacity-40"
-                                  disabled={currentProgress <= 0}
-                                >
-                                  -
-                                </button>
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  value={currentProgress === 0 ? '' : currentProgress}
-                                  placeholder="0"
-                                  onChange={(e) => {
-                                    const raw = e.target.value.replace(/[^0-9]/g, '');
-                                    if (raw === '') {
-                                      onProgressChange?.(habit.id, 0);
-                                    } else {
-                                      const parsed = parseInt(raw, 10);
-                                      const val = Math.min(target, Math.max(0, parsed));
-                                      onProgressChange?.(habit.id, val);
-                                    }
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="h-5 text-center text-[11px] font-bold text-purple-900 bg-purple-50/90 rounded border border-purple-200/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 px-1 transition-all"
-                                  style={{ width: `${Math.max(2.2, String(currentProgress).length + 1.5)}ch` }}
-                                />
-                                <span className="text-[11px] font-bold text-purple-900 whitespace-nowrap">
-                                  / {target} {habit.targetUnit || ''}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => onProgressChange?.(habit.id, currentProgress + 1)}
-                                  className="w-4 h-4 rounded bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold hover:opacity-90 flex items-center justify-center text-xs transition disabled:opacity-40"
-                                  disabled={currentProgress >= target}
-                                >
-                                  +
-                                </button>
-                              </div>
-
-                              <div className="flex-1 h-1.5 bg-purple-200/70 rounded-full overflow-hidden min-w-[30px]">
-                                <div
-                                  className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 rounded-full transition-all duration-300"
-                                  style={{ width: `${percent}%` }}
-                                />
-                              </div>
-
-                              <span className="text-[10px] font-bold text-purple-800 shrink-0">{percent}%</span>
-                            </div>
-                          );
-                        })()}
-                      </td>
-
-                      {/* Schedule */}
-                      <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700">
-                          {formatScheduledDays(habit.scheduledDays)}
-                        </span>
-                        {isDueToday && !isCompletedToday && (
-                          <span className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-2xs">
-                            Today
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Time */}
-                      <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
-                        <div
-                          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
-                          style={{ backgroundColor: getHabitColorHex(habit, habits) }}
-                        >
-                          <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
-                          <span>
-                            {habit.startTime} - {habit.endTime}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Streak */}
-                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap border-r border-purple-100/70">
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-white border border-purple-200 px-2 py-0.5 rounded-md shadow-xs">
-                          <Flame className="h-3.5 w-3.5 text-pink-500" />
-                          {streak}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-3.5 py-3 align-middle text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => toggleSelected(habit.id)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1 shadow-2xs ${
-                              isSelected
-                                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-xs'
-                                : 'bg-purple-50/80 hover:bg-purple-100/90 text-purple-700 border border-purple-200/80'
-                            }`}
-                            title={isSelected ? 'Deselect habit' : 'Select habit for bulk actions'}
-                          >
-                            {isSelected ? (
-                              <>
-                                <Check className="w-3 h-3 text-white stroke-[3]" />
-                                <span>Selected</span>
-                              </>
-                            ) : (
-                              <span>Select</span>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onEdit(habit)}
-                            className="h-7 w-7 rounded-lg bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 border border-gray-200/80 hover:border-blue-200 transition-all flex items-center justify-center shadow-2xs"
-                            title="Edit habit"
-                            aria-label={`Edit ${habit.title}`}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onDelete(habit.id)}
-                            className="h-7 w-7 rounded-lg bg-white hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/80 hover:border-rose-200 transition-all flex items-center justify-center shadow-2xs"
-                            title="Delete habit"
-                            aria-label={`Delete ${habit.title}`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer - Seamlessly attached */}
-        <div className="flex items-center justify-between px-3.5 py-2.5 bg-purple-600 text-white border-t border-purple-500">
-          <div className="flex items-center gap-2 text-sm text-white">
-            <span>Page {page} of {totalPages}</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
-              }}
-              className="border border-white/50 bg-white/95 text-purple-700 rounded px-2 py-1 text-sm focus:outline-none"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded font-medium disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-3 py-1 bg-white/95 text-purple-700 border border-white/60 rounded font-medium disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        {otherHabits.length > 0 &&
+          renderTable(
+            'Scheduled for Other Days',
+            <Calendar className="w-4 h-4 text-purple-600" />,
+            otherHabits,
+            'purple'
+          )}
       </div>
 
       {/* Bulk Delete Modal */}
