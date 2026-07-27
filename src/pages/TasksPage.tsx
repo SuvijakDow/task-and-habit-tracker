@@ -838,241 +838,257 @@ export function TasksPage() {
 
         {/* Add Task Form Modal */}
         {isModalOpen && createPortal(
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+              <form onSubmit={handleSubmit} className="flex flex-col h-full max-h-full">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Add New Task</h2>
+                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-purple-600" />
+                    Add New Task
+                  </h2>
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
+                    className="h-8 w-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition flex items-center justify-center"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                {/* Error Message */}
-                {error && (
-                  <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
-                    {error}
-                  </div>
-                )}
-
-                {/* Title Input */}
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                    Task Title *
-                  </label>
-                  <input
-                    id="title"
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    placeholder="Enter task title"
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                    autoFocus
-                  />
-                </div>
-
-                {/* Description Textarea */}
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Enter task description (optional)"
-                    rows={3}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <select
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  >
-                    {categories.length === 0 ? (
-                      <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
-                    ) : (
-                      categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="task-preset" className="block text-sm font-medium text-gray-700 mb-1">Task Preset</label>
-                  <select id="task-preset" value={formData.setId} onChange={(e) => setFormData({ ...formData, setId: e.target.value })} className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none" disabled={isSubmitting}>
-                    {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
-                  </select>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
-                    Due Date
-                  </label>
-                  <input
-                    id="dueDate"
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dueDate: e.target.value })
-                    }
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                {/* Subtasks Section */}
-                <div className="space-y-2 pt-1 border-t border-purple-100">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Subtasks (Checklist)
-                      {formData.subtasks.length > 0 && (
-                        <span className="ml-2 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60">
-                          {formData.subtasks.filter((s) => s.isCompleted).length}/{formData.subtasks.length}
-                        </span>
-                      )}
-                    </label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={subtaskInputText}
-                      onChange={(e) => setSubtaskInputText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddModalSubtask();
-                        }
-                      }}
-                      placeholder="Type subtask title and press Enter..."
-                      className="flex-1 min-h-[40px] rounded-lg border border-purple-200 bg-white/90 px-3 py-2 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddModalSubtask}
-                      disabled={isSubmitting || !subtaskInputText.trim()}
-                      className="min-h-[40px] px-3.5 text-xs font-semibold text-purple-700 bg-purple-100/70 border border-purple-200 hover:bg-purple-200/80 disabled:opacity-50 rounded-lg transition inline-flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add
-                    </button>
-                  </div>
-
-                  {formData.subtasks.length > 0 && (
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 mt-2">
-                      {formData.subtasks.map((st, index) => (
-                        <div
-                          key={st.id}
-                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-purple-50/70 border border-purple-100/90 hover:border-purple-200 transition group shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <button
-                              type="button"
-                              role="checkbox"
-                              aria-checked={st.isCompleted}
-                              onClick={() => handleToggleModalSubtask(st.id)}
-                              className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
-                                st.isCompleted
-                                  ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
-                                  : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                              }`}
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </button>
-                            <input
-                              type="text"
-                              value={st.title}
-                              onChange={(e) => handleUpdateModalSubtaskTitle(st.id, e.target.value)}
-                              className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
-                                st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                              }`}
-                              placeholder="Subtask title..."
-                            />
-                          </div>
-
-                          <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
-                            <button
-                              type="button"
-                              onClick={() => handleMoveModalSubtaskUp(index)}
-                              disabled={index === 0}
-                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                              title="Move up"
-                            >
-                              <ArrowUp className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveModalSubtaskDown(index)}
-                              disabled={index === formData.subtasks.length - 1}
-                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                              title="Move down"
-                            >
-                              <ArrowDown className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveModalSubtask(st.id)}
-                              className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
-                              title="Remove subtask"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                {/* Scrollable Form Body */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
+                      {error}
                     </div>
                   )}
+
+                  {/* Title Input */}
+                  <div>
+                    <label htmlFor="title" className="block text-xs font-semibold text-gray-700 mb-1">
+                      Task Title *
+                    </label>
+                    <input
+                      id="title"
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      placeholder="Enter task title"
+                      className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                      disabled={isSubmitting}
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Description Textarea */}
+                  <div>
+                    <label htmlFor="description" className="block text-xs font-semibold text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      placeholder="Enter task description (optional)"
+                      rows={2}
+                      className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition resize-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Grouped Grid Controls */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Category */}
+                    <div>
+                      <label htmlFor="category" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <select
+                        id="category"
+                        value={formData.category}
+                        onChange={(e) =>
+                          setFormData({ ...formData, category: e.target.value })
+                        }
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      >
+                        {categories.length === 0 ? (
+                          <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
+                        ) : (
+                          categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    {/* Task Preset */}
+                    <div>
+                      <label htmlFor="task-preset" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Preset
+                      </label>
+                      <select
+                        id="task-preset"
+                        value={formData.setId}
+                        onChange={(e) => setFormData({ ...formData, setId: e.target.value })}
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      >
+                        {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Due Date */}
+                    <div>
+                      <label htmlFor="dueDate" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Due Date
+                      </label>
+                      <input
+                        id="dueDate"
+                        type="date"
+                        value={formData.dueDate}
+                        onChange={(e) =>
+                          setFormData({ ...formData, dueDate: e.target.value })
+                        }
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-1.5 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Subtasks Framed Section */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <ListChecks className="w-4 h-4 text-purple-700" />
+                        Subtasks (Checklist)
+                      </label>
+                      {formData.subtasks.length > 0 && (
+                        <span className="text-[11px] font-semibold text-purple-700 bg-white/90 px-2 py-0.5 rounded-full border border-purple-200/80">
+                          {formData.subtasks.filter((s) => s.isCompleted).length}/{formData.subtasks.length} Completed
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={subtaskInputText}
+                        onChange={(e) => setSubtaskInputText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddModalSubtask();
+                          }
+                        }}
+                        placeholder="Type subtask title and press Enter..."
+                        className="flex-1 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddModalSubtask}
+                        disabled={isSubmitting || !subtaskInputText.trim()}
+                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add
+                      </button>
+                    </div>
+
+                    {formData.subtasks.length > 0 && (
+                      <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                        {formData.subtasks.map((st, index) => (
+                          <div
+                            key={st.id}
+                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/90 border border-purple-100 hover:border-purple-200 transition group shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={st.isCompleted}
+                                onClick={() => handleToggleModalSubtask(st.id)}
+                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
+                                  st.isCompleted
+                                    ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
+                                    : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                                }`}
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <input
+                                type="text"
+                                value={st.title}
+                                onChange={(e) => handleUpdateModalSubtaskTitle(st.id, e.target.value)}
+                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
+                                  st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                                }`}
+                                placeholder="Subtask title..."
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveModalSubtaskUp(index)}
+                                disabled={index === 0}
+                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                title="Move up"
+                              >
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveModalSubtaskDown(index)}
+                                disabled={index === formData.subtasks.length - 1}
+                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                title="Move down"
+                              >
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveModalSubtask(st.id)}
+                                className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
+                                title="Remove subtask"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Buttons */}
-                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
+                {/* Footer Actions */}
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    disabled={isSubmitting}
+                    className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
+                  >
+                    Cancel
+                  </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                    className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
                   >
                     {isSubmitting ? 'Adding...' : 'Add Task'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200"
-                  >
-                    Cancel
                   </button>
                 </div>
               </form>
@@ -1191,235 +1207,261 @@ export function TasksPage() {
               </>
             )}
           </>
-        )}
-
-        {/* Edit Task Modal */}
+        )}        {/* Edit Task Modal */}
         {editingTaskId && createPortal(
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-              <form onSubmit={handleSaveEdit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
-                <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">Edit Task</h2>
-                
-                {/* Error Message */}
-                {error && (
-                  <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm md:text-base">
-                    {error}
-                  </div>
-                )}
-
-                {/* Title Input */}
-                <div>
-                  <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-1">
-                    Task Title *
-                  </label>
-                  <input
-                    id="edit-title"
-                    type="text"
-                    value={editFormData.title}
-                    onChange={(e) =>
-                     setEditFormData({ ...editFormData, title: e.target.value })
-                    }
-                    placeholder="Enter task title"
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                {/* Description Textarea */}
-                <div>
-                  <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    id="edit-description"
-                    value={editFormData.description}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, description: e.target.value })
-                    }
-                    placeholder="Enter task description (optional)"
-                    rows={3}
-                    className="w-full rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition resize-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <select
-                    id="edit-category"
-                    value={editFormData.category}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, category: e.target.value })
-                    }
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
+          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+              <form onSubmit={handleSaveEdit} className="flex flex-col h-full max-h-full">
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <Settings2 className="w-5 h-5 text-purple-600" />
+                    Edit Task
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="h-8 w-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition flex items-center justify-center"
                   >
-                    {isEditCategoryMissing && (
-                      <option value={editFormData.category}>{editFormData.category}</option>
-                    )}
-                    {categories.length === 0 ? (
-                      <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
-                    ) : (
-                      categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="edit-task-preset" className="block text-sm font-medium text-gray-700 mb-1">Task Preset</label>
-                  <select id="edit-task-preset" value={editFormData.setId} onChange={(e) => setEditFormData({ ...editFormData, setId: e.target.value })} className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none" disabled={isSubmitting}>
-                    {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
-                  </select>
-                </div>
-
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="edit-dueDate" className="block text-sm font-medium text-gray-700 mb-1">
-                    Due Date
-                  </label>
-                  <input
-                    id="edit-dueDate"
-                    type="date"
-                    value={editFormData.dueDate}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, dueDate: e.target.value })
-                    }
-                    className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    disabled={isSubmitting}
-                  />
-                </div>
-
-                {/* Subtasks Section */}
-                <div className="space-y-2 pt-1 border-t border-purple-100">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-semibold text-gray-700">
-                      Subtasks (Checklist)
-                      {editFormData.subtasks.length > 0 && (
-                        <span className="ml-2 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60">
-                          {editFormData.subtasks.filter((s) => s.isCompleted).length}/{editFormData.subtasks.length}
-                        </span>
-                      )}
-                    </label>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editSubtaskInputText}
-                      onChange={(e) => setEditSubtaskInputText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddEditSubtask();
-                        }
-                      }}
-                      placeholder="Type subtask title and press Enter..."
-                      className="flex-1 min-h-[40px] rounded-lg border border-purple-200 bg-white/90 px-3 py-2 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddEditSubtask}
-                      disabled={isSubmitting || !editSubtaskInputText.trim()}
-                      className="min-h-[40px] px-3.5 text-xs font-semibold text-purple-700 bg-purple-100/70 border border-purple-200 hover:bg-purple-200/80 disabled:opacity-50 rounded-lg transition inline-flex items-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add
-                    </button>
-                  </div>
-
-                  {editFormData.subtasks.length > 0 && (
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 mt-2">
-                      {editFormData.subtasks.map((st, index) => (
-                        <div
-                          key={st.id}
-                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-purple-50/70 border border-purple-100/90 hover:border-purple-200 transition group shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <button
-                              type="button"
-                              role="checkbox"
-                              aria-checked={st.isCompleted}
-                              onClick={() => handleToggleEditSubtask(st.id)}
-                              className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
-                                st.isCompleted
-                                  ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
-                                  : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                              }`}
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </button>
-                            <input
-                              type="text"
-                              value={st.title}
-                              onChange={(e) => handleUpdateEditSubtaskTitle(st.id, e.target.value)}
-                              className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
-                                st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                              }`}
-                              placeholder="Subtask title..."
-                            />
-                          </div>
-
-                          <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
-                            <button
-                              type="button"
-                              onClick={() => handleMoveEditSubtaskUp(index)}
-                              disabled={index === 0}
-                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                              title="Move up"
-                            >
-                              <ArrowUp className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveEditSubtaskDown(index)}
-                              disabled={index === editFormData.subtasks.length - 1}
-                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                              title="Move down"
-                            >
-                              <ArrowDown className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveEditSubtask(st.id)}
-                              className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
-                              title="Remove subtask"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                
+                {/* Scrollable Form Body */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
+                      {error}
                     </div>
                   )}
+
+                  {/* Title Input */}
+                  <div>
+                    <label htmlFor="edit-title" className="block text-xs font-semibold text-gray-700 mb-1">
+                      Task Title *
+                    </label>
+                    <input
+                      id="edit-title"
+                      type="text"
+                      value={editFormData.title}
+                      onChange={(e) =>
+                       setEditFormData({ ...editFormData, title: e.target.value })
+                      }
+                      placeholder="Enter task title"
+                      className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Description Textarea */}
+                  <div>
+                    <label htmlFor="edit-description" className="block text-xs font-semibold text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      id="edit-description"
+                      value={editFormData.description}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, description: e.target.value })
+                      }
+                      placeholder="Enter task description (optional)"
+                      rows={2}
+                      className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition resize-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Grouped Grid Controls */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Category */}
+                    <div>
+                      <label htmlFor="edit-category" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <select
+                        id="edit-category"
+                        value={editFormData.category}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, category: e.target.value })
+                        }
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      >
+                        {isEditCategoryMissing && (
+                          <option value={editFormData.category}>{editFormData.category}</option>
+                        )}
+                        {categories.length === 0 ? (
+                          <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
+                        ) : (
+                          categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    {/* Task Preset */}
+                    <div>
+                      <label htmlFor="edit-task-preset" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Preset
+                      </label>
+                      <select
+                        id="edit-task-preset"
+                        value={editFormData.setId}
+                        onChange={(e) => setEditFormData({ ...editFormData, setId: e.target.value })}
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      >
+                        {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Due Date */}
+                    <div>
+                      <label htmlFor="edit-dueDate" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Due Date
+                      </label>
+                      <input
+                        id="edit-dueDate"
+                        type="date"
+                        value={editFormData.dueDate}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, dueDate: e.target.value })
+                        }
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-1.5 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Subtasks Framed Section */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <ListChecks className="w-4 h-4 text-purple-700" />
+                        Subtasks (Checklist)
+                      </label>
+                      {editFormData.subtasks.length > 0 && (
+                        <span className="text-[11px] font-semibold text-purple-700 bg-white/90 px-2 py-0.5 rounded-full border border-purple-200/80">
+                          {editFormData.subtasks.filter((s) => s.isCompleted).length}/{editFormData.subtasks.length} Completed
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editSubtaskInputText}
+                        onChange={(e) => setEditSubtaskInputText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddEditSubtask();
+                          }
+                        }}
+                        placeholder="Type subtask title and press Enter..."
+                        className="flex-1 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddEditSubtask}
+                        disabled={isSubmitting || !editSubtaskInputText.trim()}
+                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add
+                      </button>
+                    </div>
+
+                    {editFormData.subtasks.length > 0 && (
+                      <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                        {editFormData.subtasks.map((st, index) => (
+                          <div
+                            key={st.id}
+                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/90 border border-purple-100 hover:border-purple-200 transition group shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <button
+                                type="button"
+                                role="checkbox"
+                                aria-checked={st.isCompleted}
+                                onClick={() => handleToggleEditSubtask(st.id)}
+                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
+                                  st.isCompleted
+                                    ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
+                                    : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                                }`}
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <input
+                                type="text"
+                                value={st.title}
+                                onChange={(e) => handleUpdateEditSubtaskTitle(st.id, e.target.value)}
+                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
+                                  st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                                }`}
+                                placeholder="Subtask title..."
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveEditSubtaskUp(index)}
+                                disabled={index === 0}
+                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                title="Move up"
+                              >
+                                <ArrowUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveEditSubtaskDown(index)}
+                                disabled={index === editFormData.subtasks.length - 1}
+                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                title="Move down"
+                              >
+                                <ArrowDown className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveEditSubtask(st.id)}
+                                className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
+                                title="Remove subtask"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Buttons */}
-                <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </button>
+                {/* Footer Actions */}
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
                   <button
                     type="button"
                     onClick={handleCancelEdit}
                     disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200"
+                    className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
                   >
                     Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
+                  >
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
