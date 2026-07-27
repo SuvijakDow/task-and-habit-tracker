@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarDays, ChevronDown, FolderTree, Layers, Settings2, ListChecks, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, FolderTree, Layers, Settings2, ListChecks, Plus, X } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -269,6 +269,35 @@ export function TasksPage() {
     }));
   };
 
+  const handleUpdateModalSubtaskTitle = (id: string, newTitle: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, title: newTitle } : st)),
+    }));
+  };
+
+  const handleMoveModalSubtaskUp = (index: number) => {
+    if (index <= 0) return;
+    setFormData((prev) => {
+      const updated = [...prev.subtasks];
+      const temp = updated[index];
+      updated[index] = updated[index - 1];
+      updated[index - 1] = temp;
+      return { ...prev, subtasks: updated };
+    });
+  };
+
+  const handleMoveModalSubtaskDown = (index: number) => {
+    setFormData((prev) => {
+      if (index >= prev.subtasks.length - 1) return prev;
+      const updated = [...prev.subtasks];
+      const temp = updated[index];
+      updated[index] = updated[index + 1];
+      updated[index + 1] = temp;
+      return { ...prev, subtasks: updated };
+    });
+  };
+
   // Edit modal subtask handlers
   const handleAddEditSubtask = () => {
     if (!editSubtaskInputText.trim()) return;
@@ -296,6 +325,35 @@ export function TasksPage() {
       ...prev,
       subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, isCompleted: !st.isCompleted } : st)),
     }));
+  };
+
+  const handleUpdateEditSubtaskTitle = (id: string, newTitle: string) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, title: newTitle } : st)),
+    }));
+  };
+
+  const handleMoveEditSubtaskUp = (index: number) => {
+    if (index <= 0) return;
+    setEditFormData((prev) => {
+      const updated = [...prev.subtasks];
+      const temp = updated[index];
+      updated[index] = updated[index - 1];
+      updated[index - 1] = temp;
+      return { ...prev, subtasks: updated };
+    });
+  };
+
+  const handleMoveEditSubtaskDown = (index: number) => {
+    setEditFormData((prev) => {
+      if (index >= prev.subtasks.length - 1) return prev;
+      const updated = [...prev.subtasks];
+      const temp = updated[index];
+      updated[index] = updated[index + 1];
+      updated[index + 1] = temp;
+      return { ...prev, subtasks: updated };
+    });
   };
 
   const retryLoadData = async () => {
@@ -932,31 +990,67 @@ export function TasksPage() {
                   </div>
 
                   {formData.subtasks.length > 0 && (
-                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 mt-2">
-                      {formData.subtasks.map((st) => (
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 mt-2">
+                      {formData.subtasks.map((st, index) => (
                         <div
                           key={st.id}
-                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-purple-50/40 border border-purple-100 group"
+                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-purple-50/70 border border-purple-100/90 hover:border-purple-200 transition group shadow-2xs"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={st.isCompleted}
+                              onClick={() => handleToggleModalSubtask(st.id)}
+                              className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
+                                st.isCompleted
+                                  ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
+                                  : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                              }`}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
                             <input
-                              type="checkbox"
-                              checked={st.isCompleted}
-                              onChange={() => handleToggleModalSubtask(st.id)}
-                              className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-400 cursor-pointer"
+                              type="text"
+                              value={st.title}
+                              onChange={(e) => handleUpdateModalSubtaskTitle(st.id, e.target.value)}
+                              className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
+                                st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                              }`}
+                              placeholder="Subtask title..."
                             />
-                            <span className={`text-xs sm:text-sm truncate ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
-                              {st.title}
-                            </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveModalSubtask(st.id)}
-                            className="text-gray-400 hover:text-rose-600 text-xs p-1 rounded transition opacity-80 group-hover:opacity-100"
-                            title="Remove subtask"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+
+                          <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveModalSubtaskUp(index)}
+                              disabled={index === 0}
+                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                              title="Move up"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveModalSubtaskDown(index)}
+                              disabled={index === formData.subtasks.length - 1}
+                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                              title="Move down"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveModalSubtask(st.id)}
+                              className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
+                              title="Remove subtask"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1243,31 +1337,67 @@ export function TasksPage() {
                   </div>
 
                   {editFormData.subtasks.length > 0 && (
-                    <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 mt-2">
-                      {editFormData.subtasks.map((st) => (
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 mt-2">
+                      {editFormData.subtasks.map((st, index) => (
                         <div
                           key={st.id}
-                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-purple-50/40 border border-purple-100 group"
+                          className="flex items-center justify-between gap-2 p-2 rounded-xl bg-purple-50/70 border border-purple-100/90 hover:border-purple-200 transition group shadow-2xs"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <button
+                              type="button"
+                              role="checkbox"
+                              aria-checked={st.isCompleted}
+                              onClick={() => handleToggleEditSubtask(st.id)}
+                              className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
+                                st.isCompleted
+                                  ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
+                                  : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                              }`}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
                             <input
-                              type="checkbox"
-                              checked={st.isCompleted}
-                              onChange={() => handleToggleEditSubtask(st.id)}
-                              className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-400 cursor-pointer"
+                              type="text"
+                              value={st.title}
+                              onChange={(e) => handleUpdateEditSubtaskTitle(st.id, e.target.value)}
+                              className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
+                                st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                              }`}
+                              placeholder="Subtask title..."
                             />
-                            <span className={`text-xs sm:text-sm truncate ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
-                              {st.title}
-                            </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveEditSubtask(st.id)}
-                            className="text-gray-400 hover:text-rose-600 text-xs p-1 rounded transition opacity-80 group-hover:opacity-100"
-                            title="Remove subtask"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+
+                          <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveEditSubtaskUp(index)}
+                              disabled={index === 0}
+                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                              title="Move up"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveEditSubtaskDown(index)}
+                              disabled={index === editFormData.subtasks.length - 1}
+                              className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                              title="Move down"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEditSubtask(st.id)}
+                              className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
+                              title="Remove subtask"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
