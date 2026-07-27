@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown } from 'lucide-react';
+import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X } from 'lucide-react';
 import { DailyHabit, HabitSet } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -599,143 +599,192 @@ export function HabitsPage() {
         {/* Add Habit Form Modal */}
         {isAddModalOpen &&
           createPortal(
-            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-                <form onSubmit={handleAddHabit} className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">
+            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+                <form onSubmit={handleAddHabit} className="flex flex-col h-full max-h-full">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <Plus className="w-5 h-5 text-purple-600" />
                       Add New Habit
                     </h2>
                     <button
                       type="button"
                       onClick={() => setIsAddModalOpen(false)}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl text-purple-400 hover:text-purple-600 hover:bg-white/80 transition flex items-center justify-center"
+                      className="h-8 w-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition flex items-center justify-center"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
 
-                  <div>
-                    <label htmlFor="habit-title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Habit Name *
-                    </label>
-                    <input
-                      id="habit-title"
-                      type="text"
-                      value={habitTitle}
-                      onChange={(e) => setHabitTitle(e.target.value)}
-                      placeholder="e.g., Morning Exercise, Read 30 mins"
-                      className="w-full min-h-[38px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                      disabled={isSubmitting}
-                      autoFocus
-                    />
-                  </div>
+                  {/* Scrollable Form Body */}
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                    {/* Error Message */}
+                    {error && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
+                        {error}
+                      </div>
+                    )}
 
-                  <div>
-                    <label htmlFor="habit-preset" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Routine Preset
-                    </label>
-                    <select
-                      id="habit-preset"
-                      value={habitSetId || activeSetId}
-                      onChange={(e) => setHabitSetId(e.target.value)}
-                      className="w-full min-h-[38px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                    >
-                      {habitSets.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} {s.id === activeSetId ? '(Active)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    {/* Habit Title */}
+                    <div>
+                      <label htmlFor="habit-title" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Habit Name *
+                      </label>
+                      <input
+                        id="habit-title"
+                        type="text"
+                        value={habitTitle}
+                        onChange={(e) => setHabitTitle(e.target.value)}
+                        placeholder="e.g., Morning Exercise, Read 30 mins"
+                        className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                        autoFocus
+                      />
+                    </div>
 
-                  {/* Days Selection */}
-                  <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-lg sm:rounded-xl shadow-sm p-2.5 sm:p-5">
-                    <p className="text-[11px] sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Schedule:</p>
-                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                        <label key={index} className="cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={scheduledDays.includes(index)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setScheduledDays((prev) => [...prev, index].sort());
-                              } else {
-                                setScheduledDays((prev) => prev.filter((d) => d !== index));
-                              }
-                            }}
-                            className="peer sr-only"
-                          />
-                          <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
-                            {day}
-                          </span>
+                    {/* Routine Preset */}
+                    <div>
+                      <label htmlFor="habit-preset" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Routine Preset
+                      </label>
+                      <select
+                        id="habit-preset"
+                        value={habitSetId || activeSetId}
+                        onChange={(e) => setHabitSetId(e.target.value)}
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                      >
+                        {habitSets.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} {s.id === activeSetId ? '(Active)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Schedule Section */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4 text-purple-700" />
+                          Schedule
                         </label>
-                      ))}
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => setScheduledDays([0, 1, 2, 3, 4, 5, 6])}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            All Days
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setScheduledDays([1, 2, 3, 4, 5])}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            Weekdays
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setScheduledDays([])}
+                            className="text-gray-500 hover:text-rose-600 hover:underline transition"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                          <label key={index} className="cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={scheduledDays.includes(index)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setScheduledDays((prev) => [...prev, index].sort());
+                                } else {
+                                  setScheduledDays((prev) => prev.filter((d) => d !== index));
+                                }
+                              }}
+                              className="peer sr-only"
+                            />
+                            <span className="flex min-h-[32px] sm:min-h-[38px] items-center justify-center rounded-xl border border-purple-200/80 bg-white text-[10px] sm:text-xs font-semibold text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-500 peer-checked:text-white peer-checked:shadow-sm hover:border-purple-300">
+                              {day}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Time Selection */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <TimePickerInput
+                        value={startTime}
+                        onChange={setStartTime}
+                        label="Start Time"
+                        popoverPosition="top"
+                        align="left"
+                        required
+                        disabled={isSubmitting}
+                      />
+                      <TimePickerInput
+                        value={endTime}
+                        onChange={setEndTime}
+                        label="End Time"
+                        popoverPosition="top"
+                        align="right"
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    {/* Color Selection */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2">
+                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <Palette className="w-4 h-4 text-purple-700" />
+                        Habit Color
+                      </label>
+                      <div className="flex justify-start flex-wrap gap-2.5 pt-0.5">
+                        {PASTEL_HABIT_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setHabitColor(c)}
+                            className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
+                              habitColor === c
+                                ? 'border-purple-600 scale-110 shadow-md ring-2 ring-purple-400/40'
+                                : 'border-white/80 hover:scale-105'
+                            }`}
+                            style={{ backgroundColor: c }}
+                            aria-label={`Select color ${c}`}
+                            disabled={isSubmitting}
+                          >
+                            {habitColor === c && <Check className="w-4 h-4 text-white drop-shadow-xs" />}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Time Selection */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                    <TimePickerInput
-                      value={startTime}
-                      onChange={setStartTime}
-                      label="Start Time"
-                      popoverPosition="top"
-                      align="left"
-                      required
-                      disabled={isSubmitting}
-                    />
-                    <TimePickerInput
-                      value={endTime}
-                      onChange={setEndTime}
-                      label="End Time"
-                      popoverPosition="top"
-                      align="right"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {/* Color Selection */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                      Habit Color
-                    </label>
-                    <div className="flex justify-start flex-wrap gap-2">
-                      {PASTEL_HABIT_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setHabitColor(c)}
-                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition flex-shrink-0 ${
-                            habitColor === c ? 'border-purple-600 scale-110 shadow-sm' : 'border-transparent hover:scale-105'
-                          }`}
-                          style={{ backgroundColor: c }}
-                          aria-label={`Select color ${c}`}
-                          disabled={isSubmitting}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex-1 min-h-[38px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-xs sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
-                    >
-                      {isSubmitting ? 'Adding...' : 'Add Habit'}
-                    </button>
+                  {/* Footer Actions */}
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
                     <button
                       type="button"
                       onClick={() => setIsAddModalOpen(false)}
                       disabled={isSubmitting}
-                      className="flex-1 min-h-[38px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 text-xs sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl transition duration-200"
+                      className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
                     >
                       Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
+                    >
+                      {isSubmitting ? 'Adding...' : 'Add Habit'}
                     </button>
                   </div>
                 </form>
@@ -912,150 +961,197 @@ export function HabitsPage() {
         {/* Edit Habit Modal */}
         {editingHabitId &&
           createPortal(
-            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
-              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-none sm:backdrop-blur-xl border border-white/70 rounded-none sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
+            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSaveEdit();
                   }}
-                  className="space-y-4 sm:space-y-5 p-4 sm:p-6 md:p-7"
+                  className="flex flex-col h-full max-h-full"
                 >
-                  <h2 className="text-lg sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-600">
-                    Edit Habit
-                  </h2>
-
-                  {editError && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-start gap-3">
-                      <div className="flex-shrink-0 text-rose-600 mt-0.5">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <p className="text-sm text-rose-700 font-medium">{editError}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label htmlFor="edit-habit-title" className="block text-sm font-medium text-gray-700 mb-1">
-                      Habit Name *
-                    </label>
-                    <input
-                      id="edit-habit-title"
-                      type="text"
-                      value={editHabitTitle}
-                      onChange={(e) => setEditHabitTitle(e.target.value)}
-                      className="w-full min-h-[42px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="edit-habit-preset" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Routine Preset
-                    </label>
-                    <select
-                      id="edit-habit-preset"
-                      value={editHabitSetId || activeSetId}
-                      onChange={(e) => setEditHabitSetId(e.target.value)}
-                      className="w-full min-h-[38px] sm:min-h-[44px] rounded-lg border border-purple-200 bg-white/90 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-base text-gray-800 shadow-sm focus:border-purple-400 focus:outline-none"
-                    >
-                      {habitSets.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} {s.id === activeSetId ? '(Active)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50/80 via-white/85 to-pink-50/80 border border-purple-100/70 rounded-xl shadow-sm p-3 sm:p-5">
-                    <p className="text-xs sm:text-sm font-semibold text-gray-700 mb-3">Schedule:</p>
-                    <div className="grid grid-cols-7 gap-1 sm:gap-2">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                        <label key={index} className="cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={editScheduledDays.includes(index)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setEditScheduledDays((prev) => [...prev, index].sort());
-                              } else {
-                                setEditScheduledDays((prev) => prev.filter((d) => d !== index));
-                              }
-                            }}
-                            className="peer sr-only"
-                          />
-                          <span className="flex min-h-[28px] sm:min-h-[44px] items-center justify-center rounded-lg border border-purple-200/80 bg-white/90 text-[9px] sm:text-sm font-medium text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-pink-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-purple-300/70">
-                            {day}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Time Selection */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                    <TimePickerInput
-                      value={editStartTime}
-                      onChange={setEditStartTime}
-                      label="Start Time"
-                      popoverPosition="top"
-                      align="left"
-                      required
-                      disabled={isSubmitting}
-                    />
-                    <TimePickerInput
-                      value={editEndTime}
-                      onChange={setEditEndTime}
-                      label="End Time"
-                      popoverPosition="top"
-                      align="right"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {/* Color Selection */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5">
-                      Habit Color
-                    </label>
-                    <div className="flex justify-start flex-wrap gap-2">
-                      {PASTEL_HABIT_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => setEditHabitColor(c)}
-                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition flex-shrink-0 ${
-                            editHabitColor === c ? 'border-purple-600 scale-110 shadow-sm' : 'border-transparent hover:scale-105'
-                          }`}
-                          style={{ backgroundColor: c }}
-                          aria-label={`Select color ${c}`}
-                          disabled={isSubmitting}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white/95 via-white/90 to-transparent">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <Settings2 className="w-5 h-5 text-purple-600" />
+                      Edit Habit
+                    </h2>
                     <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex-1 min-h-[42px] sm:min-h-[44px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 shadow-[0_8px_20px_rgba(157,78,221,0.25)]"
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="h-8 w-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition flex items-center justify-center"
                     >
-                      {isSubmitting ? 'Saving...' : 'Save Changes'}
+                      <X className="w-5 h-5" />
                     </button>
+                  </div>
+
+                  {/* Scrollable Form Body */}
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                    {/* Error Message */}
+                    {editError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
+                        {editError}
+                      </div>
+                    )}
+
+                    {/* Habit Title */}
+                    <div>
+                      <label htmlFor="edit-habit-title" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Habit Name *
+                      </label>
+                      <input
+                        id="edit-habit-title"
+                        type="text"
+                        value={editHabitTitle}
+                        onChange={(e) => setEditHabitTitle(e.target.value)}
+                        placeholder="Enter habit name"
+                        className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    {/* Routine Preset */}
+                    <div>
+                      <label htmlFor="edit-habit-preset" className="block text-xs font-semibold text-gray-700 mb-1">
+                        Routine Preset
+                      </label>
+                      <select
+                        id="edit-habit-preset"
+                        value={editHabitSetId || activeSetId}
+                        onChange={(e) => setEditHabitSetId(e.target.value)}
+                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                      >
+                        {habitSets.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} {s.id === activeSetId ? '(Active)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Schedule Section */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4 text-purple-700" />
+                          Schedule
+                        </label>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => setEditScheduledDays([0, 1, 2, 3, 4, 5, 6])}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            All Days
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditScheduledDays([1, 2, 3, 4, 5])}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            Weekdays
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditScheduledDays([])}
+                            className="text-gray-500 hover:text-rose-600 hover:underline transition"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                          <label key={index} className="cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editScheduledDays.includes(index)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setEditScheduledDays((prev) => [...prev, index].sort());
+                                } else {
+                                  setEditScheduledDays((prev) => prev.filter((d) => d !== index));
+                                }
+                              }}
+                              className="peer sr-only"
+                            />
+                            <span className="flex min-h-[32px] sm:min-h-[38px] items-center justify-center rounded-xl border border-purple-200/80 bg-white text-[10px] sm:text-xs font-semibold text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-500 peer-checked:text-white peer-checked:shadow-sm hover:border-purple-300">
+                              {day}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Time Selection */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <TimePickerInput
+                        value={editStartTime}
+                        onChange={setEditStartTime}
+                        label="Start Time"
+                        popoverPosition="top"
+                        align="left"
+                        required
+                        disabled={isSubmitting}
+                      />
+                      <TimePickerInput
+                        value={editEndTime}
+                        onChange={setEditEndTime}
+                        label="End Time"
+                        popoverPosition="top"
+                        align="right"
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    {/* Color Selection */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2">
+                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <Palette className="w-4 h-4 text-purple-700" />
+                        Habit Color
+                      </label>
+                      <div className="flex justify-start flex-wrap gap-2.5 pt-0.5">
+                        {PASTEL_HABIT_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setEditHabitColor(c)}
+                            className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
+                              editHabitColor === c
+                                ? 'border-purple-600 scale-110 shadow-md ring-2 ring-purple-400/40'
+                                : 'border-white/80 hover:scale-105'
+                            }`}
+                            style={{ backgroundColor: c }}
+                            aria-label={`Select color ${c}`}
+                            disabled={isSubmitting}
+                          >
+                            {editHabitColor === c && <Check className="w-4 h-4 text-white drop-shadow-xs" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
                     <button
                       type="button"
                       onClick={handleCancelEdit}
                       disabled={isSubmitting}
-                      className="flex-1 min-h-[42px] sm:min-h-[44px] bg-white/90 hover:bg-white text-gray-700 border border-purple-100 disabled:bg-white/70 disabled:text-gray-500 text-sm sm:text-base font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200"
+                      className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
                     >
                       Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
+                    >
+                      {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </button>
                   </div>
                 </form>
