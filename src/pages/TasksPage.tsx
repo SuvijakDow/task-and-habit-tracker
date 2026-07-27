@@ -18,6 +18,7 @@ import {
 import { showToast } from '@/components/Toast';
 import { playSuccessSound } from '@/utils/audio';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
+import { formatDueDateDisplay } from '@/utils/dateUtils';
 import {
   createTaskPreset,
   deleteTaskPreset,
@@ -1090,72 +1091,11 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
     : DEFAULT_TASK_CATEGORY_COLOR;
   const categoryTextColor = getReadableCategoryTextColor(categoryColor);
 
-  const getDueDateBgColor = () => {
-    if (!task.dueDate) return '';
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = new Date(task.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return 'ring-1 ring-red-200/80'; // Overdue
-    if (diffDays === 0) return 'ring-1 ring-amber-200/80'; // Due today
-    return '';
-  };
-
-  const getDeadlineStatus = () => {
-    if (!task.dueDate) return null;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = new Date(task.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      const overdueDays = Math.abs(diffDays);
-      return {
-        text: `Overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}`,
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200'
-      };
-    }
-    if (diffDays === 0) {
-      return {
-        text: 'Due today',
-        color: 'text-amber-600',
-        bgColor: 'bg-amber-50',
-        borderColor: 'border-amber-200'
-      };
-    }
-    return {
-      text: `${diffDays} day${diffDays > 1 ? 's' : ''} left`,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200'
-    };
-  };
-
-  const formatDueDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   return (
     <div
       className={`group glass-card ${
         task.isCompleted ? 'opacity-80' : ''
-      } ${getDueDateBgColor()} transition-[box-shadow,transform,opacity] duration-200 sm:hover:shadow-2xl`}
+      } transition-[box-shadow,transform,opacity] duration-200 sm:hover:shadow-2xl`}
     >
       <div className="flex flex-row items-start sm:items-center gap-2.5 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">
@@ -1209,22 +1149,14 @@ function TaskItem({ task, categories, onToggleCompletion, onDelete, onEdit }: Ta
               {categoryName}
             </span>
 
-            {task.dueDate && (() => {
-              const status = getDeadlineStatus();
-              return (
-                <div className="inline-flex items-center gap-1.5 sm:gap-2 font-medium">
-                  <p className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
-                    <span className="sm:whitespace-nowrap">{formatDueDate(task.dueDate)}</span>
-                  </p>
-                  {status && (
-                    <span className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-xs font-semibold border ${status.color} ${status.bgColor} ${status.borderColor}`}>
-                      {status.text}
-                    </span>
-                  )}
-                </div>
-              );
-            })()}
+            {task.dueDate && (
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 font-medium">
+                <p className="inline-flex items-center gap-1">
+                  <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
+                  <span className="sm:whitespace-nowrap">{formatDueDateDisplay(task.dueDate)}</span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

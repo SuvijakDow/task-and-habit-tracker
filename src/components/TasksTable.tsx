@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
 import { CalendarDays, RefreshCw, Search } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
+import { formatDueDateDisplay } from '@/utils/dateUtils';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -341,7 +342,7 @@ export default function TasksTable({
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
-                          <div className="text-sm text-gray-700">{new Date(t.dueDate).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-700">{formatDueDateDisplay(t.dueDate)}</div>
                         ) : (
                           <div className="text-sm text-gray-400">—</div>
                         )}

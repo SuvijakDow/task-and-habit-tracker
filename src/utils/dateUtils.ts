@@ -18,3 +18,10 @@ export const getYesterdayDateString = (): string => {
   yesterday.setDate(yesterday.getDate() - 1);
   return formatToDateString(yesterday);
 };
+
+export const formatDueDateDisplay = (date: Date | string | null | undefined): string => {
+  if (!date) return '';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+  return format(d, 'd MMM yyyy');
+};
