@@ -396,9 +396,12 @@ export default function TasksTable({
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
-                          <div className="text-sm text-gray-700">{formatDueDateDisplay(t.dueDate)}</div>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700 whitespace-nowrap shadow-2xs">
+                            <CalendarDays className="w-3.5 h-3.5 text-purple-600" />
+                            {formatDueDateDisplay(t.dueDate)}
+                          </span>
                         ) : (
-                          <div className="text-sm text-gray-400">—</div>
+                          <span className="text-xs text-gray-400 font-medium">—</span>
                         )}
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
