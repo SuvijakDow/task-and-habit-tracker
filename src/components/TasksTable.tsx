@@ -294,9 +294,9 @@ export default function TasksTable({
 
                   let statusRowClass = 'hover:bg-gray-50';
                   if (deadlineType === 'overdue') {
-                    statusRowClass = 'border-l-4 border-l-rose-500 bg-rose-50/30 hover:bg-rose-50/50';
+                    statusRowClass = 'border-l-4 border-l-rose-500 hover:bg-rose-50/20';
                   } else if (deadlineType === 'today') {
-                    statusRowClass = 'border-l-4 border-l-amber-500 bg-amber-50/30 hover:bg-amber-50/50';
+                    statusRowClass = 'border-l-4 border-l-amber-500 hover:bg-amber-50/20';
                   }
 
                   const rowBgClass = isSelected ? selectedBg : statusRowClass;
