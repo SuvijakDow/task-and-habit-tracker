@@ -157,11 +157,11 @@ export default function HabitsTable({
           <table className="min-w-[700px] w-full text-sm">
             <thead className="bg-purple-600 text-white">
               <tr>
+                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Done</th>
                 <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px]">Habit Title</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Schedule</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Time</th>
                 <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Streak</th>
-                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Done</th>
                 <th className="px-3.5 py-3 text-right font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
@@ -192,6 +192,26 @@ export default function HabitsTable({
 
                   return (
                     <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBorderClass} ${rowBgClass}`}>
+                      {/* Done Checkbox */}
+                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isCompletedToday}
+                          aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
+                          onClick={() => onToggleCompletion(habit.id, isCompletedToday)}
+                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${
+                            isCompletedToday
+                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
+                              : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                          }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      </td>
+
                       {/* Title */}
                       <td className="px-3.5 py-3 align-middle min-w-[220px]">
                         <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
@@ -230,26 +250,6 @@ export default function HabitsTable({
                           <Flame className="h-3.5 w-3.5 text-pink-500" />
                           {streak}
                         </span>
-                      </td>
-
-                      {/* Done Checkbox */}
-                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
-                        <button
-                          type="button"
-                          role="checkbox"
-                          aria-checked={isCompletedToday}
-                          aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
-                          onClick={() => onToggleCompletion(habit.id, isCompletedToday)}
-                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${
-                            isCompletedToday
-                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                              : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                          }`}
-                        >
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
                       </td>
 
                       {/* Actions */}

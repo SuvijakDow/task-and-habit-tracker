@@ -260,6 +260,7 @@ export default function TasksTable({
           <table className="min-w-[700px] w-full text-sm">
             <thead className={`${headerBg} text-white`}>
               <tr>
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px">Done</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[220px]">Title</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Category</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">
@@ -269,7 +270,6 @@ export default function TasksTable({
                   </span>
                 </th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Status</th>
-                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px">Done</th>
                 <th className="px-3.5 py-2.5 text-right font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
@@ -303,6 +303,23 @@ export default function TasksTable({
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center`}>
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={t.isCompleted}
+                          aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
+                          onClick={() => onToggleCompletion(t.id, t.isCompleted)}
+                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
+                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
+                            : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                            }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      </td>
                       <td className={`px-3.5 ${tdPaddingClass} min-w-[220px]`}>
                         <div className="font-medium text-gray-900 break-words">{t.title}</div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
@@ -419,23 +436,6 @@ export default function TasksTable({
                         ) : (
                           <div className="text-sm text-gray-400">—</div>
                         )}
-                      </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center`}>
-                        <button
-                          type="button"
-                          role="checkbox"
-                          aria-checked={t.isCompleted}
-                          aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
-                          onClick={() => onToggleCompletion(t.id, t.isCompleted)}
-                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
-                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                            : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                            }`}
-                        >
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-right`}>
                         <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
