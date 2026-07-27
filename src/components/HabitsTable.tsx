@@ -157,7 +157,7 @@ export default function HabitsTable({
           <table className="min-w-[700px] w-full text-sm">
             <thead className="bg-purple-600 text-white">
               <tr>
-                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/20">Done</th>
+                <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
                 <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px]">Habit Title</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Schedule</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Time</th>
@@ -189,7 +189,7 @@ export default function HabitsTable({
                   return (
                     <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBgClass}`}>
                       {/* Done Checkbox */}
-                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap relative border-r border-purple-200/70">
+                      <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap relative border-r-2 border-purple-200">
                         {!isCompletedToday && isDueToday && (
                           <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-gradient-to-b from-purple-600 to-pink-500 shadow-2xs" />
                         )}
