@@ -288,7 +288,18 @@ export default function TasksTable({
                     headerTheme === 'pink'
                       ? 'bg-pink-100/90 hover:bg-pink-100'
                       : 'bg-purple-100/90 hover:bg-purple-100';
-                  const rowBgClass = isSelected ? selectedBg : 'hover:bg-gray-50';
+
+                  const deadlineStatus = getDeadlineStatus(t.dueDate);
+                  const deadlineType = !t.isCompleted && deadlineStatus ? deadlineStatus.type : 'normal';
+
+                  let statusRowClass = 'hover:bg-gray-50';
+                  if (deadlineType === 'overdue') {
+                    statusRowClass = 'border-l-4 border-l-rose-500 bg-rose-50/30 hover:bg-rose-50/50';
+                  } else if (deadlineType === 'today') {
+                    statusRowClass = 'border-l-4 border-l-amber-500 bg-amber-50/30 hover:bg-amber-50/50';
+                  }
+
+                  const rowBgClass = isSelected ? selectedBg : statusRowClass;
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>

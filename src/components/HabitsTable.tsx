@@ -180,16 +180,18 @@ export default function HabitsTable({
                   const todayDayIndex = new Date().getDay();
                   const isDueToday = habit.scheduledDays.includes(todayDayIndex);
 
+                  const rowBorderClass = !isCompletedToday && isDueToday
+                    ? 'border-l-4 border-l-purple-600 font-semibold'
+                    : '';
+
                   const rowBgClass = isSelected
                     ? 'bg-purple-100/90 hover:bg-purple-100'
                     : isCompletedToday
                     ? 'bg-emerald-50/40 hover:bg-emerald-50/70'
-                    : isDueToday
-                    ? 'bg-purple-50/80 hover:bg-purple-100/70 font-semibold'
-                    : 'opacity-65 hover:opacity-100 hover:bg-gray-50';
+                    : 'hover:bg-purple-50/30';
 
                   return (
-                    <tr key={habit.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
+                    <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBorderClass} ${rowBgClass}`}>
                       {/* Title */}
                       <td className="px-3.5 py-3 align-middle min-w-[220px]">
                         <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>

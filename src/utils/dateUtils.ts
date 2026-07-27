@@ -56,6 +56,7 @@ export const getDeadlineStatus = (dueDateValue?: any) => {
     return {
       text: `Overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}`,
       className: 'text-red-600 bg-red-50 border-red-200',
+      type: 'overdue' as const,
     };
   }
 
@@ -63,11 +64,13 @@ export const getDeadlineStatus = (dueDateValue?: any) => {
     return {
       text: 'Due today',
       className: 'text-amber-600 bg-amber-50 border-amber-200',
+      type: 'today' as const,
     };
   }
 
   return {
     text: `${diffDays} day${diffDays > 1 ? 's' : ''} left`,
     className: 'text-green-600 bg-green-50 border-green-200',
+    type: 'future' as const,
   };
 };

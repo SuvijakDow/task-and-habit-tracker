@@ -1549,11 +1549,21 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
   const completedSubtasks = subtasks.filter((s) => s.isCompleted).length;
   const progressPercent = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
 
+  const deadlineStatus = getDeadlineStatus(task.dueDate);
+  const deadlineType = !task.isCompleted && deadlineStatus ? deadlineStatus.type : 'normal';
+
+  let borderStyleClass = 'border border-white/70 hover:border-purple-200';
+  if (deadlineType === 'overdue') {
+    borderStyleClass = 'border-2 border-rose-400/90 bg-rose-50/20 shadow-[0_4px_16px_rgba(244,63,94,0.10)]';
+  } else if (deadlineType === 'today') {
+    borderStyleClass = 'border-2 border-amber-400/90 bg-amber-50/20 shadow-[0_4px_16px_rgba(245,158,11,0.10)]';
+  }
+
   return (
     <div
-      className={`group glass-card ${
+      className={`group glass-card ${borderStyleClass} ${
         task.isCompleted ? 'opacity-80' : ''
-      } transition-[box-shadow,transform,opacity] duration-200 sm:hover:shadow-2xl`}
+      } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl`}
     >
       <div className="flex flex-row items-start sm:items-center gap-2.5 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">
