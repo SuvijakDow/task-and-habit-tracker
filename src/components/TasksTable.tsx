@@ -260,7 +260,7 @@ export default function TasksTable({
           <table className="min-w-[700px] w-full text-sm">
             <thead className={`${headerBg} text-white`}>
               <tr>
-                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px">Done</th>
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r border-white/20">Done</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[220px]">Title</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Category</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">
@@ -282,7 +282,7 @@ export default function TasksTable({
                 </tr>
               ) : (
                 rows.map((t) => {
-                  const tdPaddingClass = t.description ? 'py-3.5 align-top' : 'py-2 align-middle';
+                  const tdPaddingClass = 'py-3 align-middle';
                   const isSelected = selectedIds.has(t.id);
                   const selectedBg =
                     headerTheme === 'pink'
@@ -303,7 +303,7 @@ export default function TasksTable({
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center relative`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center relative border-r border-purple-200/70`}>
                         {deadlineType === 'overdue' && (
                           <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-rose-500 shadow-2xs" />
                         )}
