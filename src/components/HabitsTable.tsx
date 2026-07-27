@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
-import { Flame, RefreshCw, Clock, Search, Pencil, Trash2 } from 'lucide-react';
+import { Check, Clock, Flame, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { getHabitColorHex } from '@/services/habitService';
 
 const formatScheduledDays = (days: number[]): string => {
@@ -157,15 +157,6 @@ export default function HabitsTable({
           <table className="min-w-[700px] w-full text-sm">
             <thead className="bg-purple-600 text-white">
               <tr>
-                <th className="px-3 py-3 text-center w-px">
-                  <input
-                    type="checkbox"
-                    checked={allFilteredSelected}
-                    onChange={toggleSelectAllFiltered}
-                    className="h-4 w-4 rounded border-white/60 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                    title="Select all"
-                  />
-                </th>
                 <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px]">Habit Title</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Schedule</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Time</th>
@@ -177,7 +168,7 @@ export default function HabitsTable({
             <tbody>
               {pagedHabits.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
                     No habits found.
                   </td>
                 </tr>
@@ -201,16 +192,6 @@ export default function HabitsTable({
 
                   return (
                     <tr key={habit.id} className={`border-t last:border-b transition-all ${rowBorderClass} ${rowBgClass}`}>
-                      {/* Checkbox Selection Cell */}
-                      <td className="px-3 py-3 text-center whitespace-nowrap align-middle">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelected(habit.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                        />
-                      </td>
-
                       {/* Title */}
                       <td className="px-3.5 py-3 align-middle min-w-[220px]">
                         <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
@@ -273,22 +254,45 @@ export default function HabitsTable({
 
                       {/* Actions */}
                       <td className="px-3.5 py-3 align-middle text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => toggleSelected(habit.id)}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1 shadow-2xs ${
+                              isSelected
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-xs'
+                                : 'bg-purple-50/80 hover:bg-purple-100/90 text-purple-700 border border-purple-200/80'
+                            }`}
+                            title={isSelected ? 'Deselect habit' : 'Select habit for bulk actions'}
+                          >
+                            {isSelected ? (
+                              <>
+                                <Check className="w-3 h-3 text-white stroke-[3]" />
+                                <span>Selected</span>
+                              </>
+                            ) : (
+                              <span>Select</span>
+                            )}
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => onEdit(habit)}
-                            className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gray-100/80 hover:bg-purple-100 text-gray-600 hover:text-purple-600 transition flex items-center justify-center"
+                            className="h-7 w-7 rounded-lg bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 border border-gray-200/80 hover:border-blue-200 transition-all flex items-center justify-center shadow-2xs"
                             title="Edit habit"
+                            aria-label={`Edit ${habit.title}`}
                           >
-                            <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
+
                           <button
                             type="button"
                             onClick={() => onDelete(habit.id)}
-                            className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gray-100/80 hover:bg-rose-100 text-gray-600 hover:text-rose-600 transition flex items-center justify-center"
+                            className="h-7 w-7 rounded-lg bg-white hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/80 hover:border-rose-200 transition-all flex items-center justify-center shadow-2xs"
                             title="Delete habit"
+                            aria-label={`Delete ${habit.title}`}
                           >
-                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>

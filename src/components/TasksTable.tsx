@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays, ChevronDown, ListChecks, RefreshCw, Search, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, ListChecks, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 
@@ -254,36 +254,12 @@ export default function TasksTable({
     const borderColor = headerTheme === 'purple' ? 'border-purple-200' : 'border-pink-200';
     const textColor = headerTheme === 'purple' ? 'text-purple-700' : 'text-pink-700';
 
-    const rowIds = rows.map((r) => r.id);
-    const allRowsSelected = rowIds.length > 0 && rowIds.every((id) => selectedIds.has(id));
-
-    const toggleSelectAllRows = () => {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (allRowsSelected) {
-          rowIds.forEach((id) => next.delete(id));
-        } else {
-          rowIds.forEach((id) => next.add(id));
-        }
-        return next;
-      });
-    };
-
     return (
       <div className={`border ${borderColor} rounded-xl overflow-hidden bg-white shadow-sm`}>
         <div className="overflow-x-auto">
           <table className="min-w-[700px] w-full text-sm">
             <thead className={`${headerBg} text-white`}>
               <tr>
-                <th className="px-3 py-2.5 text-center w-px">
-                  <input
-                    type="checkbox"
-                    checked={allRowsSelected}
-                    onChange={toggleSelectAllRows}
-                    className="h-4 w-4 rounded border-white/60 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                    title="Select all"
-                  />
-                </th>
                 <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[220px]">Title</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Category</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">
@@ -300,7 +276,7 @@ export default function TasksTable({
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
                     {emptyText}
                   </td>
                 </tr>
@@ -327,17 +303,6 @@ export default function TasksTable({
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
-                      {/* Checkbox Selection Cell */}
-                      <td className={`px-3 ${tdPaddingClass} text-center whitespace-nowrap`}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelected(t.id)}
-                          className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                        />
-                      </td>
-
-                      {/* Title */}
                       <td className={`px-3.5 ${tdPaddingClass} min-w-[220px]`}>
                         <div className="font-medium text-gray-900 break-words">{t.title}</div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
@@ -406,8 +371,6 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-
-                      {/* Category */}
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {(() => {
                           const matchedCategory = getCategory(t.category);
@@ -431,8 +394,6 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-
-                      {/* Due Date */}
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           <div className="text-sm text-gray-700">{formatDueDateDisplay(t.dueDate)}</div>
@@ -440,8 +401,6 @@ export default function TasksTable({
                           <div className="text-sm text-gray-400">—</div>
                         )}
                       </td>
-
-                      {/* Status */}
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap`}>
                         {t.dueDate ? (
                           (() => {
@@ -458,8 +417,6 @@ export default function TasksTable({
                           <div className="text-sm text-gray-400">—</div>
                         )}
                       </td>
-
-                      {/* Done Checkbox */}
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center`}>
                         <button
                           type="button"
@@ -477,25 +434,46 @@ export default function TasksTable({
                           </svg>
                         </button>
                       </td>
-
-                      {/* Actions */}
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-right`}>
-                        <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => toggleSelected(t.id)}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1 shadow-2xs ${
+                              selectedIds.has(t.id)
+                                ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-xs'
+                                : 'bg-purple-50/80 hover:bg-purple-100/90 text-purple-700 border border-purple-200/80'
+                            }`}
+                            title={selectedIds.has(t.id) ? 'Deselect task' : 'Select task for bulk actions'}
+                          >
+                            {selectedIds.has(t.id) ? (
+                              <>
+                                <Check className="w-3 h-3 text-white stroke-[3]" />
+                                <span>Selected</span>
+                              </>
+                            ) : (
+                              <span>Select</span>
+                            )}
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => onEdit(t)}
-                            className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gray-100/80 hover:bg-purple-100 text-gray-600 hover:text-purple-600 transition flex items-center justify-center"
+                            className="h-7 w-7 rounded-lg bg-white hover:bg-blue-50 text-gray-500 hover:text-blue-600 border border-gray-200/80 hover:border-blue-200 transition-all flex items-center justify-center shadow-2xs"
                             title="Edit task"
+                            aria-label={`Edit ${t.title}`}
                           >
-                            <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
+
                           <button
                             type="button"
                             onClick={() => onDelete(t.id)}
-                            className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gray-100/80 hover:bg-rose-100 text-gray-600 hover:text-rose-600 transition flex items-center justify-center"
+                            className="h-7 w-7 rounded-lg bg-white hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/80 hover:border-rose-200 transition-all flex items-center justify-center shadow-2xs"
                             title="Delete task"
+                            aria-label={`Delete ${t.title}`}
                           >
-                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
