@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Activity, CheckCircle2, TrendingUp, RefreshCw, Minus, X, ChevronDown, Search, Layers } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, getPast7DaysStatus, getDayAbbreviation, resetHabitData } from '@/services/habitService';
+import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, calculateTotalCompletions, getPast7DaysStatus, getDayAbbreviation, resetHabitData } from '@/services/habitService';
 import { DailyHabit, HabitSet } from '@/types';
 import { ContributionHeatmap } from '@/components/ContributionHeatmap';
 import { showToast } from '@/components/Toast';
@@ -338,54 +338,56 @@ export function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
-        {filteredHabits
-          .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
-          .filter((h) => (searchQuery ? h.title.toLowerCase().includes(searchQuery.toLowerCase()) : true))
-          .map((habit) => (
-            <HabitAnalyticsCard
-              key={habit.id}
-              habit={habit}
-              habitSets={habitSets}
-              setResetTargetHabit={setResetTargetHabit}
-              isResetting={isResetting}
-            />
-          ))}
-      </div>
+        {/* Detailed Habit Analytics Cards */}
+        <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
+          {filteredHabits
+            .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
+            .map((habit) => (
+              <HabitAnalyticsCard
+                key={habit.id}
+                habit={habit}
+                habitSets={habitSets}
+                setResetTargetHabit={setResetTargetHabit}
+                isResetting={isResetting}
+              />
+            ))}
+        </div>
 
-      {resetTargetHabit && createPortal(
-        <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
-          <div className="modal-enter max-w-sm w-full bg-white/95 backdrop-blur-xl rounded-2xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)] border border-rose-100/80">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
-              <RefreshCw className="h-6 w-6 text-rose-600" />
-            </div>
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 text-center">Reset Data?</h3>
-            <p className="text-gray-700 text-sm text-center mb-6">
-              Are you sure you want to reset all tracking data for "<strong>{resetTargetHabit.title}</strong>"?<br/><br/>Your streak and completions will become 0. This cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setResetTargetHabit(null)}
-                disabled={isResetting}
-                className="flex-1 px-3 py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-xl transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleResetConfirm}
-                disabled={isResetting}
-                className="flex-1 px-3 py-2.5 text-sm sm:text-base bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-semibold rounded-xl transition disabled:opacity-70 shadow-[0_8px_20px_rgba(243,110,132,0.28)]"
-              >
-                {isResetting ? 'Resetting...' : 'Reset'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-}
+        {/* Reset Confirmation Modal */}
+        {resetTargetHabit &&
+          createPortal(
+            <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-[9999] p-4">
+              <div className="glass-card p-5 sm:p-6 max-w-sm w-full bg-white shadow-2xl rounded-2xl border border-rose-100">
+                <div className="w-12 h-12 rounded-full bg-rose-100 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto mb-4">
+                  <RefreshCw className="h-6 w-6 text-rose-600" />
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 text-center">Reset Data?</h3>
+                <p className="text-gray-700 text-sm text-center mb-6">
+                  Are you sure you want to reset all tracking data for "<strong>{resetTargetHabit.title}</strong>"?<br/><br/>Your streak and completions will become 0. This cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setResetTargetHabit(null)}
+                    disabled={isResetting}
+                    className="flex-1 px-3 py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 font-semibold rounded-xl transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResetConfirm}
+                    disabled={isResetting}
+                    className="flex-1 px-3 py-2.5 text-sm sm:text-base bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-semibold rounded-xl transition disabled:opacity-70 shadow-[0_8px_20px_rgba(243,110,132,0.28)]"
+                  >
+                    {isResetting ? 'Resetting...' : 'Reset'}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  }
 
 function HabitAnalyticsCard({ habit, habitSets, setResetTargetHabit, isResetting }: { habit: DailyHabit, habitSets: HabitSet[], setResetTargetHabit: (habit: DailyHabit) => void, isResetting: boolean }) {
   const [showFullHistory, setShowFullHistory] = useState(false);
@@ -395,10 +397,25 @@ function HabitAnalyticsCard({ habit, habitSets, setResetTargetHabit, isResetting
 
   const rawScheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
   // Keep streak & consistency calculations using raw scheduled days so past progress & scores are preserved
-  const streak = calculateStreak(habit.completedDates, rawScheduledDays);
-  const totalCompletions = habit.completedDates.length;
+  const streak = calculateStreak(
+    habit.completedDates,
+    rawScheduledDays,
+    habit.targetValue,
+    habit.dailyProgress
+  );
+  const totalCompletions = calculateTotalCompletions(
+    habit.completedDates,
+    habit.targetValue,
+    habit.dailyProgress
+  );
   const startDate = habit.trackingStartDate || habit.createdAt;
-  const consistency = calculateConsistency(habit.completedDates, rawScheduledDays, startDate);
+  const consistency = calculateConsistency(
+    habit.completedDates,
+    rawScheduledDays,
+    startDate,
+    habit.targetValue,
+    habit.dailyProgress
+  );
   
   // For visual display: if preset is inactive, uncompleted days show as Not Scheduled
   const displayScheduledDays = isPresetActive ? rawScheduledDays : [];
@@ -501,6 +518,9 @@ function HabitAnalyticsCard({ habit, habitSets, setResetTargetHabit, isResetting
             startDate={startDate}
             completedDates={habit.completedDates}
             scheduledDays={displayScheduledDays}
+            targetValue={habit.targetValue}
+            targetUnit={habit.targetUnit}
+            dailyProgress={habit.dailyProgress}
           />
         ) : (
           <div className="flex justify-between mt-4">
@@ -519,12 +539,23 @@ function HabitAnalyticsCard({ habit, habitSets, setResetTargetHabit, isResetting
               todayObj.setHours(0, 0, 0, 0);
               const isPast = localDate < todayObj;
 
+              const loggedVal = habit.dailyProgress?.[dayStatus.date];
+              const isCompleted = dayStatus.completed;
+              const target = habit.targetValue;
+              const ratio = isCompleted
+                ? 1.0
+                : target && target > 0 && loggedVal && loggedVal > 0
+                ? Math.min(1.0, loggedVal / target)
+                : 0;
+
               let circleClass = "w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ";
               let content = null;
+              let styleObj: React.CSSProperties | undefined = undefined;
 
-              if (dayStatus.completed) {
+              if (ratio > 0) {
                 circleClass += "bg-gradient-to-tr from-purple-500 to-fuchsia-400 shadow-md shadow-purple-500/20 text-white border border-purple-400/50";
                 content = <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />;
+                styleObj = { opacity: Math.max(0.25, ratio) };
               } else if (!isScheduled) {
                 circleClass += "bg-transparent border-2 border-dashed border-slate-200 text-slate-300";
                 content = <Minus className="w-3 h-3 sm:w-4 sm:h-4" />;
@@ -540,7 +571,7 @@ function HabitAnalyticsCard({ habit, habitSets, setResetTargetHabit, isResetting
                   <span className="text-[10px] sm:text-xs text-gray-500 font-medium">
                     {getDayAbbreviation(dayStatus.date)}
                   </span>
-                  <div className={circleClass}>
+                  <div className={circleClass} style={styleObj}>
                     {content}
                   </div>
                 </div>

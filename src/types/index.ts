@@ -59,6 +59,9 @@ export interface DailyHabit {
   setId?: string; // Id of the HabitSet it belongs to
   order?: number; // For drag-drop reordering
   trackingStartDate?: Date; // Date when tracking started or was last reset
+  targetValue?: number; // Quantitative target goal value e.g. 5
+  targetUnit?: string; // Target unit e.g. 'videos', 'pages', 'mins'
+  dailyProgress?: Record<string, number>; // Date string YYYY-MM-DD -> logged progress value
   createdAt: Date;
   updatedAt: Date;
 }

@@ -230,6 +230,7 @@ export const createDailyHabit = async (
       userId,
       ...habitData,
       completedDates: habitData.completedDates || [],
+      dailyProgress: habitData.dailyProgress || {},
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -289,6 +290,9 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       endTime: doc.data().endTime || '10:00',
       color: doc.data().color || undefined,
       setId: doc.data().setId || undefined,
+      targetValue: doc.data().targetValue || undefined,
+      targetUnit: doc.data().targetUnit || undefined,
+      dailyProgress: doc.data().dailyProgress || undefined,
       trackingStartDate: doc.data().trackingStartDate ? doc.data().trackingStartDate.toDate() : undefined,
       createdAt: doc.data().createdAt.toDate(),
       updatedAt: doc.data().updatedAt.toDate(),
@@ -317,12 +321,59 @@ export const getDailyHabitById = async (habitId: string): Promise<DailyHabit | n
       scheduledDays: docSnap.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
       startTime: docSnap.data().startTime || '09:00',
       endTime: docSnap.data().endTime || '10:00',
+      targetValue: docSnap.data().targetValue || undefined,
+      targetUnit: docSnap.data().targetUnit || undefined,
+      dailyProgress: docSnap.data().dailyProgress || undefined,
       trackingStartDate: docSnap.data().trackingStartDate ? docSnap.data().trackingStartDate.toDate() : undefined,
       createdAt: docSnap.data().createdAt.toDate(),
       updatedAt: docSnap.data().updatedAt.toDate(),
     } as DailyHabit;
   } catch (error) {
     console.error('Error getting daily habit:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update daily progress for a quantitative habit
+ */
+export const updateHabitProgress = async (
+  habitId: string,
+  dateString: string,
+  progressValue: number,
+  targetValue?: number
+): Promise<void> => {
+  try {
+    const docRef = doc(db, DAILY_HABITS_COLLECTION, habitId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+
+    const data = docSnap.data();
+    const currentProgress = data.dailyProgress || {};
+    const newProgressValue = Math.max(0, progressValue);
+    const updatedProgress = { ...currentProgress, [dateString]: newProgressValue };
+
+    const completedDates: string[] = data.completedDates || [];
+    const isAlreadyCompleted = completedDates.includes(dateString);
+    const target = targetValue || data.targetValue;
+
+    let nextCompletedDates = [...completedDates];
+
+    if (target && target > 0) {
+      if (newProgressValue >= target && !isAlreadyCompleted) {
+        nextCompletedDates.push(dateString);
+      } else if (newProgressValue < target && isAlreadyCompleted) {
+        nextCompletedDates = nextCompletedDates.filter((d) => d !== dateString);
+      }
+    }
+
+    await updateDoc(docRef, {
+      dailyProgress: updatedProgress,
+      completedDates: nextCompletedDates,
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error updating habit progress:', error);
     throw error;
   }
 };
@@ -354,6 +405,7 @@ export const resetHabitData = async (habitId: string): Promise<void> => {
     const docRef = doc(db, DAILY_HABITS_COLLECTION, habitId);
     await updateDoc(docRef, {
       completedDates: [],
+      dailyProgress: {},
       trackingStartDate: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
@@ -401,9 +453,6 @@ export const unmarkHabitCompletedDate = async (
   }
 };
 
-/**
- * Check if habit is completed for a specific date
- */
 export const isHabitCompletedOnDate = async (
   habitId: string,
   dateString: string
@@ -447,11 +496,40 @@ export const getHabitStats = async (habitId: string) => {
 };
 
 /**
- * Calculate current streak for a habit (consecutive completed scheduled days)
+ * Calculate total completion score incorporating partial progress ratios
+ * e.g., 100% = 1, 50% = 0.5, 20% = 0.2
  */
-export const calculateStreak = (completedDates: string[], scheduledDays?: number[]): number => {
-  if (completedDates.length === 0) return 0;
-  
+export const calculateTotalCompletions = (
+  completedDates: string[],
+  targetValue?: number,
+  dailyProgress?: Record<string, number>
+): number => {
+  if (!targetValue || targetValue <= 0) {
+    return completedDates.length;
+  }
+
+  const allDates = new Set([...completedDates, ...Object.keys(dailyProgress || {})]);
+  let totalScore = 0;
+
+  allDates.forEach((dateStr) => {
+    const isCompleted = completedDates.includes(dateStr);
+    const logged = dailyProgress?.[dateStr] ?? (isCompleted ? targetValue : 0);
+    const ratio = Math.min(1.0, Math.max(0, logged / targetValue));
+    totalScore += ratio;
+  });
+
+  return Math.round(totalScore * 10) / 10;
+};
+
+/**
+ * Calculate current streak for a habit (consecutive completed scheduled days or >= 50% progress)
+ */
+export const calculateStreak = (
+  completedDates: string[],
+  scheduledDays?: number[],
+  targetValue?: number,
+  dailyProgress?: Record<string, number>
+): number => {
   const defaultSchedule = [0, 1, 2, 3, 4, 5, 6];
   const schedule = scheduledDays || defaultSchedule;
   
@@ -465,7 +543,18 @@ export const calculateStreak = (completedDates: string[], scheduledDays?: number
     
     // Only count if this day is scheduled
     if (schedule.includes(dayOfWeek)) {
-      if (completedDates.includes(dateStr)) {
+      const isCompleted = completedDates.includes(dateStr);
+      let isStreakValid = isCompleted;
+
+      if (!isStreakValid && targetValue && targetValue > 0) {
+        const logged = dailyProgress?.[dateStr] ?? 0;
+        const ratio = logged / targetValue;
+        if (ratio >= 0.5) {
+          isStreakValid = true;
+        }
+      }
+
+      if (isStreakValid) {
         streak++;
       } else {
         // Streak broken on a scheduled day
@@ -482,9 +571,15 @@ export const calculateStreak = (completedDates: string[], scheduledDays?: number
 
 /**
  * Calculate overall consistency percentage
- * (completed on scheduled days / total scheduled days that have passed) * 100
+ * (sum of progress ratios on scheduled days / total scheduled days that have passed) * 100
  */
-export const calculateConsistency = (completedDates: string[], scheduledDays?: number[], startDateInput?: Date): number => {
+export const calculateConsistency = (
+  completedDates: string[],
+  scheduledDays?: number[],
+  startDateInput?: Date,
+  targetValue?: number,
+  dailyProgress?: Record<string, number>
+): number => {
   const defaultSchedule = [0, 1, 2, 3, 4, 5, 6];
   const schedule = scheduledDays || defaultSchedule;
   
@@ -496,7 +591,7 @@ export const calculateConsistency = (completedDates: string[], scheduledDays?: n
   startDate.setHours(0, 0, 0, 0);
   
   let scheduledDayCount = 0;
-  let completedScheduledCount = 0;
+  let totalProgressScore = 0;
   
   // Count scheduled days from creation to today
   let currentDate = new Date(startDate);
@@ -505,15 +600,23 @@ export const calculateConsistency = (completedDates: string[], scheduledDays?: n
     if (schedule.includes(dayOfWeek)) {
       scheduledDayCount++;
       const dateStr = formatToDateString(currentDate);
-      if (completedDates.includes(dateStr)) {
-        completedScheduledCount++;
+      const isCompleted = completedDates.includes(dateStr);
+      
+      if (targetValue && targetValue > 0) {
+        const logged = dailyProgress?.[dateStr] ?? (isCompleted ? targetValue : 0);
+        const dayRatio = Math.min(1.0, Math.max(0, logged / targetValue));
+        totalProgressScore += dayRatio;
+      } else {
+        if (isCompleted) {
+          totalProgressScore += 1.0;
+        }
       }
     }
     currentDate.setDate(currentDate.getDate() + 1);
   }
   
   if (scheduledDayCount === 0) return 0;
-  return Math.round((completedScheduledCount / scheduledDayCount) * 100);
+  return Math.min(100, Math.round((totalProgressScore / scheduledDayCount) * 100));
 };
 
 /**
@@ -529,7 +632,6 @@ export const deleteDailyHabit = async (habitId: string): Promise<void> => {
   }
 };
 
-
 /**
  * Reset completion history for ALL habits of a user
  */
@@ -540,6 +642,7 @@ export const resetAllHabitsAnalytics = async (userId: string): Promise<void> => 
       habits.map((habit) =>
         updateDoc(doc(db, DAILY_HABITS_COLLECTION, habit.id), {
           completedDates: [],
+          dailyProgress: {},
           updatedAt: Timestamp.now(),
         })
       )

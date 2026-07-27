@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X } from 'lucide-react';
+import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2 } from 'lucide-react';
 import { DailyHabit, HabitSet } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -8,6 +8,7 @@ import {
   getUserDailyHabits,
   markHabitCompletedToday,
   unmarkHabitCompletedDate,
+  updateHabitProgress,
   deleteDailyHabit,
   PASTEL_HABIT_COLORS,
   getHabitColorHex,
@@ -51,6 +52,8 @@ export function HabitsPage() {
   const [endTime, setEndTime] = useState('10:00');
   const [habitColor, setHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
   const [habitSetId, setHabitSetId] = useState<string>('');
+  const [targetValue, setTargetValue] = useState<number | undefined>(undefined);
+  const [targetUnit, setTargetUnit] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayDate] = useState(getTodayDateString());
 
@@ -62,6 +65,8 @@ export function HabitsPage() {
   const [editEndTime, setEditEndTime] = useState('10:00');
   const [editHabitColor, setEditHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
   const [editHabitSetId, setEditHabitSetId] = useState<string>('');
+  const [editTargetValue, setEditTargetValue] = useState<number | undefined>(undefined);
+  const [editTargetUnit, setEditTargetUnit] = useState<string | undefined>(undefined);
 
   // Delete confirmation state
   const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
@@ -230,6 +235,8 @@ export function HabitsPage() {
         endTime,
         color: habitColor,
         setId: targetSetId,
+        targetValue: targetValue && targetValue > 0 ? targetValue : undefined,
+        targetUnit: targetUnit?.trim() || undefined,
       });
 
       setHabits((prev) => {
@@ -245,6 +252,8 @@ export function HabitsPage() {
             endTime,
             color: habitColor,
             setId: targetSetId,
+            targetValue: targetValue && targetValue > 0 ? targetValue : undefined,
+            targetUnit: targetUnit?.trim() || undefined,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -257,6 +266,8 @@ export function HabitsPage() {
       setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
       setStartTime('09:00');
       setEndTime('10:00');
+      setTargetValue(undefined);
+      setTargetUnit(undefined);
       setHabitColor(PASTEL_HABIT_COLORS[0]);
       setIsAddModalOpen(false);
     } catch (err) {
@@ -267,16 +278,69 @@ export function HabitsPage() {
     }
   };
 
+  const handleProgressChange = useCallback(
+    async (habitId: string, newProgressValue: number) => {
+      if (!user) return;
+      const habit = habits.find((h) => h.id === habitId);
+      if (!habit) return;
+
+      const target = habit.targetValue && habit.targetValue > 0 ? habit.targetValue : 1;
+      const val = habit.targetValue && habit.targetValue > 0
+        ? Math.min(target, Math.max(0, newProgressValue))
+        : Math.max(0, newProgressValue);
+      const isCompletedNow = val >= target;
+      const wasCompleted = habit.completedDates.includes(todayDate);
+
+      if (isCompletedNow && !wasCompleted) {
+        playSuccessSound();
+      }
+
+      const currentDailyProgress = habit.dailyProgress || {};
+      const updatedDailyProgress = { ...currentDailyProgress, [todayDate]: val };
+      const updatedCompletedDates = isCompletedNow
+        ? [...new Set([...habit.completedDates, todayDate])]
+        : habit.completedDates.filter((d) => d !== todayDate);
+
+      // Optimistic UI update
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === habitId
+            ? {
+                ...h,
+                dailyProgress: updatedDailyProgress,
+                completedDates: updatedCompletedDates,
+              }
+            : h
+        )
+      );
+
+      try {
+        await updateHabitProgress(habitId, todayDate, val, habit.targetValue);
+      } catch (err) {
+        console.error('Error updating habit progress:', err);
+        showToast('Failed to update progress', 'error');
+      }
+    },
+    [habits, todayDate, user]
+  );
+
   const handleToggleHabit = useCallback(
     async (habitId: string, isCompletedToday: boolean) => {
       if (!user) return;
 
+      const habit = habits.find((h) => h.id === habitId);
+      if (!habit) return;
+
+      // If habit has a targetValue, toggle between 0 and targetValue!
+      if (habit.targetValue && habit.targetValue > 0) {
+        const nextVal = isCompletedToday ? 0 : habit.targetValue;
+        await handleProgressChange(habitId, nextVal);
+        return;
+      }
+
       if (!isCompletedToday) {
         playSuccessSound();
       }
-
-      const habit = habits.find((h) => h.id === habitId);
-      if (!habit) return;
 
       const previousDates = [...habit.completedDates];
       const optimisticDates = isCompletedToday
@@ -301,7 +365,7 @@ export function HabitsPage() {
         console.error('Error toggling habit:', err);
       }
     },
-    [habits, todayDate, user]
+    [habits, handleProgressChange, todayDate, user]
   );
 
   const handleEditHabit = (
@@ -314,6 +378,8 @@ export function HabitsPage() {
     setEditEndTime(habitToEdit.endTime);
     setEditHabitColor(getHabitColorHex(habitToEdit, habits));
     setEditHabitSetId(habitToEdit.setId || activeSetId);
+    setEditTargetValue(habitToEdit.targetValue);
+    setEditTargetUnit(habitToEdit.targetUnit);
   };
 
   const handleSaveEdit = async () => {
@@ -341,6 +407,8 @@ export function HabitsPage() {
         endTime: editEndTime,
         color: editHabitColor,
         setId: targetSetId,
+        targetValue: editTargetValue && editTargetValue > 0 ? editTargetValue : null,
+        targetUnit: editTargetUnit?.trim() || null,
         updatedAt: new Date(),
       });
 
@@ -354,6 +422,8 @@ export function HabitsPage() {
               endTime: editEndTime,
               color: editHabitColor,
               setId: targetSetId,
+              targetValue: editTargetValue && editTargetValue > 0 ? editTargetValue : undefined,
+              targetUnit: editTargetUnit?.trim() || undefined,
               updatedAt: new Date(),
             }
           : habit
@@ -365,6 +435,8 @@ export function HabitsPage() {
       setEditScheduledDays([0, 1, 2, 3, 4, 5, 6]);
       setEditStartTime('09:00');
       setEditEndTime('10:00');
+      setEditTargetValue(undefined);
+      setEditTargetUnit(undefined);
       setEditError(null);
     } catch (err) {
       setEditError('Failed to save habit. Please try again.');
@@ -600,10 +672,10 @@ export function HabitsPage() {
         {isAddModalOpen &&
           createPortal(
             <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
-                <form onSubmit={handleAddHabit} className="flex flex-col h-full max-h-full">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[85vh] max-h-dvh sm:max-h-[750px] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+                <form onSubmit={handleAddHabit} className="flex flex-col h-full min-h-0">
                   {/* Header */}
-                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
                     <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                       <Plus className="w-5 h-5 text-purple-600" />
                       Add New Habit
@@ -767,24 +839,58 @@ export function HabitsPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Target Goal (Optional) */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5 shrink-0">
+                          <Target className="w-4 h-4 text-purple-700" />
+                          Quantitative Target Goal <span className="font-normal text-purple-600">(Optional)</span>
+                        </label>
+                        <span className="text-[11px] font-medium text-purple-600 truncate text-right">e.g. 5 videos, 10 pages</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Target Value</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={targetValue ?? ''}
+                            onChange={(e) => setTargetValue(e.target.value ? Math.max(1, parseInt(e.target.value)) : undefined)}
+                            placeholder="e.g. 5"
+                            className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Unit</label>
+                          <input
+                            type="text"
+                            value={targetUnit ?? ''}
+                            onChange={(e) => setTargetUnit(e.target.value)}
+                            placeholder="e.g. videos, pages"
+                            className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Footer Actions */}
-                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80 shrink-0">
                     <button
                       type="button"
                       onClick={() => setIsAddModalOpen(false)}
+                      className="w-full sm:w-1/2 min-h-[42px] px-4 py-2.5 rounded-xl border border-purple-200 bg-white text-xs sm:text-sm font-semibold text-purple-700 hover:bg-purple-50 transition"
                       disabled={isSubmitting}
-                      className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
+                      className="w-full sm:w-1/2 min-h-[42px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white text-xs sm:text-sm font-semibold hover:from-purple-700 hover:to-pink-600 transition shadow-md shadow-purple-500/20 disabled:opacity-50"
                     >
-                      {isSubmitting ? 'Adding...' : 'Add Habit'}
+                      {isSubmitting ? 'Creating...' : 'Create Habit'}
                     </button>
                   </div>
                 </form>
@@ -802,7 +908,7 @@ export function HabitsPage() {
             <p className="text-gray-600">Loading your habits...</p>
           </div>
         ) : loadError && habits.length === 0 ? (
-          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
+          <div className="glass-card p-6 md:p-10 text-center">
             <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">Habits unavailable</h2>
             <p className="text-gray-600 mb-5">{loadError}</p>
             <button
@@ -842,119 +948,225 @@ export function HabitsPage() {
                 habits={habitsToDisplay}
                 todayDate={todayDate}
                 onToggleCompletion={handleToggleHabit}
+                onProgressChange={handleProgressChange}
                 onEdit={handleEditHabit}
                 onDelete={(id) => setDeletingHabitId(id)}
                 onBulkDelete={handleBulkDeleteHabits}
               />
-            ) : (
-              <div className="space-y-3 sm:space-y-4 list-stagger">
-                {habitsToDisplay.map((habit) => {
-                  const isCompletedToday = habit.completedDates.includes(todayDate);
-                  const streak = habit.completedDates.length;
-                  const todayDayIndex = new Date().getDay();
-                  const isDueToday = habit.scheduledDays.includes(todayDayIndex);
+            ) : (() => {
+              const todayDayIndex = new Date().getDay();
+              const habitsDueToday = habitsToDisplay.filter((h) => h.scheduledDays.includes(todayDayIndex));
+              const habitsOtherDays = habitsToDisplay.filter((h) => !h.scheduledDays.includes(todayDayIndex));
 
-                  const cardStyleClass = isCompletedToday
-                    ? 'bg-gradient-to-r from-emerald-50/60 via-white/80 to-purple-50/40 border border-emerald-200/80'
-                    : isDueToday
-                    ? 'bg-gradient-to-r from-purple-50/90 via-white to-pink-50/50 border-l-4 border-l-purple-600 border border-purple-300/90 shadow-md ring-1 ring-purple-400/20'
-                    : 'bg-white/40 border border-gray-200/60 opacity-60 hover:opacity-95';
+              const renderCard = (habit: DailyHabit) => {
+                const isCompletedToday = habit.completedDates.includes(todayDate);
+                const streak = habit.completedDates.length;
+                const isDueToday = habit.scheduledDays.includes(todayDayIndex);
 
-                  return (
-                    <div key={habit.id}>
-                      <div
-                        className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${cardStyleClass} hover:shadow-md sm:hover:shadow-2xl`}
-                      >
-                        <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
-                          <button
-                            type="button"
-                            role="checkbox"
-                            aria-checked={isCompletedToday}
-                            aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
-                            onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
-                            className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
-                              isCompletedToday
-                                ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
-                                : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
-                            }`}
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </button>
+                const cardStyleClass = isCompletedToday
+                  ? 'bg-gradient-to-r from-emerald-50/60 via-white/80 to-purple-50/40 border border-emerald-200/80'
+                  : isDueToday
+                  ? 'bg-gradient-to-r from-purple-50/90 via-white to-pink-50/50 border-l-4 border-l-purple-600 border border-purple-300/90 shadow-md ring-1 ring-purple-400/20'
+                  : 'bg-white/40 border border-gray-200/60 opacity-65 hover:opacity-100';
 
-                          <span
-                            className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${
-                              isCompletedToday ? 'text-purple-700 line-through opacity-70' : 'text-gray-900'
-                            }`}
-                          >
-                            {habit.title}
+                return (
+                  <div key={habit.id}>
+                    <div
+                      className={`glass-card flex flex-col gap-2.5 py-2.5 md:py-4 px-3 sm:px-6 transition-all duration-200 group ${cardStyleClass} hover:shadow-md sm:hover:shadow-2xl`}
+                    >
+                      <div className="flex flex-row items-center gap-3 w-full md:w-auto min-w-0">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={isCompletedToday}
+                          aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
+                          onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
+                          className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
+                            isCompletedToday
+                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
+                              : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
+                          }`}
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+
+                        <span
+                          className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${
+                            isCompletedToday ? 'text-purple-700 line-through opacity-70' : 'text-gray-900'
+                          }`}
+                        >
+                          {habit.title}
+                        </span>
+
+                        {isDueToday && !isCompletedToday && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-2xs shrink-0">
+                            <Activity className="w-3 h-3 text-amber-300 animate-pulse" /> Today
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Quantitative Target Goal Quick Counter & Progress Bar */}
+                      {habit.targetValue && habit.targetValue > 0 && (() => {
+                        const currentProgress = habit.dailyProgress?.[todayDate] ?? (isCompletedToday ? habit.targetValue : 0);
+                        const target = habit.targetValue;
+                        const percent = Math.min(100, Math.round((currentProgress / target) * 100));
+
+                        return (
+                          <div className="flex flex-col gap-1.5 py-1 px-2.5 rounded-xl bg-purple-50/70 border border-purple-100/90 shadow-2xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="inline-flex items-center gap-1 bg-white border border-purple-200/90 rounded-lg p-0.5 shadow-2xs">
+                                <button
+                                  type="button"
+                                  onClick={() => handleProgressChange(habit.id, currentProgress - 1)}
+                                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-purple-100/80 text-purple-800 font-bold hover:bg-purple-200 flex items-center justify-center transition disabled:opacity-40"
+                                  disabled={currentProgress <= 0}
+                                >
+                                  -
+                                </button>
+                                <div className="flex items-center gap-1 px-1">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={currentProgress === 0 ? '' : currentProgress}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                                      if (raw === '') {
+                                        handleProgressChange(habit.id, 0);
+                                      } else {
+                                        const parsed = parseInt(raw, 10);
+                                        const val = Math.min(target, Math.max(0, parsed));
+                                        handleProgressChange(habit.id, val);
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-6 text-center text-xs font-bold text-purple-900 bg-purple-50/90 rounded border border-purple-200/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 px-1 transition-all"
+                                    style={{ width: `${Math.max(2.2, String(currentProgress).length + 1.6)}ch` }}
+                                  />
+                                  <span className="text-xs font-bold text-purple-900 whitespace-nowrap">
+                                    / {target} {habit.targetUnit || ''}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleProgressChange(habit.id, currentProgress + 1)}
+                                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold hover:opacity-90 flex items-center justify-center transition disabled:opacity-40"
+                                  disabled={currentProgress >= target}
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                <span className="text-[11px] font-bold text-purple-800">{percent}% Logged</span>
+                              </div>
+                            </div>
+
+                            {/* Progress Bar Track */}
+                            <div className="w-full h-1.5 bg-purple-200/70 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 rounded-full transition-all duration-300"
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <div className="flex flex-row items-center justify-between w-full gap-3">
+                        <div className="flex flex-row items-center gap-2 flex-wrap flex-1 min-w-0">
+                          <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap flex-shrink-0">
+                            {formatScheduledDays(habit.scheduledDays)}
                           </span>
 
-                          {isDueToday && !isCompletedToday && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-2xs shrink-0">
-                              <Activity className="w-3 h-3 text-amber-300 animate-pulse" /> Today
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0 shadow-xs"
+                            style={{ backgroundColor: getHabitColorHex(habit, habits) }}
+                          >
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
+                            <span>
+                              {habit.startTime} - {habit.endTime}
                             </span>
-                          )}
+                          </div>
                         </div>
 
-                        <div className="flex flex-row items-center justify-between w-full gap-3">
-                          <div className="flex flex-row items-center gap-2 flex-wrap flex-1 min-w-0">
-                            <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-purple-100/70 border border-purple-200/80 text-[10px] sm:text-xs font-semibold text-purple-700 whitespace-nowrap flex-shrink-0">
-                              {formatScheduledDays(habit.scheduledDays)}
-                            </span>
-
-                            <div
-                              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0 shadow-xs"
-                              style={{ backgroundColor: getHabitColorHex(habit, habits) }}
-                            >
-                              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
-                              <span>
-                                {habit.startTime} - {habit.endTime}
-                              </span>
-                            </div>
+                        <div className="flex flex-row items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 text-[10px] sm:text-xs font-medium text-pink-600 mr-1 sm:mr-2">
+                            <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-500" />
+                            <span>{streak}</span>
                           </div>
 
-                          <div className="flex flex-row items-center gap-2 opacity-65 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                            <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs md:text-sm font-semibold text-purple-700 bg-white/65 px-1.5 sm:px-2 py-0.5 rounded-md whitespace-nowrap">
-                              <Flame className="h-3.5 w-3.5 text-pink-500" />
-                              {streak}
-                            </span>
+                          <button
+                            type="button"
+                            onClick={() => handleEditHabit(habit)}
+                            className="p-1 sm:p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition"
+                            title="Edit habit"
+                          >
+                            <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </button>
 
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <button
-                                onClick={() => handleEditHabit(habit)}
-                                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-blue-600 transition-all flex items-center justify-center"
-                                title="Edit habit"
-                                aria-label={`Edit ${habit.title}`}
-                              >
-                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() => setDeletingHabitId(habit.id)}
-                                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 rounded-lg bg-white/35 hover:bg-white/80 text-gray-500 hover:text-red-600 transition-all flex items-center justify-center"
-                                title="Delete habit"
-                                aria-label={`Delete ${habit.title}`}
-                              >
-                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingHabitId(habit.id)}
+                            className="p-1 sm:p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            title="Delete habit"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              };
+
+              return (
+                <div className="space-y-6">
+                  {/* Today's Habits Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-xs sm:text-sm font-bold text-purple-900 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-purple-600 animate-pulse" />
+                        Today's Scheduled Habits
+                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                          {habitsDueToday.length}
+                        </span>
+                      </h3>
+                    </div>
+                    {habitsDueToday.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-gray-500 bg-purple-50/30 rounded-xl border border-dashed border-purple-200">
+                        No habits scheduled for today.
+                      </div>
+                    ) : (
+                      <div className="space-y-3 list-stagger">
+                        {habitsDueToday.map(renderCard)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Other Days Habits Section */}
+                  {habitsOtherDays.length > 0 && (
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between px-1">
+                        <h3 className="text-xs font-bold text-gray-500 flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                          Scheduled for Other Days
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                            {habitsOtherDays.length}
+                          </span>
+                        </h3>
+                      </div>
+                      <div className="space-y-3 list-stagger opacity-85">
+                        {habitsOtherDays.map(renderCard)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Habit Timeline at the bottom for both List and Table views */}
             {habitsToDisplay.length > 0 && (
@@ -974,16 +1186,16 @@ export function HabitsPage() {
         {editingHabitId &&
           createPortal(
             <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
-              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[85vh] max-h-dvh sm:max-h-[750px] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSaveEdit();
                   }}
-                  className="flex flex-col h-full max-h-full"
+                  className="flex flex-col h-full min-h-0"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                  <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
                     <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                       <Settings2 className="w-5 h-5 text-purple-600" />
                       Edit Habit
@@ -1146,22 +1358,56 @@ export function HabitsPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Target Goal (Optional) */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5 shrink-0">
+                          <Target className="w-4 h-4 text-purple-700" />
+                          Quantitative Target Goal <span className="font-normal text-purple-600">(Optional)</span>
+                        </label>
+                        <span className="text-[11px] font-medium text-purple-600 truncate text-right">e.g. 5 videos, 10 pages</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Target Value</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={editTargetValue ?? ''}
+                            onChange={(e) => setEditTargetValue(e.target.value ? Math.max(1, parseInt(e.target.value)) : undefined)}
+                            placeholder="e.g. 5"
+                            className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Unit</label>
+                          <input
+                            type="text"
+                            value={editTargetUnit ?? ''}
+                            onChange={(e) => setEditTargetUnit(e.target.value)}
+                            placeholder="e.g. videos, pages"
+                            className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Footer Actions */}
-                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80 shrink-0">
                     <button
                       type="button"
                       onClick={handleCancelEdit}
                       disabled={isSubmitting}
-                      className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
+                      className="w-full sm:w-1/2 min-h-[42px] px-4 py-2.5 rounded-xl border border-purple-200 bg-white text-xs sm:text-sm font-semibold text-purple-700 hover:bg-purple-50 transition"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
+                      className="w-full sm:w-1/2 min-h-[42px] px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white text-xs sm:text-sm font-semibold hover:from-purple-700 hover:to-pink-600 transition shadow-md shadow-purple-500/20 disabled:opacity-50"
                     >
                       {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </button>

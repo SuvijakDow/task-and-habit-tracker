@@ -13,6 +13,17 @@
     @apply font-sans;
     font-family: 'Bai Jamjuree', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
   }
+
+  /* Hide spinner arrows for input[type=number] across Desktop browsers */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+  }
 }
 
 html {
