@@ -154,10 +154,10 @@ export default function HabitsTable({
       {/* Table & Pagination Card Container */}
       <div className="border border-purple-200 rounded-xl overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-[640px] sm:min-w-full w-full text-sm">
+          <table className="min-w-[700px] w-full text-sm">
             <thead className="bg-purple-600 text-white">
               <tr>
-                <th className="px-3.5 py-3 text-left font-semibold w-full">Habit Title</th>
+                <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[220px]">Habit Title</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Schedule</th>
                 <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px">Time</th>
                 <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Streak</th>
@@ -186,7 +186,7 @@ export default function HabitsTable({
                   return (
                     <tr key={habit.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
                       {/* Title */}
-                      <td className="px-3.5 py-3 align-middle">
+                      <td className="px-3.5 py-3 align-middle min-w-[220px]">
                         <span className={`font-medium block break-words ${isCompletedToday ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                           {habit.title}
                         </span>

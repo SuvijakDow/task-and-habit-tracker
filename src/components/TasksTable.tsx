@@ -277,10 +277,10 @@ export default function TasksTable({
     return (
       <div className={`border ${borderColor} rounded-xl overflow-hidden bg-white shadow-sm`}>
         <div className="overflow-x-auto">
-          <table className="min-w-[640px] sm:min-w-full w-full text-sm">
+          <table className="min-w-[700px] w-full text-sm">
             <thead className={`${headerBg} text-white`}>
               <tr>
-                <th className="px-3.5 py-2.5 text-left font-semibold w-full">Title</th>
+                <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[220px]">Title</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">Category</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px">
                   <span className="inline-flex items-center gap-2">
@@ -312,7 +312,7 @@ export default function TasksTable({
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
-                      <td className={`px-3.5 ${tdPaddingClass}`}>
+                      <td className={`px-3.5 ${tdPaddingClass} min-w-[220px]`}>
                         <div className="font-medium text-gray-900 break-words">{t.title}</div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
                       </td>
