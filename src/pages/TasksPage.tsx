@@ -446,11 +446,12 @@ export function TasksPage() {
           updatedSubtasks = currentSubtasks.map((st) =>
             st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
           );
+          // Parent task is complete IF AND ONLY IF all subtasks are checked
           isTaskNowComplete = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
           return {
             ...t,
             subtasks: updatedSubtasks,
-            isCompleted: isTaskNowComplete ? true : t.isCompleted,
+            isCompleted: isTaskNowComplete,
           };
         }
         return t;
@@ -463,11 +464,10 @@ export function TasksPage() {
     }
 
     try {
-      const updates: Partial<Task> = { subtasks: updatedSubtasks };
-      if (isTaskNowComplete && !wasAlreadyComplete) {
-        updates.isCompleted = true;
-      }
-      await updateTask(taskId, updates);
+      await updateTask(taskId, {
+        subtasks: updatedSubtasks,
+        isCompleted: isTaskNowComplete,
+      });
     } catch (err) {
       console.error('Error toggling subtask:', err);
       showToast('Subtask update failed.', 'error');
