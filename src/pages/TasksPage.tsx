@@ -1575,11 +1575,11 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
           </button>
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5 sm:gap-1">
           {/* Line 1: Title & Action Buttons */}
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <span
-              className={`font-medium text-sm sm:text-base md:text-lg break-words flex-1 min-w-0 ${
+              className={`font-medium text-sm sm:text-base md:text-lg break-words flex-1 min-w-0 leading-tight ${
                 task.isCompleted
                   ? 'line-through text-gray-500'
                   : 'text-gray-900'
@@ -1619,14 +1619,14 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
 
           {task.description && (
             <p 
-              className={`text-xs sm:text-sm text-gray-500 break-words max-w-full ${task.isCompleted ? 'opacity-60' : ''}`}
+              className={`text-xs sm:text-sm text-gray-500 break-words max-w-full leading-snug ${task.isCompleted ? 'opacity-60' : ''}`}
               title={task.description}
             >
               {task.description}
             </p>
           )}
 
-          <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3 mt-0.5 text-[11px] sm:text-sm text-purple-900/60">
+          <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-2.5 mt-0.5 text-[11px] sm:text-sm text-purple-900/60">
             <span
               className="inline-flex items-center text-[9px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-md border"
               style={{
@@ -1639,12 +1639,10 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
             </span>
 
             {task.dueDate && (
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 font-medium">
-                <p className="inline-flex items-center gap-1">
-                  <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
-                  <span className="sm:whitespace-nowrap">{formatDueDateDisplay(task.dueDate)}</span>
-                </p>
-              </div>
+              <span className="inline-flex items-center gap-1 text-[9px] sm:text-xs font-medium px-2 py-0.5 rounded-md bg-purple-50/90 text-purple-700 border border-purple-200/70">
+                <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
+                <span className="sm:whitespace-nowrap">{formatDueDateDisplay(task.dueDate)}</span>
+              </span>
             )}
 
             {totalSubtasks > 0 && (
