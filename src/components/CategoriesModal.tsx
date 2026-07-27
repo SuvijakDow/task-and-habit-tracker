@@ -125,7 +125,7 @@ export function CategoriesModal({ isOpen, onClose, onCategoriesUpdated }: Catego
         color: formData.color,
       });
 
-      setCategories((prev) => [...prev, createdCategory].sort((a, b) => a.name.localeCompare(b.name)));
+      setCategories((prev) => [...prev, createdCategory].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true })));
       setFormData({ name: '', color: PASTEL_CATEGORY_COLORS[0] });
       if (onCategoriesUpdated) onCategoriesUpdated();
     } catch (err) {

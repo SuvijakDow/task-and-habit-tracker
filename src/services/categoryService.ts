@@ -101,7 +101,7 @@ export const getUserCategories = async (userId: string): Promise<Category[]> => 
       } as Category;
     });
 
-    return categories.sort((a, b) => a.name.localeCompare(b.name));
+    return categories.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
   } catch (error) {
     console.error('Error getting user categories:', error);
     throw error;
