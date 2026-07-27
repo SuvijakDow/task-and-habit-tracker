@@ -747,13 +747,13 @@ export function HabitsPage() {
                         <Palette className="w-4 h-4 text-purple-700" />
                         Habit Color
                       </label>
-                      <div className="flex justify-start flex-wrap gap-2.5 pt-0.5">
+                      <div className="grid grid-cols-9 gap-1 sm:gap-2.5 justify-items-center pt-0.5">
                         {PASTEL_HABIT_COLORS.map((c) => (
                           <button
                             key={c}
                             type="button"
                             onClick={() => setHabitColor(c)}
-                            className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
+                            className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
                               habitColor === c
                                 ? 'border-purple-600 scale-110 shadow-md ring-2 ring-purple-400/40'
                                 : 'border-white/80 hover:scale-105'
@@ -762,7 +762,7 @@ export function HabitsPage() {
                             aria-label={`Select color ${c}`}
                             disabled={isSubmitting}
                           >
-                            {habitColor === c && <Check className="w-4 h-4 text-white drop-shadow-xs" />}
+                            {habitColor === c && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white drop-shadow-xs" />}
                           </button>
                         ))}
                       </div>
@@ -1114,13 +1114,13 @@ export function HabitsPage() {
                         <Palette className="w-4 h-4 text-purple-700" />
                         Habit Color
                       </label>
-                      <div className="flex justify-start flex-wrap gap-2.5 pt-0.5">
+                      <div className="grid grid-cols-9 gap-1 sm:gap-2.5 justify-items-center pt-0.5">
                         {PASTEL_HABIT_COLORS.map((c) => (
                           <button
                             key={c}
                             type="button"
                             onClick={() => setEditHabitColor(c)}
-                            className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
+                            className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
                               editHabitColor === c
                                 ? 'border-purple-600 scale-110 shadow-md ring-2 ring-purple-400/40'
                                 : 'border-white/80 hover:scale-105'
@@ -1129,7 +1129,7 @@ export function HabitsPage() {
                             aria-label={`Select color ${c}`}
                             disabled={isSubmitting}
                           >
-                            {editHabitColor === c && <Check className="w-4 h-4 text-white drop-shadow-xs" />}
+                            {editHabitColor === c && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white drop-shadow-xs" />}
                           </button>
                         ))}
                       </div>
