@@ -232,7 +232,7 @@ export function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center shrink-0">
+          <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full sm:w-auto shrink-0">
             <div className="px-2 py-0.5">
               <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Habits</div>
               <div className="text-base sm:text-lg font-black text-white">{habitsToAnalyze.length}</div>
