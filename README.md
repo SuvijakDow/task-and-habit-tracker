@@ -1,6 +1,6 @@
 # ⚡ Task & Habit Tracker
 
-A modern, full-featured productivity web application for managing tasks, building recurring routines, and tracking habits with rich visual analytics. Built with **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Firebase**.
+A modern, full-featured productivity web application for managing tasks by time periods, building daily routines, and tracking habits with rich visual analytics. Built with **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Firebase**.
 
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6?logo=typescript&logoColor=white)
@@ -10,41 +10,43 @@ A modern, full-featured productivity web application for managing tasks, buildin
 
 ---
 
-## ✨ Features
+## ✨ Key Features & Capabilities
 
-### 📝 Smart Task Management
-- **Task Presets**: Organize tasks into custom sets (e.g. *General*, *Work*, *Projects*). Easily switch active task presets.
+### 📝 Smart Task & Period Management
+- **Task Periods (ช่วงเวลา / ภาคเรียน)**: Group tasks by custom terms, semesters, or timeframes (e.g. *2569/1*, *Summer Break*, *Project A*). Easily switch active periods or manage them via the **Manage Task Periods** modal.
+- **Subtasks Support**: Break down complex tasks into actionable subtasks with live completion progress bars and quick toggles.
 - **Smart Status Sorting**: 
-  - **Pending Tasks**: Sorted by nearest upcoming due date (overdue items highlighted first).
+  - **Pending Tasks**: Automatically sorted by nearest upcoming due date (overdue items highlighted first).
   - **Completed Tasks**: Sorted by completion history (least overdue items at top).
 - **Categories**: Color-coded custom task categories with task count tracking and fallback category reassignments.
 - **View Modes**: Dynamic switching between **List View** and **Table View**.
-- **Inline Editing & Completion**: Quick actions for completion toggle, title, due date, category, and deletion.
+- **One-Click Clear Inputs**: Integrated instant clear buttons (`X`) on search inputs across all tables.
 
-### 🎯 Daily Habits & Routine Presets
-- **Routine Presets (Habit Sets)**: Group daily habits into routines (e.g., *Morning Routine*, *Workouts*, *Nightly*).
-- **Flexible Scheduling**: Select active days of the week (Sun-Sat) and time ranges (`HH:MM`).
-- **Interactive Daily Timeline**: Visual daily schedule displaying habits by time blocks.
-- **Drag-and-Drop Order**: Custom drag-drop reordering of habits.
-- **Completion Tracking**: Streak counts that respect scheduled days (missing unscheduled days won't break your streak!).
+### 🎯 Daily Habits & Routines
+- **Routines (รูทีน / กิจวัตร)**: Group daily habits into dedicated routines (e.g., *Morning Routine*, *Nightly Habits*, *Workouts*).
+- **Flexible Scheduling**: Select active days of the week (Sun–Sat) and set custom time ranges (`HH:MM`).
+- **Weekly Timetable Modal**: Visual daily schedule displaying habit time blocks across the week.
+- **Drag-and-Drop Reordering**: Custom drag-drop order for daily habit lists.
+- **Streak & Adherence Tracking**: Streak counts respect scheduled days (missing unscheduled days won't break your streak!).
 
 ### 📊 Analytics & Performance Insights
-- **Contribution Heatmap**: GitHub-style activity matrix showing completion frequency over time.
-- **Streak & Consistency**: Tracks current streak, longest streak, and consistency percentage based on tracking start date.
-- **Past 7 Days View**: Quick visual indicators for weekly adherence.
-- **Inactive Routine Logic**: Non-active routines are recognized as *Not Scheduled* on days they were inactive, maintaining accurate analytics history.
-- **Analytics Reset**: Option to reset analytics for a single habit or all habits per user.
+- **Contribution Heatmap**: GitHub-style activity matrix displaying daily completion frequency over time.
+- **Streak & Consistency Metrics**: Tracks total active streaks, longest streaks, and overall consistency percentage based on tracking start dates.
+- **Past 7 Days Adherence**: Instant visual status indicators for recent adherence.
+- **Inactive Routine Filtering**: Non-active routines are recognized as *Not Scheduled* on days they were inactive, ensuring historical analytics precision.
+- **Analytics Reset Options**: Flexibility to reset analytics for a single habit or all habits per user.
 
-### 🔐 Authentication & Account Management
+### 🎨 Responsive Design & Hero Dashboard Banners
+- **Adaptive Desktop & Tablet Layouts**:
+  - **Desktop (1280px+)**: Sleek 1-row Hero Dashboard Banner featuring greeting text on the left, an expanded center stats box, and action buttons on the right.
+  - **Mobile & Tablet (< 1280px)**: Balanced 2-row layout with top-right aligned action buttons and a 100% full-width stats bar, preventing text truncation or awkward gaps.
+- **Glassmorphic UI**: Vibrant gradient palettes, subtle micro-animations, glassmorphism cards, and Google Fonts (*Bai Jamjuree* & *Inter*).
+
+### 🔐 Authentication & Profile Management
 - **Auth Options**: Email/Password Sign Up & Sign In, plus Google OAuth popup authentication.
-- **Centered & Sleek Sign-In Page**: Modern glassmorphism card layout perfectly centered on all mobile and desktop viewports.
-- **Profile Customization**: Display name editing and profile photo upload (auto-processed client-side to 200x200 JPEG).
+- **Centered Glassmorphism Sign-In Page**: Modern, responsive authentication layout.
+- **Profile Customization**: Display name editing and client-side photo processing (auto-resized to 200x200 JPEG).
 - **Account Deletion**: Secure account deletion requiring re-authentication and typing `"DELETE"` confirmation.
-
-### 🎨 Design & User Experience
-- **Unified Control Toolbar**: Seamless integration of view mode toggles (`List | Table`) and Preset selector inside a single, zero-gap control card.
-- **Responsive Layout**: Designed mobile-first with sticky action footers and mobile bottom bar navigation.
-- **Thai & English Typography**: Integrated Google Fonts (*Bai Jamjuree* & *Inter*).
 
 ---
 
@@ -57,8 +59,8 @@ src/
 │   ├── ContributionHeatmap.tsx  # GitHub-style completion heatmap
 │   ├── HabitTimeline.tsx        # Daily visual time blocks
 │   ├── HabitsTable.tsx          # Interactive habit list/table
-│   ├── ManageHabitSetsModal.tsx # Routine presets manager
-│   ├── ManageTaskPresetsModal.tsx # Task presets manager
+│   ├── ManageHabitSetsModal.tsx # Routine manager modal
+│   ├── ManageTaskPresetsModal.tsx # Task period manager modal
 │   ├── SettingsModal.tsx        # User profile & account settings
 │   ├── TasksTable.tsx           # Interactive task list/table
 │   ├── TimePickerInput.tsx      # Time selection popover
@@ -75,12 +77,12 @@ src/
 ├── services/                # Firebase Firestore Service Layer
 │   ├── authService.ts           # Sign In, Sign Up, Google OAuth, Account Delete
 │   ├── categoryService.ts       # Task categories CRUD & reassignments
-│   ├── habitService.ts          # Daily habits & habit set presets CRUD
-│   ├── taskPresetService.ts     # Task presets CRUD & auto-deduplication
-│   ├── taskService.ts           # Tasks CRUD & status updates
+│   ├── habitService.ts          # Daily habits & routine sets CRUD
+│   ├── taskPresetService.ts     # Task periods CRUD & auto-deduplication
+│   ├── taskService.ts           # Tasks CRUD & subtasks status updates
 │   └── userService.ts           # User profile & photo upload processing
 ├── types/                   # Shared TypeScript Interfaces
-│   └── index.ts                 # Task, Habit, Preset, User types
+│   └── index.ts                 # Task, Habit, Period, Routine, User types
 ├── utils/                   # Helper Utilities
 │   ├── audio.ts                 # Sound effects
 │   ├── dateUtils.ts             # Date formatting & date-fns helpers
@@ -105,18 +107,23 @@ src/
   category: string;       // Category ID or name
   dueDate: Date | null;
   isCompleted: boolean;
-  setId?: string;         // TaskPreset document ID
+  setId?: string;         // Task Period document ID
+  subtasks?: {            // Subtasks array
+    id: string;
+    title: string;
+    completed: boolean;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
 ```
 
-### `taskPresets`
+### `taskPresets` (Task Periods)
 ```typescript
 {
   id: string;
   userId: string;
-  name: string;           // e.g., 'General', 'Work'
+  name: string;           // e.g., '2569/1', 'Summer Break'
   color?: string;         // Hex color string
   isActive: boolean;
   createdAt: Date;
@@ -135,7 +142,7 @@ src/
   startTime: string;        // 'HH:MM'
   endTime: string;          // 'HH:MM'
   color?: string;           // Tag hex color
-  setId?: string;           // HabitSet document ID
+  setId?: string;           // Routine document ID
   order?: number;           // Reordering index
   trackingStartDate?: Date; // Analytics baseline date
   createdAt: Date;
@@ -143,12 +150,12 @@ src/
 }
 ```
 
-### `habitSets`
+### `habitSets` (Routines)
 ```typescript
 {
   id: string;
   userId: string;
-  name: string;           // e.g., 'General', 'Morning Routine'
+  name: string;           // e.g., 'Morning Routine', 'Workouts'
   color?: string;
   isActive: boolean;
   createdAt: Date;
