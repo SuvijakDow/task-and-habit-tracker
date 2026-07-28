@@ -97,7 +97,6 @@ export function TasksPage() {
   // View mode: 'list' or 'table'
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
-  const [showQuickGuide, setShowQuickGuide] = useState<boolean>(() => localStorage.getItem('hideTasksQuickGuide') !== 'true');
   
   // Form state
   const [formData, setFormData] = useState<{
@@ -734,7 +733,7 @@ export function TasksPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -747,19 +746,19 @@ export function TasksPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
               {/* Overview Summary Badges */}
-              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full sm:w-auto">
-                <div className="px-2 py-0.5">
-                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Pending</div>
+              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full lg:w-auto">
+                <div className="px-2 py-0.5 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Pending</div>
                   <div className="text-base sm:text-lg font-black text-amber-300">{incompleteTasks.length}</div>
                 </div>
-                <div className="px-2 py-0.5 border-x border-white/15">
-                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Completed</div>
+                <div className="px-2 py-0.5 border-x border-white/15 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Completed</div>
                   <div className="text-base sm:text-lg font-black text-emerald-300">{completedTasks.length}</div>
                 </div>
-                <div className="px-2 py-0.5">
-                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Done %</div>
+                <div className="px-2 py-0.5 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Done %</div>
                   <div className="text-base sm:text-lg font-black text-pink-300">
                     {visibleTasks.length > 0 ? Math.round((completedTasks.length / visibleTasks.length) * 100) : 0}%
                   </div>
@@ -767,7 +766,7 @@ export function TasksPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full lg:w-auto">
                 <button
                   onClick={() => setIsCategoriesModalOpen(true)}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
@@ -807,22 +806,20 @@ export function TasksPage() {
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5 ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'}`}
               aria-pressed={viewMode === 'list'}
               aria-label="List view"
             >
-              <ListTodo className="w-3.5 h-3.5" />
-              <span>List</span>
+              List
             </button>
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5 ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'}`}
               aria-pressed={viewMode === 'table'}
               aria-label="Table view"
             >
-              <ListChecks className="w-3.5 h-3.5" />
-              <span>Table</span>
+              Table
             </button>
           </div>
 
@@ -835,19 +832,19 @@ export function TasksPage() {
                 className="flex min-h-[36px] sm:min-h-[38px] w-full items-center justify-between rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-2xs transition-all hover:border-purple-400 hover:shadow-xs focus:outline-none sm:px-4 sm:text-sm"
                 aria-expanded={isPresetDropdownOpen}
               >
-                <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                <div className="flex items-center gap-2 truncate">
                   <Layers className="h-4 w-4 flex-shrink-0 text-purple-600" />
-                  <span className="font-semibold text-purple-900/80 shrink-0">Routine Group:</span>
+                  <span className="hidden font-normal text-gray-500 sm:inline">Preset:</span>
                   <div className="flex items-center gap-1.5 truncate">
                     <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: activePreset?.color || '#C084FC' }} />
-                    <span className="truncate font-extrabold text-gray-900">{activePreset?.name || ''}</span>
+                    <span className="truncate font-bold text-gray-900">{activePreset?.name || ''}</span>
                   </div>
                 </div>
                 <ChevronDown className={`ml-2 h-4 w-4 flex-shrink-0 text-purple-500 transition-transform duration-200 ${isPresetDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {isPresetDropdownOpen && (
                 <div className="modal-enter absolute left-0 top-full z-[100] mt-1.5 w-64 rounded-xl border-2 border-purple-300 bg-white py-1.5 shadow-[0_16px_36px_rgba(120,87,255,0.35)]">
-                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Routine Group</div>
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Preset</div>
                   {sortedPresets.map((preset) => {
                     const isActive = preset.id === activePresetId;
                     return (
@@ -1187,38 +1184,6 @@ export function TasksPage() {
               </div>
             ) : (
               <>
-                {/* Quick Start Guidance Card */}
-                {showQuickGuide && (
-                  <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-pink-50/60 to-indigo-50 border border-purple-200/90 shadow-2xs relative transition-all">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowQuickGuide(false);
-                        localStorage.setItem('hideTasksQuickGuide', 'true');
-                      }}
-                      className="absolute right-2.5 top-2.5 text-gray-400 hover:text-purple-700 p-1 rounded-full hover:bg-white/80 transition"
-                      title="Dismiss guide"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <div className="flex items-start gap-2.5">
-                      <div className="p-2 rounded-xl bg-purple-600 text-white shrink-0 mt-0.5 shadow-2xs">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 pr-6">
-                        <h3 className="text-xs sm:text-sm font-extrabold text-purple-950 flex items-center gap-1.5">
-                          Quick Start Guide 💡
-                        </h3>
-                        <div className="mt-1 text-xs text-purple-900/80 space-y-1 font-medium">
-                          <p>1. Click <strong className="text-purple-950 font-bold">+ Add Task</strong> (top right) to create a new task with due dates & subtasks.</p>
-                          <p>2. Click the check circle <strong className="text-purple-950 font-bold">◯</strong> on any task to mark it completed.</p>
-                          <p>3. Use <strong className="text-purple-950 font-bold">Routine Group</strong> to separate Semester 1, Work, or Personal task lists.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Incomplete Tasks Section */}
                 <div className="mb-8 sm:mb-10">
                   <div className="flex items-center justify-between mb-3.5 px-1">
@@ -1646,12 +1611,11 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
             role="checkbox"
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
-            title={task.isCompleted ? 'Mark as incomplete' : 'Click to mark complete'}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer hover:scale-110 ${
+            className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${
               task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
-                : 'bg-white border-2 border-purple-300 text-transparent hover:border-purple-500 hover:bg-purple-50 shadow-2xs'
+                : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
             }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

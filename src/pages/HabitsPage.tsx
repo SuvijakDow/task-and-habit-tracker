@@ -543,7 +543,7 @@ export function HabitsPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -556,19 +556,19 @@ export function HabitsPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
               {/* Overview Summary Badges */}
-              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full sm:w-auto">
-                <div className="px-2 py-0.5">
-                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Scheduled</div>
+              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full lg:w-auto">
+                <div className="px-2 py-0.5 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Scheduled</div>
                   <div className="text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
                 </div>
-                <div className="px-2 py-0.5 border-x border-white/15">
-                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Completed</div>
+                <div className="px-2 py-0.5 border-x border-white/15 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Completed</div>
                   <div className="text-base sm:text-lg font-black text-emerald-300">{completedTodayCount}</div>
                 </div>
-                <div className="px-2 py-0.5">
-                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Today %</div>
+                <div className="px-2 py-0.5 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Today %</div>
                   <div className="text-base sm:text-lg font-black text-pink-300">
                     {scheduledTodayCount > 0 ? Math.round((completedTodayCount / scheduledTodayCount) * 100) : 0}%
                   </div>
@@ -576,7 +576,7 @@ export function HabitsPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full lg:w-auto">
                 <button
                   onClick={() => setIsWeeklyModalOpen(true)}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
