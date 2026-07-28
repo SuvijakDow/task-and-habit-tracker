@@ -703,7 +703,7 @@ export function HabitsPage() {
               className="inline-flex min-h-[36px] sm:min-h-[38px] items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition shadow-2xs whitespace-nowrap"
             >
               <Settings2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Manage Presets</span>
+              <span className="hidden sm:inline">Manage Routines</span>
               <span className="sm:hidden">Manage</span>
             </button>
           </div>
@@ -763,10 +763,10 @@ export function HabitsPage() {
                       />
                     </div>
 
-                    {/* Routine Preset */}
+                    {/* Routine */}
                     <div>
                       <label htmlFor="habit-preset" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Routine Preset
+                        Routine
                       </label>
                       <select
                         id="habit-preset"

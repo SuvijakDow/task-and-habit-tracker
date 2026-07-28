@@ -97,7 +97,7 @@ export function TasksPage() {
   // View mode: 'list' or 'table'
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
-  
+
   // Form state
   const [formData, setFormData] = useState<{
     title: string;
@@ -560,16 +560,16 @@ export function TasksPage() {
         tasks.map((t) =>
           t.id === editingTaskId
             ? {
-                ...t,
-                title: editFormData.title,
-                description: editFormData.description,
-                category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
-                dueDate: editFormData.dueDate
-                  ? new Date(editFormData.dueDate)
-                  : null,
-                setId: editFormData.setId || activePresetId || undefined,
-                subtasks: editFormData.subtasks || [],
-              }
+              ...t,
+              title: editFormData.title,
+              description: editFormData.description,
+              category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
+              dueDate: editFormData.dueDate
+                ? new Date(editFormData.dueDate)
+                : null,
+              setId: editFormData.setId || activePresetId || undefined,
+              subtasks: editFormData.subtasks || [],
+            }
             : t
         )
       );
@@ -733,7 +733,7 @@ export function TasksPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -834,7 +834,7 @@ export function TasksPage() {
               >
                 <div className="flex items-center gap-2 truncate">
                   <Layers className="h-4 w-4 flex-shrink-0 text-purple-600" />
-                  <span className="hidden font-normal text-gray-500 sm:inline">Preset:</span>
+                  <span className="hidden font-normal text-gray-500 sm:inline">Routine:</span>
                   <div className="flex items-center gap-1.5 truncate">
                     <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: activePreset?.color || '#C084FC' }} />
                     <span className="truncate font-bold text-gray-900">{activePreset?.name || ''}</span>
@@ -844,7 +844,7 @@ export function TasksPage() {
               </button>
               {isPresetDropdownOpen && (
                 <div className="modal-enter absolute left-0 top-full z-[100] mt-1.5 w-64 rounded-xl border-2 border-purple-300 bg-white py-1.5 shadow-[0_16px_36px_rgba(120,87,255,0.35)]">
-                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Preset</div>
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Routine</div>
                   {sortedPresets.map((preset) => {
                     const isActive = preset.id === activePresetId;
                     return (
@@ -858,7 +858,7 @@ export function TasksPage() {
             </div>
             <button type="button" onClick={() => setIsManagePresetsOpen(true)} className="inline-flex min-h-[36px] sm:min-h-[38px] items-center whitespace-nowrap rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs font-semibold text-purple-700 shadow-2xs transition hover:bg-purple-50">
               <Settings2 className="mr-1.5 h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Manage Presets</span><span className="sm:hidden">Manage</span>
+              <span className="hidden sm:inline">Manage Routines</span><span className="sm:hidden">Manage</span>
             </button>
           </div>
         </div>
@@ -1044,11 +1044,10 @@ export function TasksPage() {
                                 role="checkbox"
                                 aria-checked={st.isCompleted}
                                 onClick={() => handleToggleModalSubtask(st.id)}
-                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
-                                  st.isCompleted
+                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${st.isCompleted
                                     ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
                                     : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                                }`}
+                                  }`}
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1058,9 +1057,8 @@ export function TasksPage() {
                                 type="text"
                                 value={st.title}
                                 onChange={(e) => handleUpdateModalSubtaskTitle(st.id, e.target.value)}
-                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
-                                  st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                                }`}
+                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                                  }`}
                                 placeholder="Subtask title..."
                               />
                             </div>
@@ -1246,7 +1244,8 @@ export function TasksPage() {
               </>
             )}
           </>
-        )}        {/* Edit Task Modal */}
+        )}
+        {/* Edit Task Modal */}
         {editingTaskId && createPortal(
           <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
             <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
@@ -1265,7 +1264,7 @@ export function TasksPage() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                
+
                 {/* Scrollable Form Body */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                   {/* Error Message */}
@@ -1285,7 +1284,7 @@ export function TasksPage() {
                       type="text"
                       value={editFormData.title}
                       onChange={(e) =>
-                       setEditFormData({ ...editFormData, title: e.target.value })
+                        setEditFormData({ ...editFormData, title: e.target.value })
                       }
                       placeholder="Enter task title"
                       className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
@@ -1429,11 +1428,10 @@ export function TasksPage() {
                                 role="checkbox"
                                 aria-checked={st.isCompleted}
                                 onClick={() => handleToggleEditSubtask(st.id)}
-                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${
-                                  st.isCompleted
+                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${st.isCompleted
                                     ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
                                     : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                                }`}
+                                  }`}
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1443,9 +1441,8 @@ export function TasksPage() {
                                 type="text"
                                 value={st.title}
                                 onChange={(e) => handleUpdateEditSubtaskTitle(st.id, e.target.value)}
-                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${
-                                  st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                                }`}
+                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
+                                  }`}
                                 placeholder="Subtask title..."
                               />
                             </div>
@@ -1600,9 +1597,8 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
 
   return (
     <div
-      className={`group glass-card ${borderStyleClass} ${
-        task.isCompleted ? 'opacity-80' : ''
-      } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl`}
+      className={`group glass-card ${borderStyleClass} ${task.isCompleted ? 'opacity-80' : ''
+        } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl`}
     >
       <div className="flex flex-row items-start sm:items-center gap-2.5 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">
@@ -1612,11 +1608,10 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${
-              task.isCompleted
+            className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
-            }`}
+              }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1628,11 +1623,10 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
           {/* Line 1: Title & Action Buttons */}
           <div className="flex items-center justify-between gap-2">
             <span
-              className={`font-medium text-sm sm:text-base md:text-lg break-words flex-1 min-w-0 leading-tight ${
-                task.isCompleted
+              className={`font-medium text-sm sm:text-base md:text-lg break-words flex-1 min-w-0 leading-tight ${task.isCompleted
                   ? 'line-through text-gray-500'
                   : 'text-gray-900'
-              }`}
+                }`}
             >
               {task.title}
             </span>
@@ -1667,7 +1661,7 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
           </div>
 
           {task.description && (
-            <p 
+            <p
               className={`text-xs sm:text-sm text-gray-500 break-words max-w-full leading-snug ${task.isCompleted ? 'opacity-60' : ''}`}
               title={task.description}
             >
@@ -1749,11 +1743,10 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
                         type="button"
                         role="checkbox"
                         aria-checked={st.isCompleted}
-                        className={`h-4 w-4 rounded border transition duration-150 flex items-center justify-center shrink-0 ${
-                          st.isCompleted
+                        className={`h-4 w-4 rounded border transition duration-150 flex items-center justify-center shrink-0 ${st.isCompleted
                             ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-xs'
                             : 'bg-white border-purple-300 text-transparent group-hover/st:border-purple-400'
-                        }`}
+                          }`}
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />

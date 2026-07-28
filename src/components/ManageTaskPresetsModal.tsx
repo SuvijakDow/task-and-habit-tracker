@@ -66,9 +66,9 @@ export function ManageTaskPresetsModal({
         <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white"><Layers className="h-5 w-5" /></div>
-            <div><h2 className="font-bold text-gray-900">Manage Task Presets</h2><p className="text-xs text-gray-500">Group tasks by context or project</p></div>
+            <div><h2 className="font-bold text-gray-900">Manage Task Routines</h2><p className="text-xs text-gray-500">Group tasks by routine or semester</p></div>
           </div>
-          <button onClick={onClose} aria-label="Close presets" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} aria-label="Close routines" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
         <div className="space-y-3 p-5">
           {sortedPresets.map((preset) => {
@@ -83,24 +83,24 @@ export function ManageTaskPresetsModal({
               <div className="flex min-w-0 items-center gap-2"><span className="h-3 w-3 flex-shrink-0 rounded-full" style={{ backgroundColor: preset.color || '#C084FC' }} /><p className="truncate text-sm font-semibold text-gray-900">{preset.name}</p></div>
               <div className="flex items-center gap-1">
                 {!active && <button disabled={isSubmitting} onClick={() => onActivate(preset.id)} className="rounded-lg bg-purple-100 px-2.5 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-200">Open</button>}
-                <button disabled={isSubmitting} onClick={() => { setEditingId(preset.id); setEditName(preset.name); setEditColor(preset.color || '#C084FC'); }} title="Rename/Recolor preset" className="rounded-lg p-1.5 text-gray-400 hover:bg-purple-50 hover:text-purple-600"><Edit2 className="h-4 w-4" /></button>
-                {presets.length > 1 && <button disabled={isSubmitting} onClick={() => setDeletingPreset(preset)} title="Delete preset" className="rounded-lg p-1.5 text-gray-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>}
+                <button disabled={isSubmitting} onClick={() => { setEditingId(preset.id); setEditName(preset.name); setEditColor(preset.color || '#C084FC'); }} title="Rename/Recolor routine" className="rounded-lg p-1.5 text-gray-400 hover:bg-purple-50 hover:text-purple-600"><Edit2 className="h-4 w-4" /></button>
+                {presets.length > 1 && <button disabled={isSubmitting} onClick={() => setDeletingPreset(preset)} title="Delete routine" className="rounded-lg p-1.5 text-gray-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>}
               </div>
             </div>;
           })}
           {isCreating ? (
             <form onSubmit={createPreset} className="space-y-3 border-t border-purple-200 bg-purple-50/50 pt-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900">Create New Preset</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900">Create New Routine</h3>
               <input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Work, Home, Semester" className="w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm outline-none focus:border-purple-500" autoFocus />
               <div className="flex flex-wrap gap-1.5">{colors.map((value) => <button key={value} type="button" onClick={() => setColor(value)} aria-label={`Select ${value}`} className={`h-6 w-6 rounded-full border-2 ${color === value ? 'scale-110 border-purple-600' : 'border-transparent'}`} style={{ backgroundColor: value }} />)}</div>
-              <div className="flex justify-end gap-2"><button type="button" onClick={() => setIsCreating(false)} className="rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100">Cancel</button><button disabled={isSubmitting || !name.trim()} className="inline-flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-50"><Plus className="h-4 w-4" />Create Preset</button></div>
+              <div className="flex justify-end gap-2"><button type="button" onClick={() => setIsCreating(false)} className="rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100">Cancel</button><button disabled={isSubmitting || !name.trim()} className="inline-flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-50"><Plus className="h-4 w-4" />Create Routine</button></div>
             </form>
-          ) : <button type="button" onClick={() => setIsCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-purple-200 py-2.5 text-xs font-bold text-purple-600 transition hover:border-purple-400 hover:bg-purple-50/50"><Plus className="h-4 w-4" />Create New Preset</button>}
+          ) : <button type="button" onClick={() => setIsCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-purple-200 py-2.5 text-xs font-bold text-purple-600 transition hover:border-purple-400 hover:bg-purple-50/50"><Plus className="h-4 w-4" />Create New Routine</button>}
         </div>
       </div>
       {deletingPreset && <div className="fixed inset-0 z-[10010] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]">
         <div className="modal-enter w-full max-w-sm space-y-4 rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
-          <div className="flex items-center gap-3"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600"><Trash2 className="h-5 w-5" /></div><div><h3 className="font-bold text-gray-900">Delete Preset?</h3><p className="text-xs text-gray-500">&quot;{deletingPreset.name}&quot; and all tasks in this preset will be permanently deleted.</p></div></div>
+          <div className="flex items-center gap-3"><div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600"><Trash2 className="h-5 w-5" /></div><div><h3 className="font-bold text-gray-900">Delete Routine?</h3><p className="text-xs text-gray-500">&quot;{deletingPreset.name}&quot; and all tasks in this routine will be permanently deleted.</p></div></div>
           <div className="flex justify-end gap-2"><button disabled={isSubmitting} onClick={() => setDeletingPreset(null)} className="rounded-xl px-3.5 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100">Cancel</button><button disabled={isSubmitting} onClick={async () => { try { setIsSubmitting(true); await onDelete(deletingPreset.id); setDeletingPreset(null); } finally { setIsSubmitting(false); } }} className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50">Delete</button></div>
         </div>
       </div>}

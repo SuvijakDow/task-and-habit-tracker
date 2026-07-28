@@ -80,8 +80,8 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">Manage Presets</h2>
-              <p className="text-xs text-gray-500 font-medium truncate">Organize your routine presets</p>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">Manage Routines</h2>
+              <p className="text-xs text-gray-500 font-medium truncate">Organize your daily habit routines</p>
             </div>
           </div>
 
@@ -99,7 +99,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
           {/* List of Habit Sets */}
           <div className="space-y-2.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
-              Your Routine Presets
+              Your Routines
             </label>
 
             {sortedHabitSets.map((set) => {
@@ -222,10 +222,10 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
             })}
           </div>
 
-          {/* Create New Preset Section */}
+          {/* Create New Routine Section */}
           {isCreating ? (
             <form onSubmit={handleCreate} className="p-3.5 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3 mt-4">
-              <h3 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Create New Preset</h3>
+              <h3 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Create New Routine</h3>
               <input
                 type="text"
                 value={newSetName}
@@ -261,7 +261,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                   disabled={isSubmitting || !newSetName.trim()}
                   className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
                 >
-                  Create Preset
+                  Create Routine
                 </button>
               </div>
             </form>
@@ -272,7 +272,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               className="w-full py-2.5 border-2 border-dashed border-purple-200 hover:border-purple-400 rounded-xl text-purple-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-purple-50/50 transition truncate"
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Create New Preset</span>
+              <span className="truncate">Create New Routine</span>
             </button>
           )}
         </div>
@@ -298,8 +298,8 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-base">Delete Preset?</h3>
-                <p className="text-xs text-gray-500">"{deletingSet.name}" will be removed. Habits in this preset will move to default routine.</p>
+                <h3 className="font-bold text-gray-900 text-base">Delete Routine?</h3>
+                <p className="text-xs text-gray-500">"{deletingSet.name}" will be removed. Habits in this routine will move to default routine.</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 pt-2">
@@ -325,7 +325,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                 }}
                 className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs"
               >
-                Delete Preset
+                Delete Routine
               </button>
             </div>
           </div>
