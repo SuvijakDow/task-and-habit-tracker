@@ -543,9 +543,9 @@ export function HabitsPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-4">
+          <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 sm:gap-4">
             {/* Top Row / Desktop Left: Greeting */}
-            <div className="flex flex-col sm:flex-row sm:items-center lg:flex-col lg:items-start justify-between gap-3 lg:gap-1">
+            <div className="flex flex-col sm:flex-row sm:items-center xl:flex-col xl:items-start justify-between gap-3 xl:gap-1">
               <div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -558,8 +558,8 @@ export function HabitsPage() {
                 </p>
               </div>
 
-              {/* Tablet Top-Right Action Buttons (Hidden on desktop, shown inside flex-row on mobile/tablet) */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center lg:hidden gap-2 sm:gap-2.5 w-full sm:w-auto">
+              {/* Tablet Top-Right Action Buttons (Hidden on full desktop xl, shown inside flex-row on mobile/tablet) */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center xl:hidden gap-2 sm:gap-2.5 w-full sm:w-auto">
                 <button
                   onClick={() => setIsWeeklyModalOpen(true)}
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
@@ -588,25 +588,25 @@ export function HabitsPage() {
             </div>
 
             {/* Desktop Center: Stats Badges (Full width on mobile/tablet, expanded box on desktop) */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-6 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full lg:flex-1 lg:max-w-xl lg:mx-4 shrink-0">
-              <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Scheduled</div>
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 xl:gap-4 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 xl:p-3 rounded-2xl border border-white/15 text-center w-full xl:flex-1 xl:max-w-xl xl:mx-4 shrink-0">
+              <div className="px-1 sm:px-2 py-0.5 min-w-0">
+                <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Scheduled</div>
                 <div className="text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
               </div>
-              <div className="px-1.5 sm:px-3 py-0.5 border-x border-white/15 min-w-0">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
+              <div className="px-1 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
+                <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
                 <div className="text-base sm:text-lg font-black text-emerald-300">{completedTodayCount}</div>
               </div>
-              <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Today %</div>
+              <div className="px-1 sm:px-2 py-0.5 min-w-0">
+                <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Today %</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">
                   {scheduledTodayCount > 0 ? Math.round((completedTodayCount / scheduledTodayCount) * 100) : 0}%
                 </div>
               </div>
             </div>
 
-            {/* Desktop Right: Action Buttons (Only visible on desktop) */}
-            <div className="hidden lg:flex lg:items-center gap-2.5 shrink-0">
+            {/* Desktop Right: Action Buttons (Only visible on full desktop xl) */}
+            <div className="hidden xl:flex xl:items-center gap-2.5 shrink-0">
               <button
                 onClick={() => setIsWeeklyModalOpen(true)}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-sm font-semibold whitespace-nowrap shadow-2xs"
