@@ -218,10 +218,7 @@ export function AnalyticsPage() {
       <div className="glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-purple-900/95 via-fuchsia-900/90 to-indigo-950/95 text-white rounded-3xl border border-white/20 shadow-xl relative overflow-hidden">
         <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-4">
-          {/* Top Row: Greeting on Left, Overview Badges on Top Right */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -234,38 +231,24 @@ export function AnalyticsPage() {
               </p>
             </div>
 
-            {/* Performance Overview Badges on Top Right */}
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-xl text-xs sm:text-sm font-semibold text-purple-100 shadow-2xs">
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-                <span>7-Day Overview</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-xl text-xs sm:text-sm font-bold text-amber-300 shadow-2xs">
-                <Award className="w-4 h-4 text-amber-300" />
-                <span>{avgConsistency >= 80 ? 'Master Level' : avgConsistency >= 50 ? 'High Momentum' : 'Building Routine'}</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Bottom Row: Full-width Glassmorphic Summary Bar */}
-          <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full">
-            <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
-              <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
-              <div className="text-base sm:text-xl font-black text-white">{habitsToAnalyze.length}</div>
-            </div>
-            <div className="px-1.5 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
-              <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Streaks</div>
-              <div className="text-base sm:text-xl font-black text-amber-300 flex items-center justify-center gap-1">
-                <Flame className="w-4 h-4 fill-amber-300 text-amber-300" />
-                {totalStreakSum}d
+            <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center shrink-0">
+              <div className="px-2 py-0.5">
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
+                <div className="text-base sm:text-lg font-black text-white">{habitsToAnalyze.length}</div>
+              </div>
+              <div className="px-2 py-0.5 border-x border-white/15">
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Streaks</div>
+                <div className="text-base sm:text-lg font-black text-amber-300 flex items-center justify-center gap-1">
+                  <Flame className="w-4 h-4 fill-amber-300 text-amber-300" />
+                  {totalStreakSum}d
+                </div>
+              </div>
+              <div className="px-2 py-0.5">
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Consistency</div>
+                <div className="text-base sm:text-lg font-black text-pink-300">{avgConsistency}%</div>
               </div>
             </div>
-            <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
-              <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Consistency</div>
-              <div className="text-base sm:text-xl font-black text-pink-300">{avgConsistency}%</div>
-            </div>
           </div>
-        </div>
       </div>
 
       {error && (

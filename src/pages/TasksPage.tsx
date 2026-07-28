@@ -733,7 +733,7 @@ export function TasksPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 space-y-4">
+          <div className="relative z-10 flex flex-col gap-3.5 sm:gap-4">
             {/* Top Row: Greeting on Left, Action Buttons on Top Right */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
@@ -748,11 +748,11 @@ export function TasksPage() {
                 </p>
               </div>
 
-              {/* Action Buttons on Top Right */}
-              <div className="flex items-center gap-2 sm:gap-2.5">
+              {/* Action Buttons: Top Right */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                 <button
                   onClick={() => setIsCategoriesModalOpen(true)}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
                   title="Manage Categories"
                 >
                   <FolderTree className="w-4 h-4 text-purple-200" />
@@ -772,7 +772,7 @@ export function TasksPage() {
                     setSubtaskInputText('');
                     setIsModalOpen(true);
                   }}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-bold whitespace-nowrap"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-bold whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
                   <span>Add Task</span>
@@ -780,19 +780,19 @@ export function TasksPage() {
               </div>
             </div>
 
-            {/* Bottom Row: Full-width Glassmorphic Summary Bar */}
-            <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full">
-              <div className="px-2 py-0.5 min-w-0">
+            {/* Bottom Row: Full-width Stats Summary Badges */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full">
+              <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Pending</div>
-                <div className="text-base sm:text-xl font-black text-amber-300">{incompleteTasks.length}</div>
+                <div className="text-base sm:text-lg font-black text-amber-300">{incompleteTasks.length}</div>
               </div>
-              <div className="px-2 py-0.5 border-x border-white/15 min-w-0">
+              <div className="px-1.5 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
-                <div className="text-base sm:text-xl font-black text-emerald-300">{completedTasks.length}</div>
+                <div className="text-base sm:text-lg font-black text-emerald-300">{completedTasks.length}</div>
               </div>
-              <div className="px-2 py-0.5 min-w-0">
+              <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Progress</div>
-                <div className="text-base sm:text-xl font-black text-pink-300">
+                <div className="text-base sm:text-lg font-black text-pink-300">
                   {visibleTasks.length > 0 ? Math.round((completedTasks.length / visibleTasks.length) * 100) : 0}%
                 </div>
               </div>
