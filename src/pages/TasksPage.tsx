@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, FolderTree, Layers, Settings2, ListChecks, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -1159,9 +1159,15 @@ export function TasksPage() {
               <>
                 {/* Incomplete Tasks Section */}
                 <div className="mb-8 sm:mb-10">
-                  <h2 className="text-xl sm:text-2xl font-bold text-pink-600 mb-3 sm:mb-4">
-                    Pending Tasks ({incompleteTasks.length})
-                  </h2>
+                  <div className="flex items-center justify-between mb-3.5 px-1">
+                    <h2 className="text-base sm:text-lg md:text-xl font-bold text-pink-950 flex items-center gap-2">
+                      <ListTodo className="w-5 h-5 text-pink-600 animate-pulse" />
+                      <span>Pending Tasks</span>
+                      <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-pink-100/90 text-pink-800 border border-pink-200/90 shadow-2xs">
+                        {incompleteTasks.length}
+                      </span>
+                    </h2>
+                  </div>
                   {incompleteTasks.length === 0 ? (
                     <div className="glass-card p-6 sm:p-8 text-center text-gray-600">
                       <p>No pending tasks. Great job, everything is complete.</p>
@@ -1186,9 +1192,15 @@ export function TasksPage() {
                 {/* Completed Tasks Section */}
                 {completedTasks.length > 0 && (
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-purple-700 mb-3 sm:mb-4">
-                      Completed Tasks ({completedTasks.length})
-                    </h2>
+                    <div className="flex items-center justify-between mb-3.5 px-1">
+                      <h2 className="text-base sm:text-lg md:text-xl font-bold text-purple-950 flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                        <span>Completed Tasks</span>
+                        <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100/90 text-purple-800 border border-purple-200/90 shadow-2xs">
+                          {completedTasks.length}
+                        </span>
+                      </h2>
+                    </div>
                     <div className="space-y-3 sm:space-y-4 list-stagger">
                       {completedTasks.map((task) => (
                         <TaskItem

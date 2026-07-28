@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays, Check, ChevronDown, ListChecks, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { CalendarDays, Check, CheckCircle2, ChevronDown, ListChecks, ListTodo, Pencil, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 
@@ -610,9 +610,15 @@ export default function TasksTable({
       </div>
 
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-pink-600 mb-3 sm:mb-4">
-          Pending Tasks ({filteredPendingTasks.length})
-        </h2>
+        <div className="flex items-center justify-between mb-2.5 px-1">
+          <h2 className="text-sm sm:text-base font-bold text-pink-950 flex items-center gap-2">
+            <ListTodo className="w-4.5 h-4.5 text-pink-600 animate-pulse" />
+            <span>Pending Tasks</span>
+            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-pink-100/90 text-pink-800 border border-pink-200/90 shadow-2xs">
+              {filteredPendingTasks.length}
+            </span>
+          </h2>
+        </div>
         {renderTable(pendingPaged, 'No pending tasks. Great job, everything is complete.', 'pink', {
           page: pendingPage,
           totalPages: pendingTotalPages,
@@ -626,9 +632,15 @@ export default function TasksTable({
       </div>
 
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-purple-700 mb-3 sm:mb-4">
-          Completed Tasks ({filteredCompletedTasks.length})
-        </h2>
+        <div className="flex items-center justify-between mb-2.5 px-1">
+          <h2 className="text-sm sm:text-base font-bold text-purple-950 flex items-center gap-2">
+            <CheckCircle2 className="w-4.5 h-4.5 text-purple-600" />
+            <span>Completed Tasks</span>
+            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100/90 text-purple-800 border border-purple-200/90 shadow-2xs">
+              {filteredCompletedTasks.length}
+            </span>
+          </h2>
+        </div>
         {renderTable(completedPaged, 'No completed tasks yet.', 'purple', {
           page: completedPage,
           totalPages: completedTotalPages,
