@@ -733,7 +733,7 @@ export function TasksPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -746,19 +746,19 @@ export function TasksPage() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full xl:w-auto">
               {/* Overview Summary Badges */}
-              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full lg:w-auto">
-                <div className="px-2 py-0.5 min-w-0">
-                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Pending</div>
+              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full xl:w-auto">
+                <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Pending</div>
                   <div className="text-base sm:text-lg font-black text-amber-300">{incompleteTasks.length}</div>
                 </div>
-                <div className="px-2 py-0.5 border-x border-white/15 min-w-0">
-                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Completed</div>
+                <div className="px-1.5 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
                   <div className="text-base sm:text-lg font-black text-emerald-300">{completedTasks.length}</div>
                 </div>
-                <div className="px-2 py-0.5 min-w-0">
-                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Done %</div>
+                <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
+                  <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Progress</div>
                   <div className="text-base sm:text-lg font-black text-pink-300">
                     {visibleTasks.length > 0 ? Math.round((completedTasks.length / visibleTasks.length) * 100) : 0}%
                   </div>
@@ -766,7 +766,7 @@ export function TasksPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full lg:w-auto">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full xl:w-auto">
                 <button
                   onClick={() => setIsCategoriesModalOpen(true)}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
@@ -799,7 +799,7 @@ export function TasksPage() {
           </div>
         </div>
 
-        {/* Unified Control Bar: Preset Selector & View Toggle */}
+        {/* Unified Control Bar: Period Selector & View Toggle */}
         <div className="relative z-30 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-3 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
           {/* View Toggle */}
           <div className="flex items-center gap-1 bg-white border border-purple-200/80 rounded-xl p-1 shadow-2xs">
@@ -823,7 +823,7 @@ export function TasksPage() {
             </button>
           </div>
 
-          {/* Preset Selector & Manage Button */}
+          {/* Period Selector & Manage Button */}
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <div className="relative routine-dropdown-container min-w-0 flex-1">
               <button
@@ -834,7 +834,7 @@ export function TasksPage() {
               >
                 <div className="flex items-center gap-2 truncate">
                   <Layers className="h-4 w-4 flex-shrink-0 text-purple-600" />
-                  <span className="hidden font-normal text-gray-500 sm:inline">Routine:</span>
+                  <span className="hidden font-normal text-gray-500 sm:inline">Period:</span>
                   <div className="flex items-center gap-1.5 truncate">
                     <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: activePreset?.color || '#C084FC' }} />
                     <span className="truncate font-bold text-gray-900">{activePreset?.name || ''}</span>
@@ -844,7 +844,7 @@ export function TasksPage() {
               </button>
               {isPresetDropdownOpen && (
                 <div className="modal-enter absolute left-0 top-full z-[100] mt-1.5 w-64 rounded-xl border-2 border-purple-300 bg-white py-1.5 shadow-[0_16px_36px_rgba(120,87,255,0.35)]">
-                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Routine</div>
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">Switch Period</div>
                   {sortedPresets.map((preset) => {
                     const isActive = preset.id === activePresetId;
                     return (
@@ -858,7 +858,7 @@ export function TasksPage() {
             </div>
             <button type="button" onClick={() => setIsManagePresetsOpen(true)} className="inline-flex min-h-[36px] sm:min-h-[38px] items-center whitespace-nowrap rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs font-semibold text-purple-700 shadow-2xs transition hover:bg-purple-50">
               <Settings2 className="mr-1.5 h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Manage Routines</span><span className="sm:hidden">Manage</span>
+              <span className="hidden sm:inline">Manage Periods</span><span className="sm:hidden">Manage</span>
             </button>
           </div>
         </div>

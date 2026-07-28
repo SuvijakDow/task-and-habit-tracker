@@ -218,7 +218,7 @@ export function AnalyticsPage() {
       <div className="glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-purple-900/95 via-fuchsia-900/90 to-indigo-950/95 text-white rounded-3xl border border-white/20 shadow-xl relative overflow-hidden">
         <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -231,20 +231,20 @@ export function AnalyticsPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full lg:w-auto shrink-0">
-              <div className="px-2 py-0.5 min-w-0">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Habits</div>
+            <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full xl:w-auto shrink-0">
+              <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
                 <div className="text-base sm:text-lg font-black text-white">{habitsToAnalyze.length}</div>
               </div>
-              <div className="px-2 py-0.5 border-x border-white/15 min-w-0">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Streaks</div>
+              <div className="px-1.5 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Streaks</div>
                 <div className="text-base sm:text-lg font-black text-amber-300 flex items-center justify-center gap-1">
                   <Flame className="w-4 h-4 fill-amber-300 text-amber-300" />
                   {totalStreakSum}d
                 </div>
               </div>
-              <div className="px-2 py-0.5 min-w-0">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider truncate">Consistency</div>
+              <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Consistency</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">{avgConsistency}%</div>
               </div>
             </div>
