@@ -587,8 +587,8 @@ export function HabitsPage() {
               </div>
             </div>
 
-            {/* Desktop Center: Stats Badges (Full width on mobile/tablet, centered box on desktop) */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full lg:w-auto shrink-0">
+            {/* Desktop Center: Stats Badges (Full width on mobile/tablet, expanded box on desktop) */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-6 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full lg:flex-1 lg:max-w-xl lg:mx-4 shrink-0">
               <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Scheduled</div>
                 <div className="text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
