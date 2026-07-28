@@ -126,6 +126,31 @@ export function AnalyticsPage() {
     });
   }, [habits, selectedSetId, habitSets]);
 
+  const habitsToAnalyze = useMemo(() => {
+    return filteredHabits.filter((h) => {
+      const matchesHabit = selectedHabitId ? h.id === selectedHabitId : true;
+      const matchesSearch = searchQuery.trim() === '' || h.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesHabit && matchesSearch;
+    });
+  }, [filteredHabits, selectedHabitId, searchQuery]);
+
+  const totalStreakSum = useMemo(() => {
+    return habitsToAnalyze.reduce((acc, habit) => {
+      const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+      return acc + calculateStreak(habit.completedDates || [], days, habit.targetValue, habit.dailyProgress);
+    }, 0);
+  }, [habitsToAnalyze]);
+
+  const avgConsistency = useMemo(() => {
+    if (habitsToAnalyze.length === 0) return 0;
+    const total = habitsToAnalyze.reduce((acc, habit) => {
+      const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+      const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
+      return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress);
+    }, 0);
+    return Math.round(total / habitsToAnalyze.length);
+  }, [habitsToAnalyze]);
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -186,31 +211,6 @@ export function AnalyticsPage() {
       </div>
     );
   }
-
-  const habitsToAnalyze = useMemo(() => {
-    return filteredHabits.filter((h) => {
-      const matchesHabit = selectedHabitId ? h.id === selectedHabitId : true;
-      const matchesSearch = searchQuery.trim() === '' || h.title.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesHabit && matchesSearch;
-    });
-  }, [filteredHabits, selectedHabitId, searchQuery]);
-
-  const totalStreakSum = useMemo(() => {
-    return habitsToAnalyze.reduce((acc, habit) => {
-      const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-      return acc + calculateStreak(habit.completedDates || [], days, habit.targetValue, habit.dailyProgress);
-    }, 0);
-  }, [habitsToAnalyze]);
-
-  const avgConsistency = useMemo(() => {
-    if (habitsToAnalyze.length === 0) return 0;
-    const total = habitsToAnalyze.reduce((acc, habit) => {
-      const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-      const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
-      return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress);
-    }, 0);
-    return Math.round(total / habitsToAnalyze.length);
-  }, [habitsToAnalyze]);
 
   return (
     <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
