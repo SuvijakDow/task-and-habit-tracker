@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2 } from 'lucide-react';
+import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, Sparkles, X, Target, Pencil, Trash2 } from 'lucide-react';
 import { DailyHabit, HabitSet } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -146,6 +146,26 @@ export function HabitsPage() {
   }, [habits, activeSet, habitSets]);
 
   const habitsToDisplay = activeRoutineHabits;
+
+  const scheduledTodayCount = useMemo(() => {
+    const todayDay = new Date().getDay();
+    return habitsToDisplay.filter((h) => {
+      const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+      return days.includes(todayDay);
+    }).length;
+  }, [habitsToDisplay]);
+
+  const completedTodayCount = useMemo(() => {
+    const todayStr = getTodayDateString();
+    const todayDay = new Date().getDay();
+    return habitsToDisplay.filter((h) => {
+      const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+      if (!days.includes(todayDay)) return false;
+      const isCompleted = h.completedDates?.includes(todayStr);
+      const logged = h.dailyProgress?.[todayStr] ?? (isCompleted ? (h.targetValue || 1) : 0);
+      return (h.targetValue && h.targetValue > 0) ? logged >= h.targetValue * 0.5 : isCompleted;
+    }).length;
+  }, [habitsToDisplay]);
 
   const handleSelectActiveSet = async (setId: string) => {
     if (!user || setId === activeSetId) {
@@ -518,43 +538,71 @@ export function HabitsPage() {
   return (
     <div className="min-h-screen pt-3 md:pt-6 pb-6 md:pb-12">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6">
-        {/* Top Bar Header */}
-        <div className="mb-3 sm:mb-4 flex items-center justify-between gap-3 w-full">
-          <div className="min-w-0 pr-2">
-            <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600 truncate">
-              Hello, {userDisplayName}
-            </h1>
-            <p className="mt-0.5 text-sm text-gray-500 font-medium hidden sm:block">Build better routines.</p>
-          </div>
+        {/* Hero Dashboard Overview Banner */}
+        <div className="glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-purple-900/95 via-fuchsia-900/90 to-indigo-950/95 text-white rounded-3xl border border-white/20 shadow-xl relative overflow-hidden">
+          <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
-            {/* Weekly Timetable Button */}
-            <button
-              onClick={() => setIsWeeklyModalOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white text-purple-700 border border-purple-200 hover:bg-purple-50 rounded-xl shadow-xs transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
-            >
-              <CalendarRange className="w-4 h-4 text-purple-600" />
-              <span className="hidden sm:inline">Weekly Timetable</span>
-            </button>
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  Hello, {userDisplayName}!
+                </h1>
+              </div>
+              <p className="mt-1 text-xs sm:text-sm text-purple-100/80 font-medium">
+                Build better daily routines and consistency.
+              </p>
+            </div>
 
-            {/* Add Habit Button */}
-            <button
-              onClick={() => {
-                setHabitTitle('');
-                setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                setStartTime('09:00');
-                setEndTime('10:00');
-                setHabitSetId(activeSetId);
-                setError(null);
-                setIsAddModalOpen(true);
-              }}
-              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-xl shadow-[0_8px_20px_rgba(157,78,221,0.25)] hover:shadow-[0_12px_28px_rgba(157,78,221,0.35)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-semibold whitespace-nowrap"
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Habit
-            </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+              {/* Overview Summary Badges */}
+              <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center w-full sm:w-auto">
+                <div className="px-2 py-0.5">
+                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Scheduled</div>
+                  <div className="text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
+                </div>
+                <div className="px-2 py-0.5 border-x border-white/15">
+                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Completed</div>
+                  <div className="text-base sm:text-lg font-black text-emerald-300">{completedTodayCount}</div>
+                </div>
+                <div className="px-2 py-0.5">
+                  <div className="text-[10px] text-purple-200 uppercase font-bold tracking-wider">Today %</div>
+                  <div className="text-base sm:text-lg font-black text-pink-300">
+                    {scheduledTodayCount > 0 ? Math.round((completedTodayCount / scheduledTodayCount) * 100) : 0}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => setIsWeeklyModalOpen(true)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
+                  title="Weekly Timetable"
+                >
+                  <CalendarRange className="w-4 h-4 text-purple-200" />
+                  <span>Timetable</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setHabitTitle('');
+                    setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                    setStartTime('09:00');
+                    setEndTime('10:00');
+                    setHabitSetId(activeSetId);
+                    setError(null);
+                    setIsAddModalOpen(true);
+                  }}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-bold whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+                  <span>Add Habit</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
