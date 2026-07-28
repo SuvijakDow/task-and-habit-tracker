@@ -543,9 +543,9 @@ export function HabitsPage() {
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col gap-3.5 sm:gap-4">
-            {/* Top Row: Greeting on Left, Action Buttons on Top Right */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-4">
+            {/* Top Row / Desktop Left: Greeting */}
+            <div className="flex flex-col sm:flex-row sm:items-center lg:flex-col lg:items-start justify-between gap-3 lg:gap-1">
               <div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
@@ -558,8 +558,8 @@ export function HabitsPage() {
                 </p>
               </div>
 
-              {/* Action Buttons: Top Right */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+              {/* Tablet Top-Right Action Buttons (Hidden on desktop, shown inside flex-row on mobile/tablet) */}
+              <div className="grid grid-cols-2 sm:flex sm:items-center lg:hidden gap-2 sm:gap-2.5 w-full sm:w-auto">
                 <button
                   onClick={() => setIsWeeklyModalOpen(true)}
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
@@ -587,22 +587,50 @@ export function HabitsPage() {
               </div>
             </div>
 
-            {/* Bottom Row: Full-width Stats Summary Badges */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full">
-              <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
+            {/* Desktop Center: Stats Badges (Full width on mobile/tablet, centered box on desktop) */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/15 text-center w-full lg:w-auto shrink-0">
+              <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Scheduled</div>
                 <div className="text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
               </div>
-              <div className="px-1.5 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
+              <div className="px-1.5 sm:px-3 py-0.5 border-x border-white/15 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
                 <div className="text-base sm:text-lg font-black text-emerald-300">{completedTodayCount}</div>
               </div>
-              <div className="px-1.5 sm:px-2 py-0.5 min-w-0">
+              <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Today %</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">
                   {scheduledTodayCount > 0 ? Math.round((completedTodayCount / scheduledTodayCount) * 100) : 0}%
                 </div>
               </div>
+            </div>
+
+            {/* Desktop Right: Action Buttons (Only visible on desktop) */}
+            <div className="hidden lg:flex lg:items-center gap-2.5 shrink-0">
+              <button
+                onClick={() => setIsWeeklyModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-sm font-semibold whitespace-nowrap shadow-2xs"
+                title="Weekly Timetable"
+              >
+                <CalendarRange className="w-4 h-4 text-purple-200" />
+                <span>Timetable</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setHabitTitle('');
+                  setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+                  setStartTime('09:00');
+                  setEndTime('10:00');
+                  setHabitSetId(activeSetId);
+                  setError(null);
+                  setIsAddModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-sm font-bold whitespace-nowrap"
+              >
+                <Plus className="w-5 h-5 stroke-[2.5]" />
+                <span>Add Habit</span>
+              </button>
             </div>
           </div>
         </div>
