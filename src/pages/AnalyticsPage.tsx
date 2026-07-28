@@ -7,6 +7,15 @@ import { DailyHabit, HabitSet } from '@/types';
 import { ContributionHeatmap } from '@/components/ContributionHeatmap';
 import { showToast } from '@/components/Toast';
 
+const parseDateSafely = (val: any): Date => {
+  if (!val) return new Date();
+  if (val instanceof Date) return val;
+  if (typeof val.toDate === 'function') return val.toDate();
+  if (typeof val.seconds === 'number') return new Date(val.seconds * 1000);
+  const parsed = new Date(val);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
 export function AnalyticsPage() {
   const { user, userProfile } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
@@ -189,7 +198,7 @@ export function AnalyticsPage() {
   const totalStreakSum = useMemo(() => {
     return habitsToAnalyze.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-      return acc + calculateStreak(habit.completedDates, days, habit.targetValue, habit.dailyProgress);
+      return acc + calculateStreak(habit.completedDates || [], days, habit.targetValue, habit.dailyProgress);
     }, 0);
   }, [habitsToAnalyze]);
 
@@ -197,8 +206,8 @@ export function AnalyticsPage() {
     if (habitsToAnalyze.length === 0) return 0;
     const total = habitsToAnalyze.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-      const startDate = habit.trackingStartDate || habit.createdAt;
-      return acc + calculateConsistency(habit.completedDates, days, startDate, habit.targetValue, habit.dailyProgress);
+      const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
+      return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress);
     }, 0);
     return Math.round(total / habitsToAnalyze.length);
   }, [habitsToAnalyze]);
@@ -465,45 +474,47 @@ function HabitAnalyticsCard({
   const isPresetActive = parentSet ? parentSet.isActive : true;
 
   const rawScheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+  const completedDatesList = habit.completedDates || [];
   const streak = calculateStreak(
-    habit.completedDates,
+    completedDatesList,
     rawScheduledDays,
     habit.targetValue,
     habit.dailyProgress
   );
   const totalCompletions = calculateTotalCompletions(
-    habit.completedDates,
+    completedDatesList,
     habit.targetValue,
     habit.dailyProgress
   );
-  const startDate = habit.trackingStartDate || habit.createdAt;
+  const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
   const consistency = calculateConsistency(
-    habit.completedDates,
+    completedDatesList,
     rawScheduledDays,
-    startDate,
+    startDateObj,
     habit.targetValue,
     habit.dailyProgress
   );
 
   const displayScheduledDays = isPresetActive ? rawScheduledDays : [];
-  const past7Days = getPast7DaysStatus(habit.completedDates);
+  const past7Days = getPast7DaysStatus(completedDatesList);
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', {
+  const formatDateStr = (val: any) => {
+    const d = parseDateSafely(val);
+    return d.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
   };
 
-  const getDaysAgoText = (startDate: Date) => {
+  const getDaysAgoTextStr = (val: any) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const start = new Date(startDate);
+    const start = parseDateSafely(val);
     start.setHours(0, 0, 0, 0);
     const diffTime = today.getTime() - start.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const totalDays = diffDays + 1;
+    const totalDays = Math.max(1, diffDays + 1);
 
     if (totalDays === 1) return '(Day 1)';
     return `(${totalDays} days)`;
@@ -575,8 +586,8 @@ function HabitAnalyticsCard({
           </div>
 
           <p className="text-[11px] sm:text-xs text-gray-500 mt-1 flex items-center gap-1 font-medium">
-            <span>🗓️</span> Tracking since: {formatDate(habit.trackingStartDate || habit.createdAt)}{' '}
-            <span className="text-purple-600 font-semibold ml-0.5">{getDaysAgoText(habit.trackingStartDate || habit.createdAt)}</span>
+            <span>🗓️</span> Tracking since: {formatDateStr(habit.trackingStartDate || habit.createdAt)}{' '}
+            <span className="text-purple-600 font-semibold ml-0.5">{getDaysAgoTextStr(habit.trackingStartDate || habit.createdAt)}</span>
           </p>
         </div>
 
@@ -648,8 +659,8 @@ function HabitAnalyticsCard({
 
         {showFullHistory ? (
           <ContributionHeatmap
-            startDate={startDate}
-            completedDates={habit.completedDates}
+            startDate={startDateObj}
+            completedDates={completedDatesList}
             scheduledDays={displayScheduledDays}
             targetValue={habit.targetValue}
             targetUnit={habit.targetUnit}
@@ -662,7 +673,7 @@ function HabitAnalyticsCard({
               const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
               const dayOfWeek = localDate.getDay();
 
-              const trackingStartObj = new Date(startDate);
+              const trackingStartObj = new Date(startDateObj);
               trackingStartObj.setHours(0, 0, 0, 0);
               const isBeforeTrackingStart = localDate < trackingStartObj;
 
