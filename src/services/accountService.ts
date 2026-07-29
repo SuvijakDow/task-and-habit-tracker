@@ -23,3 +23,15 @@ export const deleteUserData = async (userId: string): Promise<void> => {
   await deleteInBatches(snapshots.flatMap((snapshot) => snapshot.docs.map((snapshotDoc) => snapshotDoc.ref)));
   await deleteDoc(doc(db, 'users', userId));
 };
+
+/** Reset all tasks for a user. */
+export const resetUserTasks = async (userId: string): Promise<void> => {
+  const snapshot = await getDocs(query(collection(db, 'tasks'), where('userId', '==', userId)));
+  await deleteInBatches(snapshot.docs.map((d) => d.ref));
+};
+
+/** Reset all daily habits for a user. */
+export const resetUserDailyHabits = async (userId: string): Promise<void> => {
+  const snapshot = await getDocs(query(collection(db, 'dailyHabits'), where('userId', '==', userId)));
+  await deleteInBatches(snapshot.docs.map((d) => d.ref));
+};

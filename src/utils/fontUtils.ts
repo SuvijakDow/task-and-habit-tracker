@@ -21,7 +21,7 @@ export const APP_FONTS: FontOption[] = [
   {
     id: 'sarabun',
     name: 'Sarabun',
-    nameThai: 'สารบรรณ (THSarabun)',
+    nameThai: 'สารบรรณ',
     fontFamily: "'Sarabun', sans-serif",
     googleFontQuery: 'Sarabun:wght@300;400;500;600;700;800',
     previewText: 'ระบบติดตามงานและวินัยชีวิตประจำวัน',

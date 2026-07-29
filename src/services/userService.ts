@@ -16,16 +16,23 @@ const USERS_COLLECTION = 'users';
  * Mix of fun-emoji (cute expressive faces) and lorelei (soft illustrated portraits)
  */
 export const DEFAULT_AVATARS = [
-  // fun-emoji — colorful, cute, Google-like
-  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Bella&mouth=cute,kissHeart,lilSmile,smileLol,tongueOut,wideSmile',
-  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Coco&mouth=cute,kissHeart,lilSmile,smileLol,tongueOut,wideSmile',
-  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Mimi&mouth=cute,kissHeart,lilSmile,smileLol,tongueOut,wideSmile',
-  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sunny&mouth=cute,kissHeart,lilSmile,smileLol,tongueOut,wideSmile',
-  // lorelei — soft, clean, minimal illustrations
+  // Cute RPG Adventurers & Animals
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Felix',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Lily',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Mochi',
+  'https://api.dicebear.com/9.x/adventurer/svg?seed=Panda',
+  // Cute Little Robots
+  'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Sparky',
+  'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Pixel',
+  // Expressive Cute Emojis
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Bella&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cookie&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  // Soft Illustrated Portraits
   'https://api.dicebear.com/9.x/lorelei/svg?seed=Peanut',
   'https://api.dicebear.com/9.x/lorelei/svg?seed=Muffin',
-  'https://api.dicebear.com/9.x/lorelei/svg?seed=Cookie',
-  'https://api.dicebear.com/9.x/lorelei/svg?seed=Pepper',
+  // Cheerful Big Smile
+  'https://api.dicebear.com/9.x/big-smile/svg?seed=Sunny',
+  'https://api.dicebear.com/9.x/big-smile/svg?seed=Cheery',
 ];
 
 /**
