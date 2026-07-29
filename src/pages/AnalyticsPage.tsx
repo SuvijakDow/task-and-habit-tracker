@@ -137,9 +137,24 @@ export function AnalyticsPage() {
   }, [filteredHabits, selectedHabitId, searchQuery]);
 
   const totalCompletions = useMemo(() => {
-    return filteredHabits.reduce((acc, habit) => {
-      return acc + (habit.completedDates ? habit.completedDates.length : 0);
+    const rawTotal = filteredHabits.reduce((acc, habit) => {
+      const completedSet = new Set(habit.completedDates || []);
+      const progressKeys = Object.keys(habit.dailyProgress || {});
+      const allDates = new Set([...Array.from(completedSet), ...progressKeys]);
+
+      let habitRatioSum = 0;
+      allDates.forEach((dateStr) => {
+        if (completedSet.has(dateStr)) {
+          habitRatioSum += 1.0;
+        } else if (habit.targetValue && habit.targetValue > 0) {
+          const logged = habit.dailyProgress?.[dateStr] || 0;
+          habitRatioSum += Math.min(1.0, logged / habit.targetValue);
+        }
+      });
+      return acc + habitRatioSum;
     }, 0);
+
+    return Number.isInteger(rawTotal) ? rawTotal : Number(rawTotal.toFixed(1));
   }, [filteredHabits]);
 
   const avgConsistency = useMemo(() => {
