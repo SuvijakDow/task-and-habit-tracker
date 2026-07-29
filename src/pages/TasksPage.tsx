@@ -740,11 +740,11 @@ export function TasksPage() {
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
                   <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    Hello, {userDisplayName}!
+                    Task Command Center
                   </h1>
                 </div>
                 <p className="mt-1 text-xs sm:text-sm text-purple-100/80 font-medium">
-                  Focus list and daily task command center.
+                  Welcome back, {userDisplayName}! Focus on priorities and conquer your goals.
                 </p>
               </div>
 

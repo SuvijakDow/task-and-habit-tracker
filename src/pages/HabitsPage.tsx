@@ -550,11 +550,11 @@ export function HabitsPage() {
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
                   <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    Hello, {userDisplayName}!
+                    Daily Habits & Routines
                   </h1>
                 </div>
                 <p className="mt-1 text-xs sm:text-sm text-purple-100/80 font-medium">
-                  Build better daily routines and consistency.
+                  Welcome back, {userDisplayName}! Build momentum and stay consistent every day.
                 </p>
               </div>
 

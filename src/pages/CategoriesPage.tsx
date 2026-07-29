@@ -281,9 +281,11 @@ export function CategoriesPage() {
     <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
       <div className="mb-6">
         <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
-          Hello, {userDisplayName}
+          Task Categories
         </h1>
-        <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">Organize tasks into clear color groups.</p>
+        <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">
+          Welcome back, {userDisplayName}! Organize tasks into clear, color-coded groups.
+        </p>
       </div>
 
       {error && !(loadError && categories.length === 0) && (
