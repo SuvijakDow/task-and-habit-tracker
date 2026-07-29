@@ -128,30 +128,30 @@ export function AnalyticsPage() {
     });
   }, [habits, selectedSetId, habitSets]);
 
-  const habitsToAnalyze = useMemo(() => {
+  const habitsToDisplay = useMemo(() => {
     return filteredHabits.filter((h) => {
       const matchesHabit = selectedHabitId ? h.id === selectedHabitId : true;
-      const matchesSearch = searchQuery.trim() === '' || h.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = searchQuery.trim() === '' || h.title.toLowerCase().includes(searchQuery.trim().toLowerCase());
       return matchesHabit && matchesSearch;
     });
   }, [filteredHabits, selectedHabitId, searchQuery]);
 
   const totalStreakSum = useMemo(() => {
-    return habitsToAnalyze.reduce((acc, habit) => {
+    return filteredHabits.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       return acc + calculateStreak(habit.completedDates || [], days, habit.targetValue, habit.dailyProgress);
     }, 0);
-  }, [habitsToAnalyze]);
+  }, [filteredHabits]);
 
   const avgConsistency = useMemo(() => {
-    if (habitsToAnalyze.length === 0) return 0;
-    const total = habitsToAnalyze.reduce((acc, habit) => {
+    if (filteredHabits.length === 0) return 0;
+    const total = filteredHabits.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
       return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress);
     }, 0);
-    return Math.round(total / habitsToAnalyze.length);
-  }, [habitsToAnalyze]);
+    return Math.round(total / filteredHabits.length);
+  }, [filteredHabits]);
 
   if (!user) {
     return (
@@ -235,7 +235,7 @@ export function AnalyticsPage() {
             <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center shrink-0">
               <div className="px-2 py-0.5">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
-                <div className="text-base sm:text-lg font-black text-white">{habitsToAnalyze.length}</div>
+                <div className="text-base sm:text-lg font-black text-white">{filteredHabits.length}</div>
               </div>
               <div className="px-2 py-0.5 border-x border-white/15">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Streaks</div>
@@ -405,9 +405,8 @@ export function AnalyticsPage() {
 
         {/* Detailed Habit Analytics Cards */}
         <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
-          {filteredHabits
-            .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
-            .map((habit) => (
+          {habitsToDisplay.length > 0 ? (
+            habitsToDisplay.map((habit) => (
               <HabitAnalyticsCard
                 key={habit.id}
                 habit={habit}
@@ -416,7 +415,13 @@ export function AnalyticsPage() {
                 setResetTargetHabit={setResetTargetHabit}
                 isResetting={isResetting}
               />
-            ))}
+            ))
+          ) : (
+            <div className="glass-card p-8 text-center text-gray-500 rounded-2xl border border-purple-100 bg-white/90">
+              <Search className="w-8 h-8 text-purple-300 mx-auto mb-2" />
+              <p className="font-bold text-sm text-gray-700">No habits found matching your search</p>
+            </div>
+          )}
         </div>
 
         {/* Reset Confirmation Modal */}
