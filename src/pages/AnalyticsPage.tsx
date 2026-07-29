@@ -470,8 +470,13 @@ function HabitAnalyticsCard({
 }) {
   const [showFullHistory, setShowFullHistory] = useState(false);
 
-  const parentSet = habitSets.find((s) => s.id === (habit.setId || habitSets[0]?.id)) || habitSets[0];
-  const isPresetActive = parentSet ? parentSet.isActive : true;
+  const setIds = getHabitSetIds(habit);
+  const isPresetActive = setIds.length === 0
+    ? (habitSets[0] ? habitSets[0].isActive : true)
+    : setIds.some((id) => {
+        const s = habitSets.find((set) => set.id === id);
+        return s ? s.isActive : false;
+      });
 
   const rawScheduledDays = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
   const completedDatesList = habit.completedDates || [];
