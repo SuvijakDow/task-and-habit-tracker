@@ -149,25 +149,43 @@ export function HabitsPage() {
 
   const habitsToDisplay = activeRoutineHabits;
 
-  const scheduledTodayCount = useMemo(() => {
+  const scheduledTodayHabits = useMemo(() => {
     const todayDay = new Date().getDay();
     return habitsToDisplay.filter((h) => {
       const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       return days.includes(todayDay);
-    }).length;
+    });
   }, [habitsToDisplay]);
+
+  const scheduledTodayCount = scheduledTodayHabits.length;
 
   const completedTodayCount = useMemo(() => {
     const todayStr = getTodayDateString();
-    const todayDay = new Date().getDay();
-    return habitsToDisplay.filter((h) => {
-      const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-      if (!days.includes(todayDay)) return false;
+    return scheduledTodayHabits.filter((h) => {
       const isCompleted = h.completedDates?.includes(todayStr);
-      const logged = h.dailyProgress?.[todayStr] ?? (isCompleted ? (h.targetValue || 1) : 0);
-      return (h.targetValue && h.targetValue > 0) ? logged >= h.targetValue * 0.5 : isCompleted;
+      if (isCompleted) return true;
+      if (h.targetValue && h.targetValue > 0) {
+        const logged = h.dailyProgress?.[todayStr] || 0;
+        return logged >= h.targetValue;
+      }
+      return false;
     }).length;
-  }, [habitsToDisplay]);
+  }, [scheduledTodayHabits]);
+
+  const todayPercent = useMemo(() => {
+    if (scheduledTodayHabits.length === 0) return 0;
+    const todayStr = getTodayDateString();
+    const totalProgressSum = scheduledTodayHabits.reduce((acc, h) => {
+      const isCompleted = h.completedDates?.includes(todayStr);
+      if (isCompleted) return acc + 1.0;
+      if (h.targetValue && h.targetValue > 0) {
+        const logged = h.dailyProgress?.[todayStr] || 0;
+        return acc + Math.min(1.0, logged / h.targetValue);
+      }
+      return acc;
+    }, 0);
+    return Math.round((totalProgressSum / scheduledTodayHabits.length) * 100);
+  }, [scheduledTodayHabits]);
 
   const handleSelectActiveSet = async (setId: string) => {
     if (!user || setId === activeSetId) {
@@ -605,7 +623,7 @@ export function HabitsPage() {
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Today %</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">
-                  {scheduledTodayCount > 0 ? Math.round((completedTodayCount / scheduledTodayCount) * 100) : 0}%
+                  {todayPercent}%
                 </div>
               </div>
             </div>
