@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2 } from 'lucide-react';
+import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2, Sun } from 'lucide-react';
 import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -1296,8 +1296,14 @@ export function HabitsPage() {
                       </h3>
                     </div>
                     {habitsDueToday.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-gray-500 bg-purple-50/30 rounded-xl border border-dashed border-purple-200">
-                        No habits scheduled for today.
+                      <div className="glass-card p-6 sm:p-8 text-center bg-gradient-to-b from-purple-50/50 via-pink-50/30 to-white rounded-2xl border border-dashed border-purple-200/90 shadow-2xs">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-purple-500/20 to-pink-500/20 border border-amber-300/40 text-amber-500 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                          <Sun className="w-6 h-6 animate-pulse" />
+                        </div>
+                        <h4 className="text-sm sm:text-base font-extrabold text-gray-900 mb-1">Free Day Ahead! ☀️</h4>
+                        <p className="text-xs text-gray-600 max-w-sm mx-auto font-medium">
+                          No habits scheduled for today. Enjoy your rest or check habits scheduled for other days below!
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-3 list-stagger">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X, Sparkles, ClipboardList } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -1173,9 +1173,12 @@ export function TasksPage() {
             </button>
           </div>
         ) : visibleTasks.length === 0 ? (
-          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">No tasks yet</h2>
-            <p className="text-gray-600 mb-5">Add your first task to start planning your week.</p>
+          <div className="glass-card p-6 sm:p-10 md:p-12 text-center rounded-3xl border border-purple-100 bg-white/95 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500/20 via-fuchsia-500/20 to-pink-500/20 border border-purple-300/40 text-purple-600 flex items-center justify-center mx-auto mb-3.5 shadow-2xs">
+              <ClipboardList className="w-7 h-7 stroke-[2]" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-black text-gray-900 mb-1.5 tracking-tight">No tasks yet</h2>
+            <p className="text-xs sm:text-sm text-gray-600 mb-5 font-medium max-w-sm mx-auto">Add your first task to start planning your week.</p>
             <button
               type="button"
               onClick={() => {
@@ -1190,9 +1193,10 @@ export function TasksPage() {
                 setSubtaskInputText('');
                 setIsModalOpen(true);
               }}
-              className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-[1.02]"
             >
-              Add first task
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Add first task</span>
             </button>
           </div>
         ) : (
@@ -1224,8 +1228,12 @@ export function TasksPage() {
                     </h2>
                   </div>
                   {incompleteTasks.length === 0 ? (
-                    <div className="glass-card p-6 sm:p-8 text-center text-gray-600">
-                      <p>No pending tasks. Great job, everything is complete.</p>
+                    <div className="glass-card p-6 sm:p-8 text-center rounded-2xl border border-emerald-200/80 bg-emerald-50/20 shadow-2xs">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-teal-500/20 to-green-500/20 border border-emerald-300/40 text-emerald-600 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                        <Sparkles className="w-6 h-6 animate-bounce" />
+                      </div>
+                      <h3 className="text-base sm:text-lg font-extrabold text-emerald-950 mb-1">All caught up! 🎉</h3>
+                      <p className="text-xs sm:text-sm text-emerald-700/90 font-medium">No pending tasks. Great job, everything is complete.</p>
                     </div>
                   ) : (
                     <div className="space-y-3 sm:space-y-4 list-stagger">
