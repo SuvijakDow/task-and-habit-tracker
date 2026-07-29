@@ -607,12 +607,12 @@ function HabitAnalyticsCard({
           {formatScheduledDaysText(rawScheduledDays)}
         </span>
 
-        {habit.startTime && habit.endTime && (
-          <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 lg:px-3 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1 lg:gap-1.5">
-            <Clock className="w-3 h-3 lg:w-4 lg:h-4 text-indigo-500" />
-            {habit.startTime} - {habit.endTime}
-          </span>
-        )}
+        <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 lg:px-3 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1 lg:gap-1.5">
+          <Clock className="w-3 h-3 lg:w-4 lg:h-4 text-indigo-500" />
+          {habit.customSchedule && Object.keys(habit.customSchedule).length > 0
+            ? 'Flexible Times'
+            : `${habit.startTime} - ${habit.endTime}`}
+        </span>
 
         <span className="bg-slate-50 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 lg:px-3.5 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1.5">
           <span>🗓️</span>

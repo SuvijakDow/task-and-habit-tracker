@@ -285,6 +285,20 @@ export default function HabitsTable({
                         {/* Time */}
                         <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
                           {(() => {
+                            const hasCustomSchedule = habit.customSchedule && Object.keys(habit.customSchedule).length > 0;
+                            if (hasCustomSchedule) {
+                              return (
+                                <div
+                                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
+                                  style={{ backgroundColor: getHabitColorHex(habit, habits) }}
+                                  title="Flexible per-day schedule"
+                                >
+                                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
+                                  <span>Flexible Times</span>
+                                </div>
+                              );
+                            }
+
                             const timeSlots = getHabitTimeSlotsForDay(habit, todayDayIndex);
                             const slotsToDisplay = timeSlots.length > 0 ? timeSlots : [{ startTime: habit.startTime, endTime: habit.endTime }];
                             return (

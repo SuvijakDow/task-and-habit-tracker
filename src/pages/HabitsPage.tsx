@@ -1390,10 +1390,13 @@ export function HabitsPage() {
                           <div
                             className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0 shadow-xs"
                             style={{ backgroundColor: getHabitColorHex(habit, habits) }}
+                            title={habit.customSchedule && Object.keys(habit.customSchedule).length > 0 ? "Flexible per-day schedule" : undefined}
                           >
                             <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
                             <span>
-                              {habit.startTime} - {habit.endTime}
+                              {habit.customSchedule && Object.keys(habit.customSchedule).length > 0
+                                ? 'Flexible Times'
+                                : `${habit.startTime} - ${habit.endTime}`}
                             </span>
                           </div>
                         </div>
