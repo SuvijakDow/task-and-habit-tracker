@@ -136,22 +136,22 @@ export function AnalyticsPage() {
     });
   }, [filteredHabits, selectedHabitId, searchQuery]);
 
-  const totalStreakSum = useMemo(() => {
-    return habitsToAnalyze.reduce((acc, habit) => {
+  const heroTotalStreakSum = useMemo(() => {
+    return filteredHabits.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       return acc + calculateStreak(habit.completedDates || [], days, habit.targetValue, habit.dailyProgress);
     }, 0);
-  }, [habitsToAnalyze]);
+  }, [filteredHabits]);
 
-  const avgConsistency = useMemo(() => {
-    if (habitsToAnalyze.length === 0) return 0;
-    const total = habitsToAnalyze.reduce((acc, habit) => {
+  const heroAvgConsistency = useMemo(() => {
+    if (filteredHabits.length === 0) return 0;
+    const total = filteredHabits.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
       return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress);
     }, 0);
-    return Math.round(total / habitsToAnalyze.length);
-  }, [habitsToAnalyze]);
+    return Math.round(total / filteredHabits.length);
+  }, [filteredHabits]);
 
   if (!user) {
     return (
@@ -235,18 +235,18 @@ export function AnalyticsPage() {
             <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 rounded-2xl border border-white/15 text-center shrink-0">
               <div className="px-2 py-0.5">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
-                <div className="text-base sm:text-lg font-black text-white">{habitsToAnalyze.length}</div>
+                <div className="text-base sm:text-lg font-black text-white">{filteredHabits.length}</div>
               </div>
               <div className="px-2 py-0.5 border-x border-white/15">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Streaks</div>
                 <div className="text-base sm:text-lg font-black text-amber-300 flex items-center justify-center gap-1">
                   <Flame className="w-4 h-4 fill-amber-300 text-amber-300" />
-                  {totalStreakSum}d
+                  {heroTotalStreakSum}d
                 </div>
               </div>
               <div className="px-2 py-0.5">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Consistency</div>
-                <div className="text-base sm:text-lg font-black text-pink-300">{avgConsistency}%</div>
+                <div className="text-base sm:text-lg font-black text-pink-300">{heroAvgConsistency}%</div>
               </div>
             </div>
           </div>
@@ -404,10 +404,9 @@ export function AnalyticsPage() {
       </div>
 
         {/* Detailed Habit Analytics Cards */}
-        <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
-          {filteredHabits
-            .filter((h) => (selectedHabitId ? h.id === selectedHabitId : true))
-            .map((habit) => (
+        {habitsToAnalyze.length > 0 ? (
+          <div className="space-y-3 sm:space-y-4 md:space-y-6 list-stagger">
+            {habitsToAnalyze.map((habit) => (
               <HabitAnalyticsCard
                 key={habit.id}
                 habit={habit}
@@ -417,7 +416,25 @@ export function AnalyticsPage() {
                 isResetting={isResetting}
               />
             ))}
-        </div>
+          </div>
+        ) : (
+          <div className="glass-card p-8 text-center bg-white/80 rounded-2xl border border-purple-100 space-y-2">
+            <Search className="w-8 h-8 text-purple-400 mx-auto" />
+            <h3 className="font-bold text-gray-800 text-sm sm:text-base">No habits match your search</h3>
+            <p className="text-xs text-gray-500">Try adjusting your search query or clear the filter.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedHabitId(null);
+                setSearchQuery('');
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 hover:bg-purple-200 text-xs font-bold rounded-xl transition"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Clear Search</span>
+            </button>
+          </div>
+        )}
 
         {/* Reset Confirmation Modal */}
         {resetTargetHabit &&
