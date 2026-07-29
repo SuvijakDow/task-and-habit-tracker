@@ -13,40 +13,38 @@ A modern, full-featured productivity web application for managing tasks by time 
 ## ✨ Key Features & Capabilities
 
 ### 📝 Smart Task & Period Management
-- **Task Periods (ช่วงเวลา / ภาคเรียน)**: Group tasks by custom terms, semesters, or timeframes (e.g. *2569/1*, *Summer Break*, *Project A*). Easily switch active periods or manage them via the **Manage Task Periods** modal.
-- **Subtasks Support**: Break down complex tasks into actionable subtasks with live completion progress bars and quick toggles.
+- **Task Periods (Presets)**: Group tasks by custom terms, semesters, or timeframes (e.g. *2569/1*, *Summer Break*, *Project A*). Easily switch active periods or manage them via the **Manage Task Periods** modal.
+- **Subtasks Support**: Break down complex tasks into actionable checklists with live completion progress bars and quick toggles.
 - **Smart Status Sorting**: 
   - **Pending Tasks**: Automatically sorted by nearest upcoming due date (overdue items highlighted first).
-  - **Completed Tasks**: Sorted by completion history (least overdue items at top).
+  - **Completed Tasks**: Sorted by completion history (least overdue items at the top).
 - **Categories**: Color-coded custom task categories with task count tracking and fallback category reassignments.
 - **View Modes**: Dynamic switching between **List View** and **Table View**.
-- **One-Click Clear Inputs**: Integrated instant clear buttons (`X`) on search inputs across all tables.
 
-### 🎯 Daily Habits & Routines
-- **Routines (รูทีน / กิจวัตร)**: Group daily habits into dedicated routines (e.g., *Morning Routine*, *Nightly Habits*, *Workouts*).
-- **Flexible Scheduling**: Select active days of the week (Sun–Sat) and set custom time ranges (`HH:MM`).
+### 🎯 Daily Habits & Multi-Routine Tracking
+- **Multi-Routine Tagging**: Habits can belong to **multiple routines** simultaneously (e.g., *Morning Routine*, *Workouts*, *Semester 2568/2*).
+- **Partial Progress Logging**: Set target values (e.g. read 10 pages) and log partial progress throughout the day.
+- **Accurate Today % Formula**: Today's completion percentage incorporates exact partial progress ratios across all habits scheduled for today.
+- **Smart Inactive Routine Filtering**: Deactivating one routine will not affect habit tracking or status in other active routines where the habit belongs.
 - **Weekly Timetable Modal**: Visual daily schedule displaying habit time blocks across the week.
-- **Drag-and-Drop Reordering**: Custom drag-drop order for daily habit lists.
-- **Streak & Adherence Tracking**: Streak counts respect scheduled days (missing unscheduled days won't break your streak!).
+- **Drag-and-Drop Reordering**: Custom drag-and-drop ordering for daily habit lists.
 
 ### 📊 Analytics & Performance Insights
 - **Contribution Heatmap**: GitHub-style activity matrix displaying daily completion frequency over time.
-- **Streak & Consistency Metrics**: Tracks total active streaks, longest streaks, and overall consistency percentage based on tracking start dates.
-- **Past 7 Days Adherence**: Instant visual status indicators for recent adherence.
-- **Inactive Routine Filtering**: Non-active routines are recognized as *Not Scheduled* on days they were inactive, ensuring historical analytics precision.
+- **Total Completions & Decimal Precision**: Tracks aggregate completions in the Hero Banner and individual habit cards, supporting decimal precision (up to 2 decimal places) for partial goal progress.
+- **Stable Routine Analytics**: Top Hero Banner stats (**HABITS**, **COMPLETIONS**, **CONSISTENCY**) remain stable across all habits in the selected Routine preset while search filtering habit cards in real time.
+- **Consistency Scoring**: Calculates adherence percentage based on custom tracking start dates and scheduled days of the week.
 - **Analytics Reset Options**: Flexibility to reset analytics for a single habit or all habits per user.
 
-### 🎨 Responsive Design & Hero Dashboard Banners
-- **Adaptive Desktop & Tablet Layouts**:
-  - **Desktop (1280px+)**: Sleek 1-row Hero Dashboard Banner featuring greeting text on the left, an expanded center stats box, and action buttons on the right.
-  - **Mobile & Tablet (< 1280px)**: Balanced 2-row layout with top-right aligned action buttons and a 100% full-width stats bar, preventing text truncation or awkward gaps.
-- **Glassmorphic UI**: Vibrant gradient palettes, subtle micro-animations, glassmorphism cards, and Google Fonts (*Bai Jamjuree* & *Inter*).
+### 🎨 Graphic Design & Responsive Layouts
+- **Custom Graphic Empty States**: Vibrant, celebratory empty state cards with custom glowing icon rings (e.g., *Free Day Ahead! ☀️*, *All caught up! 🎉*).
+- **Adaptive Responsive Banner**: Glassmorphic Hero Dashboard Banners optimized across Mobile, Tablet, and Desktop screens.
+- **Aesthetic UI**: Smooth gradients, glassmorphism cards, micro-animations, and modern typography (*Bai Jamjuree* & *Inter*).
 
-### 🔐 Authentication & Profile Management
+### 🔐 Authentication & Security
 - **Auth Options**: Email/Password Sign Up & Sign In, plus Google OAuth popup authentication.
-- **Centered Glassmorphism Sign-In Page**: Modern, responsive authentication layout.
+- **Confirmation Modals**: Secure confirmation popups before Sign Out and Account Deletion.
 - **Profile Customization**: Display name editing and client-side photo processing (auto-resized to 200x200 JPEG).
-- **Account Deletion**: Secure account deletion requiring re-authentication and typing `"DELETE"` confirmation.
 
 ---
 
@@ -55,17 +53,11 @@ A modern, full-featured productivity web application for managing tasks by time 
 ```text
 src/
 ├── components/              # Reusable UI & Modal components
-│   ├── CategoriesModal.tsx      # Task categories manager
-│   ├── ContributionHeatmap.tsx  # GitHub-style completion heatmap
-│   ├── HabitTimeline.tsx        # Daily visual time blocks
-│   ├── HabitsTable.tsx          # Interactive habit list/table
-│   ├── ManageHabitSetsModal.tsx # Routine manager modal
-│   ├── ManageTaskPresetsModal.tsx # Task period manager modal
-│   ├── SettingsModal.tsx        # User profile & account settings
-│   ├── TasksTable.tsx           # Interactive task list/table
-│   ├── TimePickerInput.tsx      # Time selection popover
-│   ├── Toast.tsx                # Notification toasts
-│   └── WeeklyScheduleModal.tsx  # Day selection modal
+│   ├── categories/              # Category management modals
+│   ├── habits/                  # Habit tables, timelines & heatmaps
+│   ├── modals/                  # Routines, Periods, Weekly schedule & Settings modals
+│   ├── tasks/                   # Task items & tables
+│   └── ui/                      # Toasts & UI helpers
 ├── context/                 # React Contexts
 │   └── AuthContext.tsx          # Firebase Auth listener & state
 ├── pages/                   # Top-level Page Views
@@ -138,11 +130,14 @@ src/
   userId: string;
   title: string;
   completedDates: string[]; // Format: 'YYYY-MM-DD'
+  dailyProgress?: Record<string, number>; // 'YYYY-MM-DD': loggedValue
+  targetValue?: number;     // e.g., 10 (pages/mins)
+  targetUnit?: string;      // e.g., 'pages', 'mins'
   scheduledDays: number[];  // 0-6 (Sun-Sat)
   startTime: string;        // 'HH:MM'
   endTime: string;          // 'HH:MM'
   color?: string;           // Tag hex color
-  setId?: string;           // Routine document ID
+  setIds?: string[];        // Routine document IDs (multi-routine support)
   order?: number;           // Reordering index
   trackingStartDate?: Date; // Analytics baseline date
   createdAt: Date;
@@ -170,20 +165,6 @@ src/
   userId: string;
   name: string;
   color: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-### `users`
-```typescript
-{
-  uid: string;
-  email: string;
-  displayName: string;
-  photoURL: string;
-  defaultTaskPresetId?: string;
-  defaultHabitSetId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
