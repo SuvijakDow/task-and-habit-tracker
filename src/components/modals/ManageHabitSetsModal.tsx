@@ -263,9 +263,10 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting || !newSetName.trim()}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 transition shadow-xs"
                 >
-                  Create
+                  <Plus className="w-4 h-4" />
+                  <span>Create Routine</span>
                 </button>
               </div>
             </form>
@@ -279,17 +280,6 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               <span className="truncate">Create New Routine</span>
             </button>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-100 bg-white flex items-center justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition shadow-xs"
-          >
-            Done
-          </button>
         </div>
       </div>
 
