@@ -52,37 +52,50 @@ A modern, full-featured productivity web application for managing tasks by time 
 
 ```text
 src/
-├── components/              # Reusable UI & Modal components
-│   ├── categories/              # Category management modals
-│   ├── habits/                  # Habit tables, timelines & heatmaps
-│   ├── modals/                  # Routines, Periods, Weekly schedule & Settings modals
-│   ├── tasks/                   # Task items & tables
-│   └── ui/                      # Toasts & UI helpers
-├── context/                 # React Contexts
-│   └── AuthContext.tsx          # Firebase Auth listener & state
-├── pages/                   # Top-level Page Views
-│   ├── AnalyticsPage.tsx        # Heatmap & consistency analytics
-│   ├── AuthPage.tsx             # Centered Sign In / Sign Up page
-│   ├── HabitsPage.tsx           # Daily habits management page
-│   ├── MainPage.tsx             # Main layout & navigation container
-│   └── TasksPage.tsx            # Task management page
-├── services/                # Firebase Firestore Service Layer
-│   ├── authService.ts           # Sign In, Sign Up, Google OAuth, Account Delete
-│   ├── categoryService.ts       # Task categories CRUD & reassignments
-│   ├── habitService.ts          # Daily habits & routine sets CRUD
-│   ├── taskPresetService.ts     # Task periods CRUD & auto-deduplication
-│   ├── taskService.ts           # Tasks CRUD & subtasks status updates
-│   └── userService.ts           # User profile & photo upload processing
-├── types/                   # Shared TypeScript Interfaces
-│   └── index.ts                 # Task, Habit, Period, Routine, User types
-├── utils/                   # Helper Utilities
-│   ├── audio.ts                 # Sound effects
-│   ├── dateUtils.ts             # Date formatting & date-fns helpers
-│   ├── firebase.ts              # Firebase app initialization
-│   └── taskUtils.ts             # Status-based task sorting logic
-├── App.tsx                  # Root application router
-├── main.tsx                 # Vite entry point
-└── index.css                # Tailwind CSS & global styles
+├── components/                  # Reusable UI & Component modules
+│   ├── habits/                      # Habit visualizations & views
+│   │   ├── ContributionHeatmap.tsx      # GitHub-style activity matrix heatmap
+│   │   ├── HabitTimeline.tsx            # Visual daily time block schedule
+│   │   └── HabitsTable.tsx              # Interactive habit list & partial logging
+│   ├── modals/                      # Modals & Dialog overlays
+│   │   ├── CategoriesModal.tsx          # Task category manager & fallback reassignment
+│   │   ├── ManageHabitSetsModal.tsx     # Routine manager modal
+│   │   ├── ManageTaskPresetsModal.tsx   # Task period manager modal
+│   │   ├── SettingsModal.tsx            # User profile & account security settings
+│   │   └── WeeklyScheduleModal.tsx      # Weekly timetable overview modal
+│   ├── tasks/                       # Task components
+│   │   └── TasksTable.tsx               # Interactive task list & subtask checklist
+│   └── ui/                          # Global UI helpers
+│       ├── TimePickerInput.tsx          # Time selection popover input
+│       └── Toast.tsx                    # Notification toast system
+├── config/                      # Application Configurations
+│   ├── firebase.config.ts           # Firebase credentials & API keys
+│   └── firebase.ts                  # Firebase app & Firestore initialization
+├── context/                     # React Context Providers
+│   └── AuthContext.tsx              # Authentication state & user session context
+├── pages/                       # Top-level Page Views
+│   ├── AnalyticsPage.tsx            # Heatmap, streak & consistency analytics
+│   ├── AuthPage.tsx                 # Glassmorphic Sign In / Sign Up page
+│   ├── HabitsPage.tsx               # Daily habits & routine tracker page
+│   ├── MainPage.tsx                 # App layout & top navigation container
+│   └── TasksPage.tsx                # Task & period management page
+├── services/                    # Firebase Firestore API Layer
+│   ├── accountService.ts            # Account deletion & re-authentication
+│   ├── authService.ts               # Email/Password & Google OAuth authentication
+│   ├── categoryService.ts           # Task categories CRUD & reassignments
+│   ├── habitService.ts              # Daily habits & routine sets CRUD
+│   ├── taskPresetService.ts         # Task periods CRUD & auto-deduplication
+│   ├── taskService.ts               # Tasks CRUD & subtasks state updates
+│   └── userService.ts               # User profile & client photo processing
+├── types/                       # Shared TypeScript Interfaces
+│   └── index.ts                     # Data models (Tasks, Habits, Periods, Routines)
+├── utils/                       # Utility Functions
+│   ├── audio.ts                     # Sound effects generator
+│   ├── dateUtils.ts                 # Date formatting & date-fns helpers
+│   └── taskUtils.ts                 # Status-based task sorting logic
+├── App.tsx                      # Root application router
+├── main.tsx                     # Vite entry point
+└── index.css                    # Tailwind CSS & global design system
 ```
 
 ---
