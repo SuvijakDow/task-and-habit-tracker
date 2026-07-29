@@ -90,6 +90,7 @@ export const getCompletedTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
+        subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
         createdAt: task.createdAt.toDate(),
@@ -119,6 +120,7 @@ export const getPendingTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
+        subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
         createdAt: task.createdAt.toDate(),
@@ -147,6 +149,7 @@ export const getTaskById = async (taskId: string): Promise<Task | null> => {
     return {
       id: docSnap.id,
       ...task,
+      subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
       category: normalizeTaskCategory(task.category),
       dueDate: task.dueDate?.toDate() || null,
       createdAt: task.createdAt.toDate(),
