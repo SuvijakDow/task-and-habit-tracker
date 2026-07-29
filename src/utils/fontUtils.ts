@@ -15,7 +15,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'ใบจามจุรี',
     fontFamily: "'Bai Jamjuree', sans-serif",
     googleFontQuery: 'Bai+Jamjuree:wght@300;400;500;600;700',
-    previewText: 'จัดสรรเวลาและชีวิตประจำวัน',
+    previewText: 'ประชุมเครียดจนสมองไหลแต่บอกไหวเพราะใจเกเร',
     category: 'Modern Tech',
   },
   {
@@ -24,7 +24,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'สารบรรณ',
     fontFamily: "'Sarabun', sans-serif",
     googleFontQuery: 'Sarabun:wght@300;400;500;600;700;800',
-    previewText: 'ระบบติดตามงานและวินัยชีวิตประจำวัน',
+    previewText: 'คุยกับลูกค้าด้วยภาษาเทพแต่เขารับฟังด้วยภาษาคน',
     category: 'Formal & Clean',
   },
   {
@@ -33,7 +33,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'พร้อม',
     fontFamily: "'Prompt', sans-serif",
     googleFontQuery: 'Prompt:wght@300;400;500;600;700;800',
-    previewText: 'สร้างเป้าหมายและนิสัยที่ดีในทุกๆ วัน',
+    previewText: 'แก้โค้ดระบบด้วยการสวดมนต์ศักดิ์สิทธิ์ผิดที่ไฟลุก',
     category: 'Sleek Sans-Serif',
   },
   {
@@ -42,7 +42,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'คนิต',
     fontFamily: "'Kanit', sans-serif",
     googleFontQuery: 'Kanit:wght@300;400;500;600;700;800',
-    previewText: 'วางแผนงานอย่างมีระเบียบและทรงพลัง',
+    previewText: 'คิดแคมเปญระดับพันล้านแต่เงินในบัญชีเหลือหลักร้อย',
     category: 'Bold Geometric',
   },
   {
@@ -51,7 +51,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'ปรีดี',
     fontFamily: "'Pridi', sans-serif",
     googleFontQuery: 'Pridi:wght@300;400;500;600;700',
-    previewText: 'เพิ่มสมาธิและความสม่ำเสมอในทุกภารกิจ',
+    previewText: 'ตามงานด่วนด้วยจิตสัมผัสแต่ปลายสายชัตดาวน์หนี',
     category: 'Warm Slab Serif',
   },
   {
@@ -60,7 +60,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'จักรเพชร',
     fontFamily: "'Chakra Petch', sans-serif",
     googleFontQuery: 'Chakra+Petch:wght@300;400;500;600;700',
-    previewText: 'ยกระดับประสิทธิภาพชีวิตแบบก้าวกระโดด',
+    previewText: 'พรีเซนต์งานอย่างมาดนิ่งแต่ข้างหลังวิ่งกรีดร้อง',
     category: 'Futuristic Tech',
   },
   {
@@ -69,7 +69,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'มิตร',
     fontFamily: "'Mitr', sans-serif",
     googleFontQuery: 'Mitr:wght@300;400;500;600;700',
-    previewText: 'เช็คลิสต์งานย่อยและความสำเร็จวันนี้',
+    previewText: 'เคาะดีลใหญ่ด้วยการเป่ายิงฉุบใครแพ้คุมงาน',
     category: 'Soft Rounded',
   },
   {
@@ -78,7 +78,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'ครับ',
     fontFamily: "'Krub', sans-serif",
     googleFontQuery: 'Krub:wght@300;400;500;600;700',
-    previewText: 'วางแผนวันนี้ เพื่อความสำเร็จในอนาคต',
+    previewText: 'เคลียร์กองเอกสารด้วยการโยนทิ้งแล้ววิ่งไปนอน',
     category: 'Curved Modern',
   },
   {
@@ -87,7 +87,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'อินเตอร์',
     fontFamily: "'Inter', sans-serif",
     googleFontQuery: 'Inter:wght@300;400;500;600;700;800',
-    previewText: 'Modern International Sans-Serif Font',
+    previewText: 'If one man can do, let him do.',
     category: 'International Minimal',
   },
 ];
