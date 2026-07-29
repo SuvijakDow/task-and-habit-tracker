@@ -246,19 +246,19 @@ export function AnalyticsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 xl:p-3.5 rounded-2xl border border-white/15 text-center w-full sm:flex-1 sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
-              <div className="px-2 py-0.5">
+            <div className="grid grid-cols-[0.8fr_1.4fr_1.1fr] gap-1 sm:gap-2 lg:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 xl:p-3.5 rounded-2xl border border-white/15 text-center w-full sm:flex-1 sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+              <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
                 <div className="text-base sm:text-lg font-black text-white">{filteredHabits.length}</div>
               </div>
-              <div className="px-2 py-0.5 border-x border-white/15">
+              <div className="px-2 sm:px-4 py-0.5 border-x border-white/15 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completions</div>
                 <div className="text-base sm:text-lg font-black text-amber-300 flex items-center justify-center gap-1">
                   <CheckCircle2 className="w-4 h-4 text-amber-300" />
                   {totalCompletions}
                 </div>
               </div>
-              <div className="px-2 py-0.5">
+              <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Consistency</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">{avgConsistency}%</div>
               </div>
