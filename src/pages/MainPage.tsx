@@ -35,43 +35,47 @@ export function MainPage() {
 
   return (
     <div>
-      {/* Navigation Tabs */}
-      <div className="hidden md:block sticky top-0 z-20 border-b border-purple-100/90 bg-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(124,58,237,0.1)] nav-animated">
-        <nav className="hidden md:grid grid-cols-3 items-center gap-2.5 px-3 py-2.5 max-w-4xl mx-auto">
+      {/* Navigation Tabs (Floating Segmented Capsule) */}
+      <div className="hidden md:block sticky top-2 z-20 px-4 py-1 my-0.5">
+        <nav className="max-w-2xl mx-auto grid grid-cols-3 items-center gap-2 p-1.5 rounded-2xl bg-[#180938]/95 border border-purple-500/35 shadow-xl shadow-purple-950/40 backdrop-blur-2xl">
           {navItems.map((item) => (
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`inline-flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-sm lg:text-base font-bold transition-all nav-item-motion focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 ${
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm lg:text-base font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
                 currentPage === item.key
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.35)] scale-[1.02]'
-                  : 'bg-purple-50/70 text-purple-900/80 hover:bg-purple-100/90 hover:text-purple-950 border border-purple-200/60 shadow-2xs'
+                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white shadow-md shadow-purple-500/35 scale-[1.01] border border-white/20'
+                  : 'bg-purple-950/50 hover:bg-purple-900/70 text-purple-100 hover:text-white border border-purple-500/20'
               }`}
             >
-              <item.icon className={`h-5 w-5 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
-              {item.label}
+              <item.icon className={`h-4.5 w-4.5 ${currentPage === item.key ? 'text-white' : 'text-purple-300'}`} />
+              <span className={currentPage === item.key ? 'text-white font-extrabold' : 'text-purple-100 font-bold'}>
+                {item.label}
+              </span>
             </button>
           ))}
         </nav>
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-purple-100/90 bg-white/95 backdrop-blur-xl shadow-[0_-8px_25px_rgba(124,58,237,0.12)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
+      <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-purple-800/40 bg-[#14082e]/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(15,23,42,0.4)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
         <div className="grid grid-cols-3 gap-1.5 px-2">
           {navItems.map((item) => (
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`min-h-[42px] rounded-xl px-1 py-1.5 text-[11px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 ${
+              className={`min-h-[42px] rounded-xl px-1 py-1.5 text-[11px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
                 currentPage === item.key
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_8px_20px_rgba(168,85,247,0.3)]'
-                  : 'bg-purple-50/70 text-purple-900/80 border border-purple-200/60'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_8px_20px_rgba(192,132,252,0.4)] border border-white/20'
+                  : 'bg-purple-950/50 text-purple-100 border border-purple-500/20'
               }`}
               aria-label={item.label}
             >
               <span className="flex flex-col items-center justify-center gap-0.5">
-                <item.icon className={`h-4 w-4 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
-                <span className="leading-none">{item.mobileLabel}</span>
+                <item.icon className={`h-4 w-4 ${currentPage === item.key ? 'text-white' : 'text-purple-300'}`} />
+                <span className={`leading-none ${currentPage === item.key ? 'text-white font-bold' : 'text-purple-100 font-semibold'}`}>
+                  {item.mobileLabel}
+                </span>
               </span>
             </button>
           ))}
@@ -79,7 +83,7 @@ export function MainPage() {
       </nav>
 
       {/* Page Content */}
-      <div key={currentPage} className="page-enter pt-2.5 pb-[5.5rem] md:pb-0 md:pt-4">
+      <div key={currentPage} className="page-enter pt-1 pb-[5.5rem] md:pb-0 md:pt-0">
         <Suspense fallback={<div className="p-4">Loading page...</div>}>
           {currentPageContent}
         </Suspense>

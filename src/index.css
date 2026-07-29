@@ -108,13 +108,6 @@ body {
 }
 
 .nav-animated {
-  background-image: linear-gradient(
-    115deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.58),
-    rgba(245, 232, 255, 0.58),
-    rgba(255, 255, 255, 0.72)
-  );
   background-size: 100% 100%;
 }
 

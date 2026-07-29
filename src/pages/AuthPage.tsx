@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { Settings, CheckSquare } from 'lucide-react';
+import { Settings, CheckSquare, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { normalizeProfilePhotoURL } from '@/services/userService';
 const MainPage = lazy(() => import('./MainPage').then((m) => ({ default: m.MainPage })));
@@ -14,6 +14,7 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSignOutConfirmOpen, setIsSignOutConfirmOpen] = useState(false);
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -29,11 +30,12 @@ export function AuthPage() {
     displayName: '',
   });
 
-  const handleLogout = async () => {
+  const handleConfirmLogout = async () => {
     try {
       setIsSubmitting(true);
       const { signOut } = await import('@/services/authService');
       await signOut();
+      setIsSignOutConfirmOpen(false);
     } catch (err) {
       setError('Could not sign out. Please try again.');
     } finally {
@@ -62,46 +64,50 @@ export function AuthPage() {
     return (
       <div className="min-h-screen">
         {/* Profile header with logout */}
-        <div className="bg-white/90 sm:bg-white/95 backdrop-blur-xl border-b border-purple-100/80 shadow-[0_4px_20px_rgba(124,58,237,0.08)]">
-          <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
+        <div className="bg-gradient-to-r from-[#14082e] via-[#1c0b42] to-[#14082e] border-b border-purple-800/45 shadow-md relative overflow-hidden">
+          {/* Subtle background glow effect */}
+          <div className="absolute left-1/4 -top-10 w-64 h-24 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute right-1/4 -bottom-10 w-64 h-24 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex items-center gap-3">
-                <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-400 shadow-xs shrink-0">
+                <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-400 shadow-md shadow-purple-500/30 shrink-0">
                   {profilePhoto ? (
                     <img
                       src={profilePhoto}
                       alt={profileName || 'Profile'}
-                      className="h-8 w-8 md:h-10 md:w-10 rounded-full border-2 border-white object-cover bg-white"
+                      className="h-8 w-8 md:h-10 md:w-10 rounded-full border-2 border-slate-900 object-cover bg-slate-900"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="h-8 w-8 md:h-10 md:w-10 rounded-full border-2 border-white bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs md:text-sm">
+                    <div className="h-8 w-8 md:h-10 md:w-10 rounded-full border-2 border-slate-900 bg-purple-900 text-purple-200 font-extrabold flex items-center justify-center text-xs md:text-sm">
                       {(profileName || 'U').charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-sm md:text-base font-bold text-gray-900 truncate tracking-tight">
+                  <h1 className="text-sm md:text-base font-bold text-white truncate tracking-tight">
                     {profileName}
                   </h1>
-                  <p className="text-gray-500 text-[11px] md:text-xs mt-0.5 font-medium truncate">{user.email}</p>
+                  <p className="text-purple-200/80 text-[11px] md:text-xs mt-0.5 font-medium truncate">{user.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsSettingsOpen(true)}
-                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 transition-all flex items-center justify-center flex-shrink-0 shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-white/10 hover:bg-white/20 text-purple-200 hover:text-white border border-white/20 backdrop-blur-md transition-all flex items-center justify-center flex-shrink-0 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                   title="Settings"
                   aria-label="Open settings"
                 >
                   <Settings size={17} />
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setIsSignOutConfirmOpen(true)}
                   disabled={isSubmitting}
-                  className="px-3.5 py-2 min-h-[38px] sm:min-h-[40px] bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-800 font-bold rounded-xl border border-purple-200/80 transition-all disabled:opacity-50 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70"
+                  className="px-3.5 py-2 min-h-[38px] sm:min-h-[40px] bg-white/10 hover:bg-white/20 text-purple-100 hover:text-white font-bold rounded-xl border border-white/20 backdrop-blur-md transition-all disabled:opacity-50 text-xs sm:text-sm flex-shrink-0 whitespace-nowrap shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                 >
-                  {isSubmitting ? 'Signing out...' : 'Sign Out'}
+                  Sign Out
                 </button>
               </div>
             </div>
@@ -117,6 +123,41 @@ export function AuthPage() {
         <Suspense>
           <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </Suspense>
+
+        {/* Sign Out Confirmation Modal */}
+        {isSignOutConfirmOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+            <div className="modal-enter w-full max-w-sm rounded-2xl border border-purple-100/90 bg-white/95 backdrop-blur-2xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(120,87,255,0.25)] space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-500 text-white shadow-md shadow-purple-500/30">
+                  <LogOut size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Sign Out</h3>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5">Are you sure you want to sign out?</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSignOutConfirmOpen(false)}
+                  disabled={isSubmitting}
+                  className="flex-1 min-h-[40px] rounded-xl border border-gray-200 bg-gray-100 hover:bg-gray-200 text-sm font-bold text-gray-700 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmLogout}
+                  disabled={isSubmitting}
+                  className="flex-1 min-h-[40px] rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-sm font-bold text-white shadow-md shadow-purple-500/25 hover:brightness-110 transition disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Signing out...' : 'Sign Out'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

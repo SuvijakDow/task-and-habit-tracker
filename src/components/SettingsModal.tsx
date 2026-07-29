@@ -142,47 +142,47 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   if (!isOpen) return null;
 
   const busy = isSaving || isUploading || isDeletingAccount;
-
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-[2px] flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="modal-enter w-full max-w-md max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto bg-white/95 sm:bg-white/88 backdrop-blur-xl border border-white/70 rounded-t-2xl sm:rounded-2xl shadow-[0_-12px_32px_rgba(120,87,255,0.24)] sm:shadow-[0_24px_56px_rgba(120,87,255,0.26)]">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 sm:p-6 pb-2">
+    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-950/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="modal-enter w-full max-w-md max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-2xl border border-purple-100/90 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.25)] overflow-hidden">
+        {/* Sticky Header */}
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-white/95 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <Settings className="text-white" size={18} />
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-500 flex items-center justify-center shadow-md shadow-purple-500/25">
+              <Settings className="text-white" size={19} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Settings</h2>
+            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">Settings</h2>
           </div>
           <button
             onClick={onClose}
             disabled={busy}
-            className="h-11 w-11 rounded-lg bg-white/50 hover:bg-white/80 text-gray-400 hover:text-gray-600 transition-all flex items-center justify-center disabled:opacity-50"
+            className="h-9 w-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 transition-all flex items-center justify-center border border-purple-100 disabled:opacity-50"
             aria-label="Close settings"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="px-5 sm:px-6 pb-6 pt-4 space-y-6">
+        {/* Scrollable Content Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {/* Messages */}
           {error && (
-            <div className="p-3 bg-red-50/90 border border-red-200 rounded-xl text-red-700 text-sm">
+            <div className="p-3 bg-rose-50/90 border border-rose-200 rounded-xl text-rose-700 text-sm font-medium">
               {error}
             </div>
           )}
           {success && (
-            <div className="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl text-emerald-700 text-sm flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <div className="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-semibold flex items-center gap-2">
+              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
-              Profile saved!
+              Profile saved successfully!
             </div>
           )}
 
-          {/* Display Name */}
+          {/* Display Name Input */}
           <div>
-            <label htmlFor="settings-displayName" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="settings-displayName" className="block text-sm font-bold text-gray-800 mb-1.5">
               Display Name
             </label>
             <input
@@ -190,21 +190,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your name"
+              placeholder="Your display name"
               disabled={busy}
-              className="w-full min-h-[44px] px-4 py-2.5 bg-white/60 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white disabled:opacity-50 transition-all text-base text-gray-900 placeholder-gray-400"
+              className="w-full min-h-[44px] px-4 py-2.5 bg-purple-50/40 border border-purple-200/80 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/15 focus:border-purple-500 focus:bg-white disabled:opacity-50 transition-all text-base font-semibold text-gray-900 placeholder-gray-400 shadow-2xs"
             />
           </div>
 
-          {/* Avatar Selection */}
-          <div>
-            <p className="text-sm font-semibold text-gray-700 mb-3">
+          {/* Avatar Selection Section */}
+          <div className="pt-1 border-t border-purple-100/70">
+            <p className="text-sm font-bold text-gray-800 mb-3">
               Profile Picture
             </p>
 
             {/* Current preview + Upload button */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-16 w-16 rounded-xl border-2 border-purple-300 overflow-hidden shadow-lg flex-shrink-0 bg-white/70">
+              <div className="h-16 w-16 rounded-2xl border-2 border-purple-400/80 overflow-hidden shadow-md shrink-0 bg-white">
                 {normalizedSelectedAvatar ? (
                   <img
                     src={normalizedSelectedAvatar}
@@ -214,7 +214,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                    <ImagePlus className="text-purple-300" size={24} />
+                    <ImagePlus className="text-purple-400" size={24} />
                   </div>
                 )}
               </div>
@@ -223,12 +223,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={busy}
-                  className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2.5 bg-white/70 border border-purple-200 text-purple-700 font-semibold rounded-lg hover:bg-white hover:border-purple-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                  className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 bg-purple-50 border border-purple-200 text-purple-700 font-bold rounded-xl hover:bg-purple-100 hover:border-purple-300 transition-all disabled:opacity-50 text-sm shadow-2xs"
                 >
                   <Upload size={15} />
                   {isUploading ? 'Uploading...' : 'Upload Photo'}
                 </button>
-                <p className="text-gray-400 text-xs mt-1.5">JPG, PNG, or WebP · Max 5MB</p>
+                <p className="text-gray-400 text-xs mt-1.5 font-medium">JPG, PNG, or WebP · Max 5MB</p>
               </div>
               <input
                 ref={fileInputRef}
@@ -241,8 +241,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             {/* Avatar grid */}
-            <p className="text-xs font-medium text-gray-500 mb-2">Or choose a default avatar:</p>
-            <div className="grid grid-cols-4 gap-3">
+            <p className="text-xs font-semibold text-gray-500 mb-2.5">Or choose a default avatar:</p>
+            <div className="grid grid-cols-4 gap-2.5">
               {avatarOptions.map((avatarURL, index) => {
                 const normalizedAvatarURL = normalizeProfilePhotoURL(avatarURL);
                 const isSelected = normalizedSelectedAvatar === normalizedAvatarURL;
@@ -254,24 +254,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     type="button"
                     onClick={() => setSelectedAvatar(avatarURL)}
                     disabled={busy}
-                    className={`relative aspect-square rounded-xl border-2 overflow-hidden transition-all duration-200 hover:scale-105 disabled:opacity-50 ${isSelected
-                        ? 'border-purple-500 ring-2 ring-purple-300 shadow-lg shadow-purple-500/25 scale-105'
-                        : 'border-white/50 hover:border-purple-300 shadow-md'
-                      }`}
+                    className={`relative aspect-square rounded-2xl border-2 overflow-hidden transition-all duration-200 hover:scale-105 disabled:opacity-50 ${
+                      isSelected
+                        ? 'border-purple-500 ring-4 ring-purple-500/20 shadow-md shadow-purple-500/25 scale-105'
+                        : 'border-purple-100 hover:border-purple-300 shadow-2xs'
+                    }`}
                     aria-label={isGooglePhoto ? 'Your Google photo' : `Avatar option ${index + 1}`}
                     title={isGooglePhoto ? 'Your Google photo' : `Avatar ${index + 1}`}
-                    >
+                  >
                     <img
                       src={normalizedAvatarURL}
                       alt={isGooglePhoto ? 'Google profile photo' : `Avatar ${index + 1}`}
-                      className="w-full h-full object-cover bg-white/70"
+                      className="w-full h-full object-cover bg-white"
                       loading="lazy"
                       referrerPolicy="no-referrer"
                     />
 
                     {/* Selected checkmark */}
                     {isSelected && (
-                      <div className="absolute bottom-1 right-1 h-5 w-5 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-md">
+                      <div className="absolute bottom-1 right-1 h-5 w-5 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center shadow-md ring-2 ring-white">
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
@@ -280,7 +281,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                     {/* Google badge */}
                     {isGooglePhoto && (
-                      <div className="absolute top-1 left-1 h-4 w-4 bg-white rounded-full flex items-center justify-center shadow-sm">
+                      <div className="absolute top-1 left-1 h-4 w-4 bg-white rounded-full flex items-center justify-center shadow-xs border border-gray-200">
                         <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -294,43 +295,58 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               })}
             </div>
 
-            {/* Show label if custom uploaded photo is selected */}
+            {/* Custom uploaded photo badge */}
             {isCustomUpload && (
-              <p className="text-xs text-purple-600 font-medium mt-2 flex items-center gap-1.5">
-                <Upload size={12} />
+              <p className="text-xs text-purple-600 font-semibold mt-2.5 flex items-center gap-1.5">
+                <Upload size={13} />
                 Using your uploaded photo
               </p>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-            <button
-              onClick={handleSave}
-              disabled={busy}
-              className="flex-1 min-h-[44px] py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-semibold rounded-lg shadow-lg shadow-purple-500/30 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
-            <button
-              onClick={onClose}
-              disabled={busy}
-              className="flex-1 min-h-[44px] py-2.5 bg-white/60 border border-white/40 text-gray-700 text-base font-semibold rounded-lg hover:bg-white/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-          </div>
-
-          <section className="rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+          {/* Danger Zone */}
+          <section className="rounded-2xl border border-rose-200/90 bg-rose-50/60 p-4 shadow-2xs">
             <div className="flex gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600"><AlertTriangle size={18} /></div>
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-2xs">
+                <AlertTriangle size={18} />
+              </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-rose-900">Danger Zone</h3>
-                <p className="mt-1 text-xs leading-relaxed text-rose-700">Permanently delete your account and all tasks, habits, categories, presets, and profile data.</p>
-                <button type="button" onClick={() => setIsDeleteDialogOpen(true)} disabled={busy} className="mt-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"><Trash2 size={14} />Delete Account</button>
+                <h3 className="font-bold text-rose-900 text-sm">Danger Zone</h3>
+                <p className="mt-1 text-xs leading-relaxed text-rose-700 font-medium">
+                  Permanently delete your account and all tasks, habits, categories, presets, and profile data.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  disabled={busy}
+                  className="mt-3 inline-flex min-h-[36px] items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white transition shadow-2xs disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                  Delete Account
+                </button>
               </div>
             </div>
           </section>
+        </div>
+
+        {/* Sticky Footer Action Buttons */}
+        <div className="flex items-center gap-3 p-4 border-t border-purple-100/80 bg-white/95 shrink-0 rounded-b-2xl">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="flex-1 min-h-[42px] py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl border border-gray-200 transition-all disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={busy}
+            className="flex-1 min-h-[42px] py-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white text-sm font-bold rounded-xl shadow-md shadow-purple-500/25 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50"
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
 
