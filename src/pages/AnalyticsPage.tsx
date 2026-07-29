@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Award, Calendar, CheckCircle2, ChevronDown, Clock, Flame, Layers, Minus, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, calculateTotalCompletions, getPast7DaysStatus, getDayAbbreviation, resetHabitData, getHabitColorHex } from '@/services/habitService';
-import { DailyHabit, HabitSet } from '@/types';
+import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
 import { ContributionHeatmap } from '@/components/ContributionHeatmap';
 import { showToast } from '@/components/Toast';
 
@@ -120,7 +120,10 @@ export function AnalyticsPage() {
   const filteredHabits = useMemo(() => {
     const defaultSetId = habitSets[0]?.id;
     return habits.filter((h) => {
-      if (h.setId) return h.setId === selectedSetId;
+      const setIds = getHabitSetIds(h);
+      if (setIds.length > 0) {
+        return setIds.includes(selectedSetId);
+      }
       return selectedSetId === defaultSetId;
     });
   }, [habits, selectedSetId, habitSets]);

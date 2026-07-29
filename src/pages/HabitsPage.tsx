@@ -52,6 +52,7 @@ export function HabitsPage() {
   const [endTime, setEndTime] = useState('10:00');
   const [habitColor, setHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
   const [habitSetIds, setHabitSetIds] = useState<string[]>([]);
+  const [routineSearchQuery, setRoutineSearchQuery] = useState('');
   const [targetValue, setTargetValue] = useState<number | undefined>(undefined);
   const [targetUnit, setTargetUnit] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -798,48 +799,81 @@ export function HabitsPage() {
 
                     {/* Routines (Multi-Select) */}
                     <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5 shrink-0">
                           <Layers className="w-4 h-4 text-purple-700" />
                           Routines (Presets)
                         </label>
-                        <span className="text-[11px] font-semibold text-purple-600">
-                          {habitSetIds.length > 0 ? `${habitSetIds.length} selected` : '1 selected'}
-                        </span>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => setHabitSetIds(sortedHabitSets.map((s) => s.id))}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            All
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setHabitSetIds([activeSetId])}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            Active Only
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <span className="text-purple-600 font-bold">
+                            {habitSetIds.length > 0 ? `${habitSetIds.length} selected` : '1 selected'}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-[11px] font-medium text-gray-500">Select routines this habit belongs to (can select multiple):</p>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {sortedHabitSets.map((s) => {
-                          const isChecked = habitSetIds.length > 0 ? habitSetIds.includes(s.id) : s.id === activeSetId;
-                          return (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => {
-                                setHabitSetIds((prev) => {
-                                  const effective = prev.length === 0 ? [activeSetId] : prev;
-                                  if (effective.includes(s.id)) {
-                                    const next = effective.filter((id) => id !== s.id);
-                                    return next.length > 0 ? next : [activeSetId];
-                                  }
-                                  return [...effective, s.id];
-                                });
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                                isChecked
-                                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-xs scale-[1.02]'
-                                  : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
-                              }`}
-                            >
-                              <div
-                                className={`w-2.5 h-2.5 rounded-full ${isChecked ? 'bg-white' : ''}`}
-                                style={{ backgroundColor: isChecked ? undefined : s.color || '#A78BFA' }}
-                              />
-                              <span>{s.name}</span>
-                              {isChecked && <Check className="w-3.5 h-3.5 text-white ml-0.5" />}
-                            </button>
-                          );
-                        })}
+
+                      {/* Mini search bar if many routines exist */}
+                      {sortedHabitSets.length > 6 && (
+                        <input
+                          type="text"
+                          value={routineSearchQuery}
+                          onChange={(e) => setRoutineSearchQuery(e.target.value)}
+                          placeholder="Search routines..."
+                          className="w-full min-h-[30px] px-2.5 py-1 bg-white border border-purple-200/90 rounded-lg text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                        />
+                      )}
+
+                      {/* Scrollable Compact Chip List */}
+                      <div className="max-h-32 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-purple-200/80 flex flex-wrap gap-1.5 custom-scrollbar">
+                        {sortedHabitSets
+                          .filter((s) => s.name.toLowerCase().includes(routineSearchQuery.toLowerCase()))
+                          .map((s) => {
+                            const isChecked = habitSetIds.length > 0 ? habitSetIds.includes(s.id) : s.id === activeSetId;
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => {
+                                  setHabitSetIds((prev) => {
+                                    const effective = prev.length === 0 ? [activeSetId] : prev;
+                                    if (effective.includes(s.id)) {
+                                      const next = effective.filter((id) => id !== s.id);
+                                      return next.length > 0 ? next : [activeSetId];
+                                    }
+                                    return [...effective, s.id];
+                                  });
+                                }}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                                  isChecked
+                                    ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-2xs scale-[1.01]'
+                                    : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
+                                }`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full ${isChecked ? 'bg-white' : ''}`}
+                                  style={{ backgroundColor: isChecked ? undefined : s.color || '#A78BFA' }}
+                                />
+                                <span className="truncate max-w-[120px]">{s.name}</span>
+                                {isChecked && <Check className="w-3 h-3 text-white shrink-0 ml-0.5" />}
+                              </button>
+                            );
+                          })}
                       </div>
                     </div>
 
@@ -1343,48 +1377,81 @@ export function HabitsPage() {
 
                     {/* Routines (Multi-Select) */}
                     <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5 shrink-0">
                           <Layers className="w-4 h-4 text-purple-700" />
                           Routines (Presets)
                         </label>
-                        <span className="text-[11px] font-semibold text-purple-600">
-                          {editHabitSetIds.length > 0 ? `${editHabitSetIds.length} selected` : '1 selected'}
-                        </span>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => setEditHabitSetIds(sortedHabitSets.map((s) => s.id))}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            All
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <button
+                            type="button"
+                            onClick={() => setEditHabitSetIds([activeSetId])}
+                            className="text-purple-700 hover:text-purple-900 hover:underline transition"
+                          >
+                            Active Only
+                          </button>
+                          <span className="text-purple-300">•</span>
+                          <span className="text-purple-600 font-bold">
+                            {editHabitSetIds.length > 0 ? `${editHabitSetIds.length} selected` : '1 selected'}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-[11px] font-medium text-gray-500">Select routines this habit belongs to (can select multiple):</p>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {sortedHabitSets.map((s) => {
-                          const isChecked = editHabitSetIds.length > 0 ? editHabitSetIds.includes(s.id) : s.id === activeSetId;
-                          return (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => {
-                                setEditHabitSetIds((prev) => {
-                                  const effective = prev.length === 0 ? [activeSetId] : prev;
-                                  if (effective.includes(s.id)) {
-                                    const next = effective.filter((id) => id !== s.id);
-                                    return next.length > 0 ? next : [activeSetId];
-                                  }
-                                  return [...effective, s.id];
-                                });
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                                isChecked
-                                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-xs scale-[1.02]'
-                                  : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
-                              }`}
-                            >
-                              <div
-                                className={`w-2.5 h-2.5 rounded-full ${isChecked ? 'bg-white' : ''}`}
-                                style={{ backgroundColor: isChecked ? undefined : s.color || '#A78BFA' }}
-                              />
-                              <span>{s.name}</span>
-                              {isChecked && <Check className="w-3.5 h-3.5 text-white ml-0.5" />}
-                            </button>
-                          );
-                        })}
+
+                      {/* Mini search bar if many routines exist */}
+                      {sortedHabitSets.length > 6 && (
+                        <input
+                          type="text"
+                          value={routineSearchQuery}
+                          onChange={(e) => setRoutineSearchQuery(e.target.value)}
+                          placeholder="Search routines..."
+                          className="w-full min-h-[30px] px-2.5 py-1 bg-white border border-purple-200/90 rounded-lg text-xs font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-400"
+                        />
+                      )}
+
+                      {/* Scrollable Compact Chip List */}
+                      <div className="max-h-32 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-purple-200/80 flex flex-wrap gap-1.5 custom-scrollbar">
+                        {sortedHabitSets
+                          .filter((s) => s.name.toLowerCase().includes(routineSearchQuery.toLowerCase()))
+                          .map((s) => {
+                            const isChecked = editHabitSetIds.length > 0 ? editHabitSetIds.includes(s.id) : s.id === activeSetId;
+                            return (
+                              <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => {
+                                  setEditHabitSetIds((prev) => {
+                                    const effective = prev.length === 0 ? [activeSetId] : prev;
+                                    if (effective.includes(s.id)) {
+                                      const next = effective.filter((id) => id !== s.id);
+                                      return next.length > 0 ? next : [activeSetId];
+                                    }
+                                    return [...effective, s.id];
+                                  });
+                                }}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                                  isChecked
+                                    ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-2xs scale-[1.01]'
+                                    : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
+                                }`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full ${isChecked ? 'bg-white' : ''}`}
+                                  style={{ backgroundColor: isChecked ? undefined : s.color || '#A78BFA' }}
+                                />
+                                <span className="truncate max-w-[120px]">{s.name}</span>
+                                {isChecked && <Check className="w-3 h-3 text-white shrink-0 ml-0.5" />}
+                              </button>
+                            );
+                          })}
                       </div>
                     </div>
 
