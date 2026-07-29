@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, Sparkles, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -84,7 +84,7 @@ const getCategoryErrorMessage = (error: unknown): string => {
 };
 
 export function TasksPage() {
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [presets, setPresets] = useState<TaskPreset[]>([]);
@@ -634,7 +634,6 @@ export function TasksPage() {
       </div>
     );
   }
-  const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
   const sortedPresets = useMemo(() => {
     return [...presets].sort((a, b) =>
@@ -734,18 +733,17 @@ export function TasksPage() {
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 sm:gap-4">
-            {/* Top Row / Desktop Left: Greeting */}
+            {/* Top Row / Desktop Left: Title */}
             <div className="flex flex-col sm:flex-row sm:items-center xl:flex-col xl:items-start justify-between gap-3 xl:gap-1">
               <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    Task Command Center
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 border border-white/25 backdrop-blur-md shadow-2xs">
+                    <CheckCircle2 className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    Task Hub
                   </h1>
                 </div>
-                <p className="mt-1 text-xs sm:text-sm text-purple-100/80 font-medium">
-                  Welcome back, {userDisplayName}! Focus on priorities and conquer your goals.
-                </p>
               </div>
 
               {/* Tablet Top-Right Action Buttons (Hidden on full desktop xl, shown inside flex-row on mobile/tablet) */}

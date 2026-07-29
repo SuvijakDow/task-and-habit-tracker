@@ -34,7 +34,7 @@ const getCategoryErrorMessage = (error: unknown): string => {
 };
 
 export function CategoriesPage() {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +57,6 @@ export function CategoriesPage() {
     color: PASTEL_CATEGORY_COLORS[0],
   });
   const categoryNameInputRef = useRef<HTMLInputElement>(null);
-  const userDisplayName = userProfile?.displayName?.trim() || user?.displayName?.trim() || 'there';
 
   const loadData = async () => {
     if (!user) return;
@@ -283,9 +282,6 @@ export function CategoriesPage() {
         <h1 className="text-xl sm:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-pink-600">
           Task Categories
         </h1>
-        <p className="mt-1 text-sm sm:text-base text-gray-500 font-medium">
-          Welcome back, {userDisplayName}! Organize tasks into clear, color-coded groups.
-        </p>
       </div>
 
       {error && !(loadError && categories.length === 0) && (

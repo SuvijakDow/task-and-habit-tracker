@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, Sparkles, X, Target, Pencil, Trash2 } from 'lucide-react';
+import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2 } from 'lucide-react';
 import { DailyHabit, HabitSet } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -30,7 +30,7 @@ import { ManageHabitSetsModal } from '@/components/ManageHabitSetsModal';
 import HabitsTable from '@/components/HabitsTable';
 
 export function HabitsPage() {
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
   const [activeSetId, setActiveSetId] = useState<string>('');
@@ -533,7 +533,6 @@ export function HabitsPage() {
       </div>
     );
   }
-  const userDisplayName = userProfile?.displayName?.trim() || user.displayName?.trim() || 'there';
 
   return (
     <div className="min-h-screen pt-3 md:pt-6 pb-6 md:pb-12">
@@ -544,18 +543,17 @@ export function HabitsPage() {
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 sm:gap-4">
-            {/* Top Row / Desktop Left: Greeting */}
+            {/* Top Row / Desktop Left: Title */}
             <div className="flex flex-col sm:flex-row sm:items-center xl:flex-col xl:items-start justify-between gap-3 xl:gap-1">
               <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                    Daily Habits & Routines
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 border border-white/25 backdrop-blur-md shadow-2xs">
+                    <Flame className="w-5 h-5 text-amber-300 animate-pulse" />
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    Daily Habits
                   </h1>
                 </div>
-                <p className="mt-1 text-xs sm:text-sm text-purple-100/80 font-medium">
-                  Welcome back, {userDisplayName}! Build momentum and stay consistent every day.
-                </p>
               </div>
 
               {/* Tablet Top-Right Action Buttons (Hidden on full desktop xl, shown inside flex-row on mobile/tablet) */}

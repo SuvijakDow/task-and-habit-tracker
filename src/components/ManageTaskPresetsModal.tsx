@@ -61,16 +61,19 @@ export function ManageTaskPresetsModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm">
-      <div className="modal-enter w-full max-w-md overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white px-5 py-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/40 p-3 sm:p-4 backdrop-blur-sm">
+      <div className="modal-enter w-full max-w-md bg-white rounded-2xl shadow-2xl border border-purple-100 overflow-hidden flex flex-col max-h-[85vh]">
+        {/* Pinned Header */}
+        <div className="flex items-center justify-between border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white px-5 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white"><Layers className="h-5 w-5" /></div>
             <div><h2 className="font-bold text-gray-900">Manage Task Periods</h2><p className="text-xs text-gray-500">Group tasks by period, semester, or term</p></div>
           </div>
           <button onClick={onClose} aria-label="Close periods" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
-        <div className="space-y-3 p-5">
+
+        {/* Scrollable List Body */}
+        <div className="space-y-3 p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
           {sortedPresets.map((preset) => {
             const active = preset.id === activePresetId;
             const isEditing = preset.id === editingId;
@@ -88,8 +91,12 @@ export function ManageTaskPresetsModal({
               </div>
             </div>;
           })}
+        </div>
+
+        {/* Sticky Pinned Creation Footer */}
+        <div className="p-4 sm:p-5 border-t border-purple-100 bg-purple-50/50 shrink-0">
           {isCreating ? (
-            <form onSubmit={createPreset} className="space-y-3 border-t border-purple-200 bg-purple-50/50 pt-4">
+            <form onSubmit={createPreset} className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900">Create New Period</h3>
               <input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. 2569/1, Summer Break, Project A" className="w-full rounded-lg border border-purple-200 bg-white px-3 py-2 text-sm outline-none focus:border-purple-500" autoFocus />
               <div className="flex flex-wrap gap-1.5">{colors.map((value) => <button key={value} type="button" onClick={() => setColor(value)} aria-label={`Select ${value}`} className={`h-6 w-6 rounded-full border-2 ${color === value ? 'scale-110 border-purple-600' : 'border-transparent'}`} style={{ backgroundColor: value }} />)}</div>

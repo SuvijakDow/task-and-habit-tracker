@@ -72,9 +72,9 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[10000] p-3 sm:p-4">
-      <div className="modal-enter w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-purple-100 overflow-hidden flex flex-col max-h-[90dvh]">
+      <div className="modal-enter w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-purple-100 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 via-pink-50/50 to-white">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 via-pink-50/50 to-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md">
               <Layers className="w-5 h-5" />
@@ -94,31 +94,31 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
           </button>
         </div>
 
-        {/* Content Area */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 bg-slate-50/50">
+        {/* Scrollable Content Area */}
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 space-y-3 bg-slate-50/50">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+            Your Routines
+          </label>
+
           {/* List of Habit Sets */}
           <div className="space-y-2.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
-              Your Routines
-            </label>
-
             {sortedHabitSets.map((set) => {
               const isActive = set.id === activeSetId;
               const isEditing = set.id === editingSetId;
 
               if (isEditing) {
                 return (
-                  <div key={set.id} className="p-3.5 bg-white rounded-xl border-2 border-purple-400 shadow-sm space-y-3">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        placeholder="e.g. Semester, Vacation"
-                        className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-purple-200 focus:border-purple-500 focus:outline-none"
-                        autoFocus
-                      />
-                    </div>
+                  <div
+                    key={set.id}
+                    className="p-3 bg-white border-2 border-purple-400 rounded-xl space-y-3 shadow-sm"
+                  >
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm rounded-lg border border-purple-200 focus:border-purple-500 focus:outline-none"
+                      autoFocus
+                    />
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-gray-500 font-medium mr-1">Color:</span>
                       {PASTEL_HABIT_COLORS.map((c) => (
@@ -133,7 +133,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                         />
                       ))}
                     </div>
-                    <div className="flex items-center justify-end gap-2 pt-1">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => setEditingSetId(null)}
@@ -143,9 +143,9 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                       </button>
                       <button
                         type="button"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !editName.trim()}
                         onClick={() => handleSaveEdit(set.id)}
-                        className="px-3.5 py-1 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+                        className="px-3 py-1 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
                       >
                         Save
                       </button>
@@ -157,22 +157,24 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               return (
                 <div
                   key={set.id}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                  className={`flex items-center justify-between p-3 rounded-xl border transition ${
                     isActive
-                      ? 'bg-purple-50/90 border-purple-300 shadow-sm'
-                      : 'bg-white border-gray-200 hover:border-purple-200'
+                      ? 'bg-purple-50/80 border-purple-300 shadow-2xs'
+                      : 'bg-white border-gray-200/90 hover:border-purple-200'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className="w-4 h-4 rounded-full flex-shrink-0 shadow-xs"
+                      className="w-3.5 h-3.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: set.color || '#C084FC' }}
                     />
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-gray-900 truncate">{set.name}</span>
+                        <span className="font-semibold text-sm text-gray-900 truncate">
+                          {set.name}
+                        </span>
                         {isActive && (
-                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-600 text-white">
+                          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-600 text-white shadow-2xs">
                             Active
                           </span>
                         )}
@@ -221,10 +223,12 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               );
             })}
           </div>
+        </div>
 
-          {/* Create New Routine Section */}
+        {/* Sticky Pinned Creation Footer */}
+        <div className="p-4 sm:p-5 border-t border-purple-100 bg-purple-50/50 shrink-0">
           {isCreating ? (
-            <form onSubmit={handleCreate} className="p-3.5 bg-purple-50/50 rounded-xl border border-purple-200 space-y-3 mt-4">
+            <form onSubmit={handleCreate} className="space-y-3">
               <h3 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Create New Routine</h3>
               <input
                 type="text"
@@ -261,7 +265,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                   disabled={isSubmitting || !newSetName.trim()}
                   className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
                 >
-                  Create Routine
+                  Create
                 </button>
               </div>
             </form>
