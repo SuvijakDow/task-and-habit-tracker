@@ -187,6 +187,18 @@ export function HabitsPage() {
     return Math.round((totalProgressSum / scheduledTodayHabits.length) * 100);
   }, [scheduledTodayHabits]);
 
+  const openAddModal = () => {
+    setHabitTitle('');
+    setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
+    setStartTime('09:00');
+    setEndTime('10:00');
+    setHabitSetIds([activeSetId]);
+    setTargetValue(undefined);
+    setTargetUnit(undefined);
+    setError(null);
+    setIsAddModalOpen(true);
+  };
+
   const handleSelectActiveSet = async (setId: string) => {
     if (!user || setId === activeSetId) {
       setIsRoutineDropdownOpen(false);
@@ -593,15 +605,7 @@ export function HabitsPage() {
                 </button>
 
                 <button
-                  onClick={() => {
-                    setHabitTitle('');
-                    setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                    setStartTime('09:00');
-                    setEndTime('10:00');
-                    setHabitSetIds([activeSetId]);
-                    setError(null);
-                    setIsAddModalOpen(true);
-                  }}
+                  onClick={openAddModal}
                   className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-bold whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
@@ -640,15 +644,7 @@ export function HabitsPage() {
               </button>
 
               <button
-                onClick={() => {
-                  setHabitTitle('');
-                  setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                  setStartTime('09:00');
-                  setEndTime('10:00');
-                  setHabitSetIds([activeSetId]);
-                  setError(null);
-                  setIsAddModalOpen(true);
-                }}
+                onClick={openAddModal}
                 className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-sm font-bold whitespace-nowrap"
               >
                 <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -1089,14 +1085,7 @@ export function HabitsPage() {
             <p className="text-xs sm:text-sm text-gray-600 mb-4">Start building better habits in this routine preset by adding one above!</p>
             <button
               type="button"
-              onClick={() => {
-                setHabitTitle('');
-                setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
-                setStartTime('09:00');
-                setEndTime('10:00');
-                setError(null);
-                setIsAddModalOpen(true);
-              }}
+              onClick={openAddModal}
               className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
             >
               Add habit to preset
