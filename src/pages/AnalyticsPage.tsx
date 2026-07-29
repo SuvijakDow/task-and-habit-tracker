@@ -555,17 +555,16 @@ function HabitAnalyticsCard({
   };
 
   const tier = getConsistencyTier(consistency);
-
   return (
-    <div className="glass-card p-4 sm:p-5 border border-purple-200/80 rounded-2xl transition-all duration-300 relative overflow-hidden bg-white/95 backdrop-blur-xl space-y-3.5">
+    <div className="glass-card p-4 sm:p-5 lg:p-6 border border-purple-200/80 rounded-2xl lg:rounded-3xl transition-all duration-300 relative overflow-hidden bg-white/95 backdrop-blur-xl space-y-3.5 lg:space-y-5 shadow-sm hover:shadow-md">
       {/* Top Header Row */}
-      <div className="flex items-center justify-between gap-2 border-b border-purple-100/70 pb-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center justify-between gap-2 border-b border-purple-100/70 pb-3 lg:pb-4">
+        <div className="flex items-center gap-2.5 lg:gap-3.5 min-w-0">
           <span
-            className="w-2.5 h-6 sm:w-3 sm:h-7 rounded-full shrink-0 shadow-2xs"
+            className="w-2.5 h-6 sm:w-3 sm:h-7 lg:w-3.5 lg:h-8 rounded-full shrink-0 shadow-2xs"
             style={{ backgroundColor: getHabitColorHex(habit, habits) }}
           />
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight truncate">
             {habit.title}
           </h2>
         </div>
@@ -574,36 +573,36 @@ function HabitAnalyticsCard({
           type="button"
           onClick={() => setResetTargetHabit(habit)}
           disabled={isResetting}
-          className="shrink-0 p-1.5 rounded-lg bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/70 hover:border-rose-200 transition disabled:opacity-50"
+          className="shrink-0 p-1.5 lg:p-2 rounded-xl bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/70 hover:border-rose-200 transition disabled:opacity-50"
           title="Reset Habit Data"
           aria-label={`Reset tracking for ${habit.title}`}
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-4 w-4 lg:h-5 lg:w-5" />
         </button>
       </div>
 
       {/* Meta Pills Bar */}
-      <div className="flex items-center gap-1.5 flex-wrap text-[11px] sm:text-xs">
-        <span className="bg-purple-50 text-purple-700 border border-purple-200/80 px-2 py-0.5 rounded-md font-semibold inline-flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-purple-500" />
+      <div className="flex items-center gap-1.5 lg:gap-2.5 flex-wrap text-[11px] sm:text-xs lg:text-sm font-medium">
+        <span className="bg-purple-50 text-purple-700 border border-purple-200/80 px-2 py-0.5 lg:px-3 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1 lg:gap-1.5">
+          <Calendar className="w-3 h-3 lg:w-4 lg:h-4 text-purple-500" />
           {formatScheduledDaysText(rawScheduledDays)}
         </span>
 
         {habit.startTime && habit.endTime && (
-          <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-md font-semibold inline-flex items-center gap-1">
-            <Clock className="w-3 h-3 text-indigo-500" />
+          <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 lg:px-3 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1 lg:gap-1.5">
+            <Clock className="w-3 h-3 lg:w-4 lg:h-4 text-indigo-500" />
             {habit.startTime} - {habit.endTime}
           </span>
         )}
 
-        <span className="bg-slate-50 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 rounded-md font-semibold inline-flex items-center gap-1.5">
+        <span className="bg-slate-50 text-slate-700 border border-slate-200/80 px-2.5 py-0.5 lg:px-3.5 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1.5">
           <span>🗓️</span>
           <span>Since {formatDateStr(habit.trackingStartDate || habit.createdAt)}</span>
           <span className="text-purple-600 font-bold">• {getDaysAgoTextStr(habit.trackingStartDate || habit.createdAt)}</span>
         </span>
 
         {!isPresetActive && (
-          <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 rounded-md font-semibold inline-flex items-center gap-1">
+          <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 lg:px-3 lg:py-1 rounded-md lg:rounded-lg font-semibold inline-flex items-center gap-1 lg:gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
             Inactive Routine
           </span>
@@ -611,43 +610,43 @@ function HabitAnalyticsCard({
       </div>
 
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:gap-5">
         {/* Current Streak */}
-        <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-pink-500/10 border border-orange-200/80 rounded-xl p-3 sm:p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-gray-700 text-xs font-semibold">
+        <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-pink-500/10 border border-orange-200/80 rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-2xs">
+          <div className="flex items-center justify-between text-gray-700 text-xs lg:text-sm font-bold">
             <span>Current Streak</span>
-            <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
+            <Flame className="w-4 h-4 lg:w-5 lg:h-5 text-orange-500 animate-pulse" />
           </div>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-xl sm:text-2xl font-black text-orange-600">{streak}</span>
-            <span className="text-xs font-bold text-orange-800/80">{streak === 1 ? 'day' : 'days'}</span>
+          <div className="mt-1 lg:mt-2 flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl lg:text-4xl xl:text-4xl font-black text-orange-600">{streak}</span>
+            <span className="text-xs lg:text-sm font-bold text-orange-800/80">{streak === 1 ? 'day' : 'days'}</span>
           </div>
         </div>
 
         {/* Total Completions */}
-        <div className="bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-indigo-500/10 border border-purple-200/80 rounded-xl p-3 sm:p-4 shadow-2xs">
-          <div className="flex items-center justify-between text-gray-700 text-xs font-semibold">
+        <div className="bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-indigo-500/10 border border-purple-200/80 rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-2xs">
+          <div className="flex items-center justify-between text-gray-700 text-xs lg:text-sm font-bold">
             <span>Total Completions</span>
-            <CheckCircle2 className="w-4 h-4 text-purple-600" />
+            <CheckCircle2 className="w-4 h-4 lg:w-5 lg:h-5 text-purple-600" />
           </div>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-xl sm:text-2xl font-black text-purple-600">{totalCompletions}</span>
-            <span className="text-xs font-bold text-purple-800/80">{totalCompletions === 1 ? 'time' : 'times'}</span>
+          <div className="mt-1 lg:mt-2 flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl lg:text-4xl xl:text-4xl font-black text-purple-600">{totalCompletions}</span>
+            <span className="text-xs lg:text-sm font-bold text-purple-800/80">{totalCompletions === 1 ? 'time' : 'times'}</span>
           </div>
         </div>
       </div>
 
       {/* History Toggle Container */}
-      <div className="p-3 sm:p-4 border border-purple-100/90 rounded-xl bg-purple-50/30">
-        <div className="flex justify-between items-center mb-2">
-          <p className="text-gray-800 text-xs font-bold flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-purple-600" />
+      <div className="p-3 sm:p-4 lg:p-5 border border-purple-100/90 rounded-xl lg:rounded-2xl bg-purple-50/30 space-y-3">
+        <div className="flex justify-between items-center">
+          <p className="text-gray-800 text-xs lg:text-sm font-bold flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5 text-purple-600" />
             Habit History
           </p>
           <button
             type="button"
             onClick={() => setShowFullHistory(!showFullHistory)}
-            className="text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-100/80 hover:bg-purple-200 px-2.5 py-1 rounded-lg transition"
+            className="text-[11px] lg:text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-100/80 hover:bg-purple-200 px-2.5 py-1 lg:px-3 lg:py-1.5 rounded-lg lg:rounded-xl transition"
           >
             {showFullHistory ? 'Show Last 7 Days' : 'View Full History'}
           </button>
@@ -663,7 +662,7 @@ function HabitAnalyticsCard({
             dailyProgress={habit.dailyProgress}
           />
         ) : (
-          <div className="flex justify-between items-center pt-1">
+          <div className="flex justify-between items-center pt-1 px-1">
             {past7Days.map((dayStatus) => {
               const [year, month, day] = dayStatus.date.split('-');
               const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -688,33 +687,33 @@ function HabitAnalyticsCard({
                 ? Math.min(1.0, loggedVal / target)
                 : 0;
 
-              let circleClass = 'w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all ';
+              let circleClass = 'w-7 h-7 sm:w-8 sm:h-8 lg:w-11 lg:h-11 rounded-full flex items-center justify-center transition-all ';
               let content = null;
               let styleObj: React.CSSProperties | undefined = undefined;
 
               if (ratio > 0) {
                 circleClass += 'bg-gradient-to-tr from-purple-600 via-fuchsia-500 to-pink-400 text-white shadow-xs border border-purple-300/60';
-                content = <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />;
+                content = <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-6 lg:h-6" />;
                 styleObj = { opacity: Math.max(0.3, ratio) };
               } else if (!isScheduled) {
                 circleClass += 'bg-transparent border border-dashed border-gray-300 text-gray-300';
-                content = <Minus className="w-3 h-3" />;
+                content = <Minus className="w-3 h-3 lg:w-4 lg:h-4" />;
               } else if (isPast) {
                 circleClass += 'bg-rose-50 border border-rose-200 text-rose-500';
-                content = <X className="w-3.5 h-3.5" />;
+                content = <X className="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />;
               } else {
                 circleClass += 'bg-slate-100 border border-slate-200 text-slate-400';
               }
 
               return (
-                <div key={dayStatus.date} className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-500 font-bold">
+                <div key={dayStatus.date} className="flex flex-col items-center gap-1 lg:gap-1.5">
+                  <span className="text-[10px] lg:text-xs text-gray-600 font-bold">
                     {getDayAbbreviation(dayStatus.date)}
                   </span>
                   <div className={circleClass} style={styleObj}>
                     {content}
                   </div>
-                  <span className="text-[9px] text-gray-400 font-semibold">{parseInt(day, 10)}</span>
+                  <span className="text-[9px] lg:text-xs text-gray-400 font-bold">{parseInt(day, 10)}</span>
                 </div>
               );
             })}
@@ -723,26 +722,24 @@ function HabitAnalyticsCard({
       </div>
 
       {/* Completion Rate & Rank Tier */}
-      <div className="p-3 sm:p-4 border border-purple-100/90 rounded-xl bg-purple-50/30">
-        <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
-          <p className="text-gray-800 text-xs font-bold flex items-center gap-1.5">
-            <TrendingUp className="w-3.5 h-3.5 text-purple-600" />
+      <div className="p-3 sm:p-4 lg:p-5 border border-purple-100/90 rounded-xl lg:rounded-2xl bg-purple-50/30 space-y-2 lg:space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+          <p className="text-gray-800 text-xs lg:text-sm font-bold flex items-center gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5 text-purple-600" />
             Overall Consistency
           </p>
 
-          <div className={`px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-extrabold flex items-center gap-1 ${tier.badgeClass}`}>
+          <div className={`px-2 py-0.5 lg:px-3.5 lg:py-1 rounded-full text-[10px] sm:text-xs lg:text-sm font-extrabold flex items-center gap-1 lg:gap-1.5 ${tier.badgeClass}`}>
             {tier.icon}
             <span>{tier.label}</span>
           </div>
         </div>
 
         {/* Dynamic Progress Bar */}
-        <div className="w-full h-3.5 sm:h-4 rounded-full bg-gradient-to-r from-purple-100/90 via-pink-100/90 to-indigo-100/90 p-0.5 shadow-inner border border-purple-200/50">
+        <div className="w-full h-3.5 sm:h-4 lg:h-5 rounded-full bg-gradient-to-r from-purple-100/90 via-pink-100/90 to-indigo-100/90 p-0.5 shadow-inner border border-purple-200/50">
           <div
-            className="consistency-gradient-animated h-full rounded-full transition-all duration-700 ease-out shadow-2xs"
-            style={{
-              width: `${consistency}%`,
-            }}
+            className="h-full bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 rounded-full transition-all duration-500 shadow-xs"
+            style={{ width: `${consistency}%` }}
           />
         </div>
       </div>
