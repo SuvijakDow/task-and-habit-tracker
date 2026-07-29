@@ -550,7 +550,7 @@ export const calculateTotalCompletions = (
     totalScore += ratio;
   });
 
-  return Math.round(totalScore * 10) / 10;
+  return Number.isInteger(totalScore) ? totalScore : Number(totalScore.toFixed(2));
 };
 
 /**
