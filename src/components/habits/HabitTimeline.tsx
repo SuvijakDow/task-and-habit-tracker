@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { DailyHabit } from '@/types';
 import { formatToDateString } from '@/utils/dateUtils';
-import { timeToMinutes } from '@/services/habitService';
+import { timeToMinutes, getHabitTimeSlotsForDay } from '@/services/habitService';
 
 interface HabitTimelineProps {
   habits: DailyHabit[];
@@ -9,8 +9,11 @@ interface HabitTimelineProps {
   onEditHabit?: (habit: DailyHabit) => void;
 }
 
-interface PositionedHabit extends DailyHabit {
-  index: number;
+interface PositionedSlot {
+  habit: DailyHabit;
+  startTime: string;
+  endTime: string;
+  slotIndex: number;
   column: number;
   totalColumns: number;
 }
@@ -24,27 +27,35 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
   const todayDayOfWeek = today.getDay();
   const todayDateStr = formatToDateString(today);
 
-  // Filter habits that are scheduled for today
-  const todaysHabits = useMemo(() => {
-    return habits.filter((habit) => habit.scheduledDays.includes(todayDayOfWeek));
+  // Flatten all time slots scheduled for today across habits
+  const todaySlots = useMemo(() => {
+    return habits.flatMap((h) => {
+      const slots = getHabitTimeSlotsForDay(h, todayDayOfWeek);
+      return slots.map((slot, slotIndex) => ({
+        habit: h,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        slotIndex,
+      }));
+    });
   }, [habits, todayDayOfWeek]);
 
-  // Sort habits by start time
-  const sortedHabits = useMemo(() => {
-    return [...todaysHabits].sort(
+  // Sort slots by start time
+  const sortedSlots = useMemo(() => {
+    return [...todaySlots].sort(
       (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
     );
-  }, [todaysHabits]);
+  }, [todaySlots]);
 
   // Calculate time range (min and max hours with ±1 hour buffer)
   const timeRange = useMemo(() => {
-    if (sortedHabits.length === 0) {
+    if (sortedSlots.length === 0) {
       return { startHour: 9, endHour: 10 };
     }
 
-    const times = sortedHabits.flatMap((habit) => [
-      timeToMinutes(habit.startTime),
-      timeToMinutes(habit.endTime),
+    const times = sortedSlots.flatMap((item) => [
+      timeToMinutes(item.startTime),
+      timeToMinutes(item.endTime),
     ]);
 
     const minMinutes = Math.min(...times);
@@ -61,22 +72,22 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
     }
 
     return { startHour, endHour };
-  }, [sortedHabits]);
+  }, [sortedSlots]);
 
-  // Calculate positions for overlapping habits
-  const positionedHabits = useMemo(() => {
-    const positioned: PositionedHabit[] = [];
-    const columns: number[] = new Array(sortedHabits.length).fill(-1);
+  // Calculate positions for overlapping slots
+  const positionedSlots = useMemo(() => {
+    const positioned: PositionedSlot[] = [];
+    const columns: number[] = new Array(sortedSlots.length).fill(-1);
 
     // Assign the lowest available column
-    for (let i = 0; i < sortedHabits.length; i++) {
-      const habit = sortedHabits[i];
-      const startMin = timeToMinutes(habit.startTime);
-      const endMin = timeToMinutes(habit.endTime);
+    for (let i = 0; i < sortedSlots.length; i++) {
+      const slot = sortedSlots[i];
+      const startMin = timeToMinutes(slot.startTime);
+      const endMin = timeToMinutes(slot.endTime);
       
       const takenColumns = new Set<number>();
       for (let j = 0; j < i; j++) {
-        const other = sortedHabits[j];
+        const other = sortedSlots[j];
         const otherStart = timeToMinutes(other.startTime);
         const otherEnd = timeToMinutes(other.endTime);
         
@@ -92,15 +103,15 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
       columns[i] = col;
     }
 
-    // Calculate total columns required for each habit's group
-    for (let i = 0; i < sortedHabits.length; i++) {
-      const habit = sortedHabits[i];
-      const startMin = timeToMinutes(habit.startTime);
-      const endMin = timeToMinutes(habit.endTime);
+    // Calculate total columns required for each slot's group
+    for (let i = 0; i < sortedSlots.length; i++) {
+      const slot = sortedSlots[i];
+      const startMin = timeToMinutes(slot.startTime);
+      const endMin = timeToMinutes(slot.endTime);
       
       let maxColInGroup = columns[i];
-      for (let j = 0; j < sortedHabits.length; j++) {
-        const other = sortedHabits[j];
+      for (let j = 0; j < sortedSlots.length; j++) {
+        const other = sortedSlots[j];
         const otherStart = timeToMinutes(other.startTime);
         const otherEnd = timeToMinutes(other.endTime);
         
@@ -110,33 +121,32 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
       }
       
       positioned.push({
-        ...habit,
-        index: i,
+        ...slot,
         column: columns[i],
         totalColumns: maxColInGroup + 1,
       });
     }
 
     return positioned;
-  }, [sortedHabits]);
+  }, [sortedSlots]);
 
-  const getHabitPosition = (habit: PositionedHabit) => {
+  const getSlotPosition = (slot: PositionedSlot) => {
     const { startHour, endHour } = timeRange;
     const totalMinutes = (endHour - startHour) * 60;
     
-    const startMin = timeToMinutes(habit.startTime);
-    const endMin = timeToMinutes(habit.endTime);
+    const startMin = timeToMinutes(slot.startTime);
+    const endMin = timeToMinutes(slot.endTime);
     const startHourMin = startHour * 60;
 
     const topPercent = ((startMin - startHourMin) / totalMinutes) * 100;
     const heightPercent = ((endMin - startMin) / totalMinutes) * 100;
-    const leftPercent = (habit.column / Math.max(habit.totalColumns, 1)) * 100;
-    const widthPercent = 100 / Math.max(habit.totalColumns, 1);
+    const leftPercent = (slot.column / Math.max(slot.totalColumns, 1)) * 100;
+    const widthPercent = 100 / Math.max(slot.totalColumns, 1);
 
     return { topPercent, heightPercent, leftPercent, widthPercent };
   };
 
-  if (todaysHabits.length === 0) {
+  if (todaySlots.length === 0) {
     return (
       <div className="mt-8 p-6 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700">
         <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-4">
@@ -195,18 +205,19 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
             })}
 
             {/* Habit blocks */}
-            {positionedHabits.map((habit) => {
-              const { topPercent, heightPercent, leftPercent, widthPercent } = getHabitPosition(habit);
+            {positionedSlots.map((item, idx) => {
+              const habit = item.habit;
+              const { topPercent, heightPercent, leftPercent, widthPercent } = getSlotPosition(item);
               const isCompleted = habit.completedDates.includes(todayDateStr);
               const habitColor = getHabitColor(habit.id);
               const isHex = habitColor.startsWith('#');
-              const sMin = timeToMinutes(habit.startTime);
-              const eMin = timeToMinutes(habit.endTime);
+              const sMin = timeToMinutes(item.startTime);
+              const eMin = timeToMinutes(item.endTime);
               const durationMins = Math.max(1, eMin - sMin);
 
               return (
                 <div
-                  key={habit.id}
+                  key={`${habit.id}-${item.startTime}-${idx}`}
                   className={`absolute cursor-pointer transition-all hover:shadow-lg hover:z-30 ${
                     isCompleted ? 'opacity-60' : 'opacity-100'
                   }`}
@@ -222,7 +233,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
                       onEditHabit(habit);
                     }
                   }}
-                  title={`${habit.title}\nTime: ${habit.startTime} - ${habit.endTime}\nClick to edit habit`}
+                  title={`${habit.title}\nTime: ${item.startTime} - ${item.endTime}\nClick to edit habit`}
                 >
                   <div
                     className={`w-full h-full rounded-lg px-3 py-1.5 flex ${
@@ -238,7 +249,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
                           {habit.title}
                         </span>
                         <span className="text-[10px] font-semibold text-white/90 whitespace-nowrap leading-none flex-shrink-0">
-                          {habit.startTime} - {habit.endTime}
+                          {item.startTime} - {item.endTime}
                         </span>
                       </>
                     ) : (
@@ -247,7 +258,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
                           {habit.title}
                         </p>
                         <p className="text-[10px] sm:text-xs font-semibold text-white/90 truncate mt-0.5 leading-tight">
-                          {habit.startTime} - {habit.endTime}
+                          {item.startTime} - {item.endTime}
                         </p>
                       </>
                     )}

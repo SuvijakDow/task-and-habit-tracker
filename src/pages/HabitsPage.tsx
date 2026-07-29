@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2, Sun } from 'lucide-react';
-import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
+import { DailyHabit, HabitSet, TimeSlot, getHabitSetIds } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   createDailyHabit,
@@ -50,6 +50,8 @@ export function HabitsPage() {
   const [scheduledDays, setScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [isAdvancedSchedule, setIsAdvancedSchedule] = useState(false);
+  const [customSchedule, setCustomSchedule] = useState<Record<number, TimeSlot[]>>({});
   const [habitColor, setHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
   const [habitSetIds, setHabitSetIds] = useState<string[]>([]);
   const [routineSearchQuery, setRoutineSearchQuery] = useState('');
@@ -64,6 +66,8 @@ export function HabitsPage() {
   const [editScheduledDays, setEditScheduledDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [editStartTime, setEditStartTime] = useState('09:00');
   const [editEndTime, setEditEndTime] = useState('10:00');
+  const [editIsAdvancedSchedule, setEditIsAdvancedSchedule] = useState(false);
+  const [editCustomSchedule, setEditCustomSchedule] = useState<Record<number, TimeSlot[]>>({});
   const [editHabitColor, setEditHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
   const [editHabitSetIds, setEditHabitSetIds] = useState<string[]>([]);
   const [editTargetValue, setEditTargetValue] = useState<number | undefined>(undefined);
@@ -187,11 +191,60 @@ export function HabitsPage() {
     return Math.round((totalProgressSum / scheduledTodayHabits.length) * 100);
   }, [scheduledTodayHabits]);
 
+  const addSlotToCustomSchedule = (
+    dayIndex: number,
+    scheduleMap: Record<number, TimeSlot[]>,
+    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>,
+    fallbackStart = '09:00',
+    fallbackEnd = '10:00'
+  ) => {
+    const existing = scheduleMap[dayIndex] && scheduleMap[dayIndex].length > 0
+      ? scheduleMap[dayIndex]
+      : [{ startTime: fallbackStart, endTime: fallbackEnd }];
+    const lastSlot = existing[existing.length - 1];
+    const newSlot: TimeSlot = lastSlot
+      ? { startTime: lastSlot.endTime, endTime: '21:00' }
+      : { startTime: fallbackStart, endTime: fallbackEnd };
+
+    setScheduleMap((prev) => ({
+      ...prev,
+      [dayIndex]: [...existing, newSlot],
+    }));
+  };
+
+  const updateSlotInCustomSchedule = (
+    dayIndex: number,
+    slotIndex: number,
+    field: 'startTime' | 'endTime',
+    value: string,
+    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>
+  ) => {
+    setScheduleMap((prev) => {
+      const daySlots = [...(prev[dayIndex] || [])];
+      if (!daySlots[slotIndex]) return prev;
+      daySlots[slotIndex] = { ...daySlots[slotIndex], [field]: value };
+      return { ...prev, [dayIndex]: daySlots };
+    });
+  };
+
+  const removeSlotFromCustomSchedule = (
+    dayIndex: number,
+    slotIndex: number,
+    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>
+  ) => {
+    setScheduleMap((prev) => {
+      const daySlots = (prev[dayIndex] || []).filter((_, idx) => idx !== slotIndex);
+      return { ...prev, [dayIndex]: daySlots };
+    });
+  };
+
   const openAddModal = () => {
     setHabitTitle('');
     setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
     setStartTime('09:00');
     setEndTime('10:00');
+    setIsAdvancedSchedule(false);
+    setCustomSchedule({});
     setHabitSetIds([activeSetId]);
     setTargetValue(undefined);
     setTargetUnit(undefined);
@@ -232,10 +285,11 @@ export function HabitsPage() {
     if (!user) return;
     const newSet = await createHabitSet(user.uid, { name, color, isActive: false });
     setHabitSets((prev) => [...prev, newSet]);
-    showToast('Created new routine preset', 'success');
+    showToast('Created routine preset', 'success');
   };
 
-  const handleUpdateSet = async (setId: string, updates: Partial<Pick<HabitSet, 'name' | 'color'>>) => {
+  const handleUpdateSet = async (setId: string, updates: Partial<HabitSet>) => {
+    if (!user) return;
     await updateHabitSet(setId, updates);
     setHabitSets((prev) =>
       prev.map((s) => (s.id === setId ? { ...s, ...updates } : s))
@@ -269,7 +323,7 @@ export function HabitsPage() {
       return;
     }
 
-    if (endTime <= startTime) {
+    if (!isAdvancedSchedule && endTime <= startTime) {
       setError('End time must be after start time');
       return;
     }
@@ -279,12 +333,15 @@ export function HabitsPage() {
       setError(null);
 
       const targetSetIds = habitSetIds.length > 0 ? habitSetIds : [activeSetId];
+      const scheduleToSave = isAdvancedSchedule && Object.keys(customSchedule).length > 0 ? customSchedule : undefined;
+
       const newHabitId = await createDailyHabit(user.uid, {
         title: habitTitle.trim(),
         completedDates: [],
         scheduledDays,
         startTime,
         endTime,
+        customSchedule: scheduleToSave,
         color: habitColor,
         setIds: targetSetIds,
         setId: targetSetIds[0],
@@ -303,6 +360,7 @@ export function HabitsPage() {
             scheduledDays,
             startTime,
             endTime,
+            customSchedule: scheduleToSave,
             color: habitColor,
             setIds: targetSetIds,
             setId: targetSetIds[0],
@@ -320,6 +378,8 @@ export function HabitsPage() {
       setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
       setStartTime('09:00');
       setEndTime('10:00');
+      setIsAdvancedSchedule(false);
+      setCustomSchedule({});
       setTargetValue(undefined);
       setTargetUnit(undefined);
       setHabitColor(PASTEL_HABIT_COLORS[0]);
@@ -435,6 +495,10 @@ export function HabitsPage() {
     setEditHabitSetIds(currentSetIds.length > 0 ? currentSetIds : [activeSetId]);
     setEditTargetValue(habitToEdit.targetValue);
     setEditTargetUnit(habitToEdit.targetUnit);
+
+    const hasCustom = habitToEdit.customSchedule && Object.keys(habitToEdit.customSchedule).length > 0;
+    setEditIsAdvancedSchedule(Boolean(hasCustom));
+    setEditCustomSchedule(habitToEdit.customSchedule ? JSON.parse(JSON.stringify(habitToEdit.customSchedule)) : {});
   };
 
   const handleSaveEdit = async () => {
@@ -445,7 +509,7 @@ export function HabitsPage() {
       return;
     }
 
-    if (editEndTime <= editStartTime) {
+    if (!editIsAdvancedSchedule && editEndTime <= editStartTime) {
       setEditError('End time must be after start time');
       return;
     }
@@ -455,11 +519,14 @@ export function HabitsPage() {
       setEditError(null);
 
       const targetSetIds = editHabitSetIds.length > 0 ? editHabitSetIds : [activeSetId];
+      const scheduleToSave = editIsAdvancedSchedule && Object.keys(editCustomSchedule).length > 0 ? editCustomSchedule : null;
+
       await updateDoc(doc(db, 'dailyHabits', editingHabitId), {
         title: editHabitTitle.trim(),
         scheduledDays: editScheduledDays,
         startTime: editStartTime,
         endTime: editEndTime,
+        customSchedule: scheduleToSave,
         color: editHabitColor,
         setIds: targetSetIds,
         setId: targetSetIds[0],
@@ -476,6 +543,7 @@ export function HabitsPage() {
               scheduledDays: editScheduledDays,
               startTime: editStartTime,
               endTime: editEndTime,
+              customSchedule: scheduleToSave || undefined,
               color: editHabitColor,
               setIds: targetSetIds,
               setId: targetSetIds[0],
@@ -948,26 +1016,115 @@ export function HabitsPage() {
                       </div>
                     </div>
 
-                    {/* Time Selection */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <TimePickerInput
-                        value={startTime}
-                        onChange={setStartTime}
-                        label="Start Time"
-                        popoverPosition="top"
-                        align="left"
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <TimePickerInput
-                        value={endTime}
-                        onChange={setEndTime}
-                        label="End Time"
-                        popoverPosition="top"
-                        align="right"
-                        required
-                        disabled={isSubmitting}
-                      />
+                    {/* Time & Schedule Section */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                            <Clock className="w-4 h-4 text-purple-700" />
+                            Time & Slots
+                          </span>
+                          <p className="text-[11px] text-gray-500 font-medium">Configure single or per-day custom times</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsAdvancedSchedule(!isAdvancedSchedule)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all border ${
+                            isAdvancedSchedule
+                              ? 'bg-purple-600 text-white border-transparent shadow-xs'
+                              : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
+                          }`}
+                        >
+                          {isAdvancedSchedule ? '✓ Custom Per-Day' : '+ Customize Per-Day'}
+                        </button>
+                      </div>
+
+                      {!isAdvancedSchedule ? (
+                        <div className="grid grid-cols-2 gap-3 pt-0.5">
+                          <TimePickerInput
+                            value={startTime}
+                            onChange={setStartTime}
+                            label="Start Time"
+                            popoverPosition="top"
+                            align="left"
+                            required
+                            disabled={isSubmitting}
+                          />
+                          <TimePickerInput
+                            value={endTime}
+                            onChange={setEndTime}
+                            label="End Time"
+                            popoverPosition="top"
+                            align="right"
+                            required
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-3 pt-1">
+                          {scheduledDays.length === 0 ? (
+                            <p className="text-xs text-amber-700 font-medium bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                              Please select at least one day in Schedule above to add custom times.
+                            </p>
+                          ) : (
+                            [1, 2, 3, 4, 5, 6, 0].filter((dayId) => scheduledDays.includes(dayId)).map((dayId) => {
+                              const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                              const daySlots = customSchedule[dayId] && customSchedule[dayId].length > 0
+                                ? customSchedule[dayId]
+                                : [{ startTime, endTime }];
+
+                              return (
+                                <div key={dayId} className="p-3 rounded-xl bg-white border border-purple-200/80 space-y-2 shadow-2xs">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-extrabold text-purple-900">{dayNames[dayId]}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => addSlotToCustomSchedule(dayId, customSchedule, setCustomSchedule, startTime, endTime)}
+                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 transition"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                      Add Slot
+                                    </button>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {daySlots.map((slot, sIdx) => (
+                                      <div key={sIdx} className="flex items-center gap-2">
+                                        <div className="flex-1 grid grid-cols-2 gap-2">
+                                          <TimePickerInput
+                                            value={slot.startTime}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'startTime', val, setCustomSchedule)}
+                                            label={`Start ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
+                                            popoverPosition="top"
+                                            align="left"
+                                          />
+                                          <TimePickerInput
+                                            value={slot.endTime}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'endTime', val, setCustomSchedule)}
+                                            label={`End ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
+                                            popoverPosition="top"
+                                            align="right"
+                                          />
+                                        </div>
+                                        {daySlots.length > 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => removeSlotFromCustomSchedule(dayId, sIdx, setCustomSchedule)}
+                                            className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition shrink-0 mt-4"
+                                            title="Remove time slot"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Color Selection */}
@@ -1525,26 +1682,115 @@ export function HabitsPage() {
                       </div>
                     </div>
 
-                    {/* Time Selection */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <TimePickerInput
-                        value={editStartTime}
-                        onChange={setEditStartTime}
-                        label="Start Time"
-                        popoverPosition="top"
-                        align="left"
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <TimePickerInput
-                        value={editEndTime}
-                        onChange={setEditEndTime}
-                        label="End Time"
-                        popoverPosition="top"
-                        align="right"
-                        required
-                        disabled={isSubmitting}
-                      />
+                    {/* Time & Schedule Section */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                            <Clock className="w-4 h-4 text-purple-700" />
+                            Time & Slots
+                          </span>
+                          <p className="text-[11px] text-gray-500 font-medium">Configure single or per-day custom times</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditIsAdvancedSchedule(!editIsAdvancedSchedule)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all border ${
+                            editIsAdvancedSchedule
+                              ? 'bg-purple-600 text-white border-transparent shadow-xs'
+                              : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
+                          }`}
+                        >
+                          {editIsAdvancedSchedule ? '✓ Custom Per-Day' : '+ Customize Per-Day'}
+                        </button>
+                      </div>
+
+                      {!editIsAdvancedSchedule ? (
+                        <div className="grid grid-cols-2 gap-3 pt-0.5">
+                          <TimePickerInput
+                            value={editStartTime}
+                            onChange={setEditStartTime}
+                            label="Start Time"
+                            popoverPosition="top"
+                            align="left"
+                            required
+                            disabled={isSubmitting}
+                          />
+                          <TimePickerInput
+                            value={editEndTime}
+                            onChange={setEditEndTime}
+                            label="End Time"
+                            popoverPosition="top"
+                            align="right"
+                            required
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-3 pt-1">
+                          {editScheduledDays.length === 0 ? (
+                            <p className="text-xs text-amber-700 font-medium bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                              Please select at least one day in Schedule above to add custom times.
+                            </p>
+                          ) : (
+                            [1, 2, 3, 4, 5, 6, 0].filter((dayId) => editScheduledDays.includes(dayId)).map((dayId) => {
+                              const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                              const daySlots = editCustomSchedule[dayId] && editCustomSchedule[dayId].length > 0
+                                ? editCustomSchedule[dayId]
+                                : [{ startTime: editStartTime, endTime: editEndTime }];
+
+                              return (
+                                <div key={dayId} className="p-3 rounded-xl bg-white border border-purple-200/80 space-y-2 shadow-2xs">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-extrabold text-purple-900">{dayNames[dayId]}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => addSlotToCustomSchedule(dayId, editCustomSchedule, setEditCustomSchedule, editStartTime, editEndTime)}
+                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 transition"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                      Add Slot
+                                    </button>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {daySlots.map((slot, sIdx) => (
+                                      <div key={sIdx} className="flex items-center gap-2">
+                                        <div className="flex-1 grid grid-cols-2 gap-2">
+                                          <TimePickerInput
+                                            value={slot.startTime}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'startTime', val, setEditCustomSchedule)}
+                                            label={`Start ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
+                                            popoverPosition="top"
+                                            align="left"
+                                          />
+                                          <TimePickerInput
+                                            value={slot.endTime}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'endTime', val, setEditCustomSchedule)}
+                                            label={`End ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
+                                            popoverPosition="top"
+                                            align="right"
+                                          />
+                                        </div>
+                                        {daySlots.length > 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => removeSlotFromCustomSchedule(dayId, sIdx, setEditCustomSchedule)}
+                                            className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition shrink-0 mt-4"
+                                            title="Remove time slot"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Color Selection */}

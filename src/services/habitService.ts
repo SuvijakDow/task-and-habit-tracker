@@ -255,6 +255,9 @@ export const createDailyHabit = async (
     if (habitData.targetUnit !== undefined && habitData.targetUnit !== null && habitData.targetUnit.trim().length > 0) {
       payload.targetUnit = habitData.targetUnit.trim();
     }
+    if (habitData.customSchedule) {
+      payload.customSchedule = habitData.customSchedule;
+    }
     if (habitData.trackingStartDate) {
       payload.trackingStartDate = Timestamp.fromDate(habitData.trackingStartDate);
     }
@@ -265,6 +268,19 @@ export const createDailyHabit = async (
     console.error('Error creating daily habit:', error);
     throw error;
   }
+};
+
+export const getHabitTimeSlotsForDay = (
+  habit: DailyHabit,
+  dayOfWeek: number
+): { startTime: string; endTime: string }[] => {
+  if (habit.customSchedule?.[dayOfWeek] && habit.customSchedule[dayOfWeek].length > 0) {
+    return habit.customSchedule[dayOfWeek];
+  }
+  if (habit.scheduledDays.includes(dayOfWeek)) {
+    return [{ startTime: habit.startTime || '09:00', endTime: habit.endTime || '10:00' }];
+  }
+  return [];
 };
 
 export const PASTEL_HABIT_COLORS = [
@@ -314,6 +330,7 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       scheduledDays: doc.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
       startTime: doc.data().startTime || '09:00',
       endTime: doc.data().endTime || '10:00',
+      customSchedule: doc.data().customSchedule || undefined,
       color: doc.data().color || undefined,
       setId: doc.data().setId || undefined,
       setIds: Array.isArray(doc.data().setIds)
@@ -350,6 +367,7 @@ export const getDailyHabitById = async (habitId: string): Promise<DailyHabit | n
       scheduledDays: docSnap.data().scheduledDays || [0, 1, 2, 3, 4, 5, 6],
       startTime: docSnap.data().startTime || '09:00',
       endTime: docSnap.data().endTime || '10:00',
+      customSchedule: docSnap.data().customSchedule || undefined,
       targetValue: docSnap.data().targetValue || undefined,
       targetUnit: docSnap.data().targetUnit || undefined,
       dailyProgress: docSnap.data().dailyProgress || undefined,

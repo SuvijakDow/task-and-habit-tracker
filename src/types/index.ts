@@ -47,6 +47,13 @@ export interface HabitSet {
   updatedAt: Date;
 }
 
+export interface TimeSlot {
+  startTime: string; // HH:MM format, e.g. '09:00'
+  endTime: string;   // HH:MM format, e.g. '10:00'
+}
+
+export type CustomSchedule = Record<number, TimeSlot[]>; // Map dayOfWeek (0-6) -> TimeSlot[]
+
 export interface DailyHabit {
   id: string;
   userId: string;
@@ -55,6 +62,7 @@ export interface DailyHabit {
   scheduledDays: number[]; // 0-6 (Sun-Sat), defaults to [0,1,2,3,4,5,6] if not set
   startTime: string; // HH:MM format, e.g. '09:00'
   endTime: string; // HH:MM format, e.g. '10:00'
+  customSchedule?: CustomSchedule; // Optional per-day multi-time-slot schedule
   color?: string; // Hex color string, e.g. '#F87171'
   setId?: string; // Legacy Id of the HabitSet it belongs to
   setIds?: string[]; // Array of HabitSet IDs it belongs to (multi-routine support)

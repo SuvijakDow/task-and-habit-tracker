@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
 import { Activity, Calendar, Check, Clock, Flame, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
-import { getHabitColorHex } from '@/services/habitService';
+import { getHabitColorHex, getHabitTimeSlotsForDay } from '@/services/habitService';
 
 const formatScheduledDays = (days: number[]): string => {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -284,15 +284,26 @@ export default function HabitsTable({
 
                         {/* Time */}
                         <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
-                          <div
-                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
-                            style={{ backgroundColor: getHabitColorHex(habit, habits) }}
-                          >
-                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
-                            <span>
-                              {habit.startTime} - {habit.endTime}
-                            </span>
-                          </div>
+                          {(() => {
+                            const timeSlots = getHabitTimeSlotsForDay(habit, todayDayIndex);
+                            const slotsToDisplay = timeSlots.length > 0 ? timeSlots : [{ startTime: habit.startTime, endTime: habit.endTime }];
+                            return (
+                              <div className="flex flex-col gap-1">
+                                {slotsToDisplay.map((slot, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-white text-[10px] sm:text-xs font-semibold whitespace-nowrap shadow-xs"
+                                    style={{ backgroundColor: getHabitColorHex(habit, habits) }}
+                                  >
+                                    <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white/90" />
+                                    <span>
+                                      {slot.startTime} - {slot.endTime}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* Streak */}

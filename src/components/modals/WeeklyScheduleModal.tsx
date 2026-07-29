@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, CalendarRange, Clock, Download } from 'lucide-react';
 import { toPng, toSvg } from 'html-to-image';
 import { DailyHabit } from '@/types';
-import { timeToMinutes, getHabitColorHex, hexToRgba } from '@/services/habitService';
+import { timeToMinutes, getHabitColorHex, hexToRgba, getHabitTimeSlotsForDay } from '@/services/habitService';
 
 interface WeeklyScheduleModalProps {
   isOpen: boolean;
@@ -67,11 +67,20 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
     let maxMin = 0;
 
     habits.forEach((h) => {
-      const s = timeToMinutes(h.startTime);
-      const e = timeToMinutes(h.endTime);
-      if (s < minMin) minMin = s;
-      if (e > maxMin) maxMin = e;
+      [0, 1, 2, 3, 4, 5, 6].forEach((dayId) => {
+        const slots = getHabitTimeSlotsForDay(h, dayId);
+        slots.forEach((slot) => {
+          const s = timeToMinutes(slot.startTime);
+          const e = timeToMinutes(slot.endTime);
+          if (s < minMin) minMin = s;
+          if (e > maxMin) maxMin = e;
+        });
+      });
     });
+
+    if (minMin >= maxMin) {
+      return { startHour: 8, endHour: 20 };
+    }
 
     let sHour = Math.max(0, Math.floor(minMin / 60) - 1);
     let eHour = Math.min(24, Math.ceil(maxMin / 60) + 1);
@@ -183,31 +192,33 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
               {/* Day Rows */}
               <div className="divide-y divide-gray-200">
                 {DAYS_OF_WEEK.map((day) => {
-                  // Find all habits scheduled for this day
-                  const dayHabits = habits.filter((h) => h.scheduledDays.includes(day.id));
+                  const daySlots = habits.flatMap((h) => {
+                    const slots = getHabitTimeSlotsForDay(h, day.id);
+                    return slots.map((slot) => ({
+                      habit: h,
+                      startTime: slot.startTime,
+                      endTime: slot.endTime,
+                    }));
+                  });
 
-                  // Sort habits by start time
-                  const sortedDayHabits = [...dayHabits].sort(
+                  const sortedDaySlots = [...daySlots].sort(
                     (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)
                   );
 
-                  // Pre-calculate real start and end boundaries
-                  const habitBounds = sortedDayHabits.map((h) => {
-                    const s = timeToMinutes(h.startTime);
-                    const e = timeToMinutes(h.endTime);
+                  const habitBounds = sortedDaySlots.map((item) => {
+                    const s = timeToMinutes(item.startTime);
+                    const e = timeToMinutes(item.endTime);
                     const realEnd = e > s ? e : s + 30;
                     return { s, realEnd };
                   });
 
-                  // Calculate vertical layers using real time overlap
-                  const layers: number[] = new Array(sortedDayHabits.length).fill(0);
-                  for (let i = 0; i < sortedDayHabits.length; i++) {
+                  const layers: number[] = new Array(sortedDaySlots.length).fill(0);
+                  for (let i = 0; i < sortedDaySlots.length; i++) {
                     const boundsI = habitBounds[i];
                     const takenLayers = new Set<number>();
 
                     for (let j = 0; j < i; j++) {
                       const boundsJ = habitBounds[j];
-                      // Check if real time ranges overlap (startI < endJ && endI > startJ)
                       if (boundsI.s < boundsJ.realEnd && boundsI.realEnd > boundsJ.s) {
                         takenLayers.add(layers[j]);
                       }
@@ -227,16 +238,13 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
                       className="grid grid-cols-[100px_1fr] relative hover:bg-slate-50/40 transition-colors"
                       style={{ minHeight: `${rowHeight}px` }}
                     >
-                      {/* Left Day Title Label */}
                       <div
                         className={`px-2 py-2 border-r border-gray-200 font-bold text-xs sm:text-sm flex items-center justify-center ${day.color} border-l-4`}
                       >
                         <span>{day.short}</span>
                       </div>
 
-                      {/* Hour Columns & Habit Blocks Area */}
                       <div className="relative w-full h-full">
-                        {/* Background hour grid lines */}
                         <div
                           className="absolute inset-0 grid h-full pointer-events-none"
                           style={{ gridTemplateColumns: `repeat(${hoursList.length}, minmax(0, 1fr))` }}
@@ -246,13 +254,12 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
                           ))}
                         </div>
 
-                        {/* Habit Blocks */}
                         <div className="relative w-full h-full p-1">
-                          {sortedDayHabits.map((habit, idx) => {
+                          {sortedDaySlots.map((item, idx) => {
+                            const habit = item.habit;
                             const bounds = habitBounds[idx];
                             const durationMinutes = bounds.realEnd - bounds.s;
 
-                            // Calculate horizontal position based on exact start & end time
                             const leftPct = Math.max(
                               0,
                               ((bounds.s - startGridMinutes) / totalGridMinutes) * 100
@@ -261,21 +268,17 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
                               100 - leftPct,
                               (durationMinutes / totalGridMinutes) * 100
                             );
-                            // Ensure a minimum 2.4% visual width so micro 10-min pills remain interactive & visible
                             const displayWidthPct = Math.max(realWidthPct, 2.4);
 
                             const colorHex = getHabitColorHex(habit, habits);
                             const layer = layers[idx];
 
                             return (
-                              <div
-                                key={habit.id}
-                                onClick={() => {
-                                  if (onEditHabit) {
-                                    onEditHabit(habit);
-                                  }
-                                }}
-                                title={`${habit.title}\nTime: ${habit.startTime} - ${habit.endTime}\nClick to edit habit`}
+                              <button
+                                key={`${habit.id}-${item.startTime}-${idx}`}
+                                type="button"
+                                onClick={() => onEditHabit?.(habit)}
+                                title={`${habit.title}\nTime: ${item.startTime} - ${item.endTime}\nClick to edit habit`}
                                 className="absolute rounded-xl border-2 px-2 py-0.5 shadow-xs hover:shadow-lg hover:scale-[1.02] hover:z-50 cursor-pointer transition-all flex flex-col justify-center overflow-hidden group"
                                 style={{
                                   left: `calc(${leftPct}% + 1px)`,
@@ -287,7 +290,6 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
                                 }}
                               >
                                 {durationMinutes <= 30 ? (
-                                  /* Short Block Layout (<= 30 mins): No text! Sleek centered indicator dot */
                                   <div className="flex items-center justify-center w-full h-full">
                                     <span
                                       className="w-3 h-3 rounded-full shadow-xs transition-transform group-hover:scale-125 border border-white/80"
@@ -302,7 +304,7 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
                                     </p>
                                   </div>
                                 )}
-                              </div>
+                              </button>
                             );
                           })}
                         </div>
