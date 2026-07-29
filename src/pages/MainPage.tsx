@@ -36,16 +36,16 @@ export function MainPage() {
   return (
     <div>
       {/* Navigation Tabs */}
-      <div className="hidden md:block sticky top-0 z-20 border-y border-white/60 bg-white/68 backdrop-blur-xl shadow-[0_10px_28px_rgba(124,58,237,0.12)] nav-animated">
-        <nav className="hidden md:grid grid-cols-3 items-center gap-2 px-3 py-2 max-w-4xl mx-auto">
+      <div className="hidden md:block sticky top-0 z-20 border-b border-purple-100/90 bg-white/90 backdrop-blur-2xl shadow-[0_8px_30px_rgba(124,58,237,0.1)] nav-animated">
+        <nav className="hidden md:grid grid-cols-3 items-center gap-2.5 px-3 py-2.5 max-w-4xl mx-auto">
           {navItems.map((item) => (
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm lg:text-base font-semibold transition-all nav-item-motion focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+              className={`inline-flex items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-sm lg:text-base font-bold transition-all nav-item-motion focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 ${
                 currentPage === item.key
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.3)] scale-[1.01]'
-                  : 'bg-white/72 text-purple-900/70 hover:bg-white hover:text-purple-700 border border-white/70'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.35)] scale-[1.02]'
+                  : 'bg-purple-50/70 text-purple-900/80 hover:bg-purple-100/90 hover:text-purple-950 border border-purple-200/60 shadow-2xs'
               }`}
             >
               <item.icon className={`h-5 w-5 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
@@ -56,21 +56,21 @@ export function MainPage() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-white/65 bg-white/88 backdrop-blur-sm shadow-[0_-6px_20px_rgba(124,58,237,0.14)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
-        <div className="grid grid-cols-3 gap-1 px-2">
+      <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-purple-100/90 bg-white/95 backdrop-blur-xl shadow-[0_-8px_25px_rgba(124,58,237,0.12)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
+        <div className="grid grid-cols-3 gap-1.5 px-2">
           {navItems.map((item) => (
             <button
               key={item.key}
               onClick={() => setCurrentPage(item.key)}
-              className={`min-h-[40px] rounded-lg px-1 py-1.5 text-[10px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+              className={`min-h-[42px] rounded-xl px-1 py-1.5 text-[11px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/70 ${
                 currentPage === item.key
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_10px_24px_rgba(168,85,247,0.3)]'
-                  : 'bg-white/72 text-purple-900/70 border border-white/70'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_8px_20px_rgba(168,85,247,0.3)]'
+                  : 'bg-purple-50/70 text-purple-900/80 border border-purple-200/60'
               }`}
               aria-label={item.label}
             >
               <span className="flex flex-col items-center justify-center gap-0.5">
-                <item.icon className={`h-3.5 w-3.5 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
+                <item.icon className={`h-4 w-4 ${currentPage === item.key ? 'text-white' : item.iconClass}`} />
                 <span className="leading-none">{item.mobileLabel}</span>
               </span>
             </button>
