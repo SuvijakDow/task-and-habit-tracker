@@ -149,46 +149,25 @@ export function HabitsPage() {
 
   const habitsToDisplay = activeRoutineHabits;
 
-  const scheduledTodayHabits = useMemo(() => {
+  const scheduledTodayCount = useMemo(() => {
     const todayDay = new Date().getDay();
     return habitsToDisplay.filter((h) => {
       const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       return days.includes(todayDay);
-    });
+    }).length;
   }, [habitsToDisplay]);
-
-  const scheduledTodayCount = scheduledTodayHabits.length;
-
-  const todayProgressSum = useMemo(() => {
-    const todayStr = getTodayDateString();
-    return scheduledTodayHabits.reduce((sum, h) => {
-      const isCompleted = h.completedDates?.includes(todayStr);
-      const target = h.targetValue;
-      if (target && target > 0) {
-        const logged = h.dailyProgress?.[todayStr] ?? (isCompleted ? target : 0);
-        return sum + Math.min(1.0, Math.max(0, logged / target));
-      }
-      return sum + (isCompleted ? 1.0 : 0.0);
-    }, 0);
-  }, [scheduledTodayHabits]);
 
   const completedTodayCount = useMemo(() => {
     const todayStr = getTodayDateString();
-    return scheduledTodayHabits.filter((h) => {
+    const todayDay = new Date().getDay();
+    return habitsToDisplay.filter((h) => {
+      const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
+      if (!days.includes(todayDay)) return false;
       const isCompleted = h.completedDates?.includes(todayStr);
-      const target = h.targetValue;
-      if (target && target > 0) {
-        const logged = h.dailyProgress?.[todayStr] ?? 0;
-        return logged >= target;
-      }
-      return isCompleted;
+      const logged = h.dailyProgress?.[todayStr] ?? (isCompleted ? (h.targetValue || 1) : 0);
+      return (h.targetValue && h.targetValue > 0) ? logged >= h.targetValue * 0.5 : isCompleted;
     }).length;
-  }, [scheduledTodayHabits]);
-
-  const todayCompletionPercentage = useMemo(() => {
-    if (scheduledTodayCount === 0) return 0;
-    return Math.round((todayProgressSum / scheduledTodayCount) * 100);
-  }, [todayProgressSum, scheduledTodayCount]);
+  }, [habitsToDisplay]);
 
   const handleSelectActiveSet = async (setId: string) => {
     if (!user || setId === activeSetId) {
@@ -626,7 +605,7 @@ export function HabitsPage() {
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Today %</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">
-                  {todayCompletionPercentage}%
+                  {scheduledTodayCount > 0 ? Math.round((completedTodayCount / scheduledTodayCount) * 100) : 0}%
                 </div>
               </div>
             </div>
@@ -1669,9 +1648,10 @@ export function HabitsPage() {
                   </button>
                   <button
                     onClick={handleDeleteHabit}
-                    className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)]"
+                    disabled={isSubmitting}
+                    className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition duration-200 text-sm shadow-[0_8px_20px_rgba(244,63,94,0.28)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Delete
+                    {isSubmitting ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>

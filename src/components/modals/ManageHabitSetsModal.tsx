@@ -212,7 +212,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                         type="button"
                         disabled={isSubmitting}
                         onClick={() => setDeletingSet(set)}
-                        className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 active:opacity-60 disabled:opacity-40 rounded-lg transition"
+                        className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                         title="Delete preset"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -263,10 +263,9 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting || !newSetName.trim()}
-                  className="inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 active:opacity-75 disabled:opacity-50 transition"
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Create Routine</span>
+                  Create
                 </button>
               </div>
             </form>
@@ -280,6 +279,17 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
               <span className="truncate">Create New Routine</span>
             </button>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-gray-100 bg-white flex items-center justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition shadow-xs"
+          >
+            Done
+          </button>
         </div>
       </div>
 
@@ -317,7 +327,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
                     setIsSubmitting(false);
                   }
                 }}
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 active:opacity-75 disabled:opacity-50 rounded-xl shadow-xs transition"
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isSubmitting ? 'Deleting...' : 'Delete Routine'}
               </button>
