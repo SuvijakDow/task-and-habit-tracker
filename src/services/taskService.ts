@@ -11,13 +11,22 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { Task } from '@/types';
+import { Task, Subtask } from '@/types';
 
 const TASKS_COLLECTION = 'tasks';
 const DEFAULT_TASK_CATEGORY = 'Personal';
 
 const normalizeTaskCategory = (value: unknown): string => {
   return typeof value === 'string' && value.trim() ? value : DEFAULT_TASK_CATEGORY;
+};
+
+export const normalizeSubtasks = (rawSubtasks: any): Subtask[] => {
+  if (!Array.isArray(rawSubtasks)) return [];
+  return rawSubtasks.map((st, index) => ({
+    id: typeof st?.id === 'string' && st.id ? st.id : `st-${Date.now()}-${index}`,
+    title: typeof st?.title === 'string' ? st.title : (st?.name || st?.text || ''),
+    isCompleted: Boolean(st?.isCompleted ?? st?.completed ?? false),
+  }));
 };
 
 /**
@@ -31,7 +40,7 @@ export const createTask = async (
     const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
       userId,
       ...taskData,
-      subtasks: taskData.subtasks || [],
+      subtasks: normalizeSubtasks(taskData.subtasks),
       category: normalizeTaskCategory(taskData.category),
       dueDate: taskData.dueDate ? Timestamp.fromDate(taskData.dueDate) : null,
       createdAt: Timestamp.now(),
@@ -60,7 +69,7 @@ export const getUserTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
-        subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+        subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
         createdAt: task.createdAt.toDate(),
@@ -90,7 +99,7 @@ export const getCompletedTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
-        subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+        subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
         createdAt: task.createdAt.toDate(),
@@ -120,7 +129,7 @@ export const getPendingTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
-        subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+        subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
         createdAt: task.createdAt.toDate(),
@@ -149,7 +158,7 @@ export const getTaskById = async (taskId: string): Promise<Task | null> => {
     return {
       id: docSnap.id,
       ...task,
-      subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+      subtasks: normalizeSubtasks(task.subtasks),
       category: normalizeTaskCategory(task.category),
       dueDate: task.dueDate?.toDate() || null,
       createdAt: task.createdAt.toDate(),
@@ -186,7 +195,7 @@ export const updateTask = async (
     }
 
     if (updates.subtasks !== undefined) {
-      dataToUpdate.subtasks = updates.subtasks;
+      dataToUpdate.subtasks = normalizeSubtasks(updates.subtasks);
     }
     
     await updateDoc(docRef, dataToUpdate);

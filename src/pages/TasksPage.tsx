@@ -408,16 +408,20 @@ export function TasksPage() {
     }
 
     let updatedSubtasks: Subtask[] = [];
+    const updatesToSave: Partial<Task> = { isCompleted: newStatus };
 
     // Optimistic update: instantly reflect change in UI for main task AND all subtasks
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id === taskId) {
-          updatedSubtasks = (t.subtasks || []).map((st) => ({ ...st, isCompleted: newStatus }));
+          if (t.subtasks && t.subtasks.length > 0) {
+            updatedSubtasks = t.subtasks.map((st) => ({ ...st, isCompleted: newStatus }));
+            updatesToSave.subtasks = updatedSubtasks;
+          }
           return {
             ...t,
             isCompleted: newStatus,
-            subtasks: updatedSubtasks,
+            subtasks: updatedSubtasks.length > 0 ? updatedSubtasks : (t.subtasks || []),
           };
         }
         return t;
@@ -425,7 +429,7 @@ export function TasksPage() {
     );
 
     try {
-      await updateTask(taskId, { isCompleted: newStatus, subtasks: updatedSubtasks });
+      await updateTask(taskId, updatesToSave);
     } catch (err) {
       showToast('Task update failed. Please try again.', 'error');
       console.error('Error updating task:', err);
