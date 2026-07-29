@@ -5,7 +5,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
-import { db } from '@/utils/firebase';
+import { db } from '@/config/firebase';
 import { UserProfile } from '@/types';
 import { ensureDefaultCategories } from '@/services/categoryService';
 

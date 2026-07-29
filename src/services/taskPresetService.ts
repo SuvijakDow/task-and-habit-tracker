@@ -10,7 +10,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
+import { db } from '@/config/firebase';
 import { TaskPreset } from '@/types';
 
 const TASK_PRESETS_COLLECTION = 'taskPresets';

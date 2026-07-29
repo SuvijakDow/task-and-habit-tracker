@@ -20,14 +20,14 @@ import {
 } from '@/services/habitService';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
-import { showToast } from '@/components/Toast';
+import { db } from '@/config/firebase';
+import { showToast } from '@/components/ui/Toast';
 import { playSuccessSound } from '@/utils/audio';
-import { HabitTimeline } from '@/components/HabitTimeline';
-import { TimePickerInput } from '@/components/TimePickerInput';
-import { WeeklyScheduleModal } from '@/components/WeeklyScheduleModal';
-import { ManageHabitSetsModal } from '@/components/ManageHabitSetsModal';
-import HabitsTable from '@/components/HabitsTable';
+import { HabitTimeline } from '@/components/habits/HabitTimeline';
+import { TimePickerInput } from '@/components/ui/TimePickerInput';
+import { WeeklyScheduleModal } from '@/components/modals/WeeklyScheduleModal';
+import { ManageHabitSetsModal } from '@/components/modals/ManageHabitSetsModal';
+import HabitsTable from '@/components/habits/HabitsTable';
 
 export function HabitsPage() {
   const { user, loading: authLoading } = useAuth();

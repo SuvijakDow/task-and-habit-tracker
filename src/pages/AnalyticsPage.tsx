@@ -4,8 +4,8 @@ import { Award, Calendar, CheckCircle2, ChevronDown, Clock, Flame, Layers, Minus
 import { useAuth } from '@/context/AuthContext';
 import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, calculateTotalCompletions, getPast7DaysStatus, getDayAbbreviation, resetHabitData, getHabitColorHex } from '@/services/habitService';
 import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
-import { ContributionHeatmap } from '@/components/ContributionHeatmap';
-import { showToast } from '@/components/Toast';
+import { ContributionHeatmap } from '@/components/habits/ContributionHeatmap';
+import { showToast } from '@/components/ui/Toast';
 
 const parseDateSafely = (val: any): Date => {
   if (!val) return new Date();

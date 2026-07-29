@@ -13,7 +13,7 @@ import {
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
+import { db } from '@/config/firebase';
 import { DailyHabit, HabitSet } from '@/types';
 import { formatToDateString } from '@/utils/dateUtils';
 

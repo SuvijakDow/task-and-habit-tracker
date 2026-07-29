@@ -9,7 +9,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
+import { db } from '@/config/firebase';
 import { Category } from '@/types';
 
 const CATEGORIES_COLLECTION = 'categories';

@@ -11,7 +11,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
 } from 'firebase/auth';
-import { auth } from '@/utils/firebase';
+import { auth } from '@/config/firebase';
 import { UserProfile } from '@/types';
 
 /**

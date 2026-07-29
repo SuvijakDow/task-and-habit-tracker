@@ -10,12 +10,12 @@ import {
   updateTask,
   deleteTask,
 } from '@/services/taskService';
-import TasksTable from '@/components/TasksTable';
-import { CategoriesModal } from '@/components/CategoriesModal';
+import TasksTable from '@/components/tasks/TasksTable';
+import { CategoriesModal } from '@/components/modals/CategoriesModal';
 import {
   getUserCategories,
 } from '@/services/categoryService';
-import { showToast } from '@/components/Toast';
+import { showToast } from '@/components/ui/Toast';
 import { playSuccessSound } from '@/utils/audio';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
@@ -26,7 +26,7 @@ import {
   setActiveTaskPreset,
   updateTaskPreset,
 } from '@/services/taskPresetService';
-import { ManageTaskPresetsModal } from '@/components/ManageTaskPresetsModal';
+import { ManageTaskPresetsModal } from '@/components/modals/ManageTaskPresetsModal';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';

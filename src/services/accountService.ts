@@ -1,5 +1,5 @@
 import { collection, deleteDoc, doc, getDocs, query, where, writeBatch } from 'firebase/firestore';
-import { db } from '@/utils/firebase';
+import { db } from '@/config/firebase';
 
 const USER_DATA_COLLECTIONS = ['tasks', 'categories', 'dailyHabits', 'habitSets', 'taskPresets'] as const;
 

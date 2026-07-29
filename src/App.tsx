@@ -1,6 +1,6 @@
 import { AuthProvider } from '@/context/AuthContext';
 import AuthPage from '@/pages/AuthPage';
-import { ToastContainer } from '@/components/Toast';
+import { ToastContainer } from '@/components/ui/Toast';
 
 export function App() {
   return (
