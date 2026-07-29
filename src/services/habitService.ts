@@ -244,6 +244,11 @@ export const createDailyHabit = async (
     if (habitData.setId) {
       payload.setId = habitData.setId;
     }
+    if (Array.isArray(habitData.setIds)) {
+      payload.setIds = habitData.setIds;
+    } else if (habitData.setId) {
+      payload.setIds = [habitData.setId];
+    }
     if (habitData.targetValue !== undefined && habitData.targetValue !== null && habitData.targetValue > 0) {
       payload.targetValue = habitData.targetValue;
     }
@@ -311,6 +316,9 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       endTime: doc.data().endTime || '10:00',
       color: doc.data().color || undefined,
       setId: doc.data().setId || undefined,
+      setIds: Array.isArray(doc.data().setIds)
+        ? doc.data().setIds
+        : (doc.data().setId ? [doc.data().setId] : []),
       targetValue: doc.data().targetValue || undefined,
       targetUnit: doc.data().targetUnit || undefined,
       dailyProgress: doc.data().dailyProgress || undefined,

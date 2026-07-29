@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2 } from 'lucide-react';
-import { DailyHabit, HabitSet } from '@/types';
+import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   createDailyHabit,
@@ -51,7 +51,7 @@ export function HabitsPage() {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [habitColor, setHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
-  const [habitSetId, setHabitSetId] = useState<string>('');
+  const [habitSetIds, setHabitSetIds] = useState<string[]>([]);
   const [targetValue, setTargetValue] = useState<number | undefined>(undefined);
   const [targetUnit, setTargetUnit] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +64,7 @@ export function HabitsPage() {
   const [editStartTime, setEditStartTime] = useState('09:00');
   const [editEndTime, setEditEndTime] = useState('10:00');
   const [editHabitColor, setEditHabitColor] = useState(PASTEL_HABIT_COLORS[0]);
-  const [editHabitSetId, setEditHabitSetId] = useState<string>('');
+  const [editHabitSetIds, setEditHabitSetIds] = useState<string[]>([]);
   const [editTargetValue, setEditTargetValue] = useState<number | undefined>(undefined);
   const [editTargetUnit, setEditTargetUnit] = useState<string | undefined>(undefined);
 
@@ -110,7 +110,7 @@ export function HabitsPage() {
       const active = sets.find((s) => s.isActive) || sets[0];
       if (active) {
         setActiveSetId(active.id);
-        setHabitSetId(active.id);
+        setHabitSetIds([active.id]);
       }
       setError(null);
     } catch (err) {
@@ -133,13 +133,14 @@ export function HabitsPage() {
     return habitSets.find((s) => s.id === activeSetId) || habitSets[0];
   }, [habitSets, activeSetId]);
 
-  // Habits belonging strictly to active routine set (or default set for legacy habits)
+  // Habits belonging to active routine set (or default set for legacy habits)
   const activeRoutineHabits = useMemo(() => {
     if (!activeSet) return habits;
     const defaultSetId = habitSets[0]?.id;
     return habits.filter((h) => {
-      if (h.setId) {
-        return h.setId === activeSet.id;
+      const setIds = getHabitSetIds(h);
+      if (setIds.length > 0) {
+        return setIds.includes(activeSet.id);
       }
       return activeSet.id === defaultSetId;
     });
@@ -246,7 +247,7 @@ export function HabitsPage() {
       setIsSubmitting(true);
       setError(null);
 
-      const targetSetId = habitSetId || activeSetId;
+      const targetSetIds = habitSetIds.length > 0 ? habitSetIds : [activeSetId];
       const newHabitId = await createDailyHabit(user.uid, {
         title: habitTitle.trim(),
         completedDates: [],
@@ -254,7 +255,8 @@ export function HabitsPage() {
         startTime,
         endTime,
         color: habitColor,
-        setId: targetSetId,
+        setIds: targetSetIds,
+        setId: targetSetIds[0],
         targetValue: targetValue && targetValue > 0 ? targetValue : undefined,
         targetUnit: targetUnit?.trim() || undefined,
       });
@@ -271,7 +273,8 @@ export function HabitsPage() {
             startTime,
             endTime,
             color: habitColor,
-            setId: targetSetId,
+            setIds: targetSetIds,
+            setId: targetSetIds[0],
             targetValue: targetValue && targetValue > 0 ? targetValue : undefined,
             targetUnit: targetUnit?.trim() || undefined,
             createdAt: new Date(),
@@ -397,7 +400,8 @@ export function HabitsPage() {
     setEditStartTime(habitToEdit.startTime);
     setEditEndTime(habitToEdit.endTime);
     setEditHabitColor(getHabitColorHex(habitToEdit, habits));
-    setEditHabitSetId(habitToEdit.setId || activeSetId);
+    const currentSetIds = getHabitSetIds(habitToEdit);
+    setEditHabitSetIds(currentSetIds.length > 0 ? currentSetIds : [activeSetId]);
     setEditTargetValue(habitToEdit.targetValue);
     setEditTargetUnit(habitToEdit.targetUnit);
   };
@@ -419,14 +423,15 @@ export function HabitsPage() {
       setIsSubmitting(true);
       setEditError(null);
 
-      const targetSetId = editHabitSetId || activeSetId;
+      const targetSetIds = editHabitSetIds.length > 0 ? editHabitSetIds : [activeSetId];
       await updateDoc(doc(db, 'dailyHabits', editingHabitId), {
         title: editHabitTitle.trim(),
         scheduledDays: editScheduledDays,
         startTime: editStartTime,
         endTime: editEndTime,
         color: editHabitColor,
-        setId: targetSetId,
+        setIds: targetSetIds,
+        setId: targetSetIds[0],
         targetValue: editTargetValue && editTargetValue > 0 ? editTargetValue : null,
         targetUnit: editTargetUnit?.trim() || null,
         updatedAt: new Date(),
@@ -441,7 +446,8 @@ export function HabitsPage() {
               startTime: editStartTime,
               endTime: editEndTime,
               color: editHabitColor,
-              setId: targetSetId,
+              setIds: targetSetIds,
+              setId: targetSetIds[0],
               targetValue: editTargetValue && editTargetValue > 0 ? editTargetValue : undefined,
               targetUnit: editTargetUnit?.trim() || undefined,
               updatedAt: new Date(),
@@ -573,7 +579,7 @@ export function HabitsPage() {
                     setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
                     setStartTime('09:00');
                     setEndTime('10:00');
-                    setHabitSetId(activeSetId);
+                    setHabitSetIds([activeSetId]);
                     setError(null);
                     setIsAddModalOpen(true);
                   }}
@@ -620,7 +626,7 @@ export function HabitsPage() {
                   setScheduledDays([0, 1, 2, 3, 4, 5, 6]);
                   setStartTime('09:00');
                   setEndTime('10:00');
-                  setHabitSetId(activeSetId);
+                  setHabitSetIds([activeSetId]);
                   setError(null);
                   setIsAddModalOpen(true);
                 }}
@@ -790,23 +796,51 @@ export function HabitsPage() {
                       />
                     </div>
 
-                    {/* Routine */}
-                    <div>
-                      <label htmlFor="habit-preset" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Routine
-                      </label>
-                      <select
-                        id="habit-preset"
-                        value={habitSetId || activeSetId}
-                        onChange={(e) => setHabitSetId(e.target.value)}
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                      >
-                        {habitSets.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name} {s.id === activeSetId ? '(Active)' : ''}
-                          </option>
-                        ))}
-                      </select>
+                    {/* Routines (Multi-Select) */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-purple-700" />
+                          Routines (Presets)
+                        </label>
+                        <span className="text-[11px] font-semibold text-purple-600">
+                          {habitSetIds.length > 0 ? `${habitSetIds.length} selected` : '1 selected'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-medium text-gray-500">Select routines this habit belongs to (can select multiple):</p>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {sortedHabitSets.map((s) => {
+                          const isChecked = habitSetIds.length > 0 ? habitSetIds.includes(s.id) : s.id === activeSetId;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => {
+                                setHabitSetIds((prev) => {
+                                  const effective = prev.length === 0 ? [activeSetId] : prev;
+                                  if (effective.includes(s.id)) {
+                                    const next = effective.filter((id) => id !== s.id);
+                                    return next.length > 0 ? next : [activeSetId];
+                                  }
+                                  return [...effective, s.id];
+                                });
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                isChecked
+                                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-xs scale-[1.02]'
+                                  : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
+                              }`}
+                            >
+                              <div
+                                className={`w-2.5 h-2.5 rounded-full ${isChecked ? 'bg-white' : ''}`}
+                                style={{ backgroundColor: isChecked ? undefined : s.color || '#A78BFA' }}
+                              />
+                              <span>{s.name}</span>
+                              {isChecked && <Check className="w-3.5 h-3.5 text-white ml-0.5" />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Schedule Section */}
@@ -1307,23 +1341,51 @@ export function HabitsPage() {
                       />
                     </div>
 
-                    {/* Routine Preset */}
-                    <div>
-                      <label htmlFor="edit-habit-preset" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Routine Preset
-                      </label>
-                      <select
-                        id="edit-habit-preset"
-                        value={editHabitSetId || activeSetId}
-                        onChange={(e) => setEditHabitSetId(e.target.value)}
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-3 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                      >
-                        {habitSets.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name} {s.id === activeSetId ? '(Active)' : ''}
-                          </option>
-                        ))}
-                      </select>
+                    {/* Routines (Multi-Select) */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-purple-700" />
+                          Routines (Presets)
+                        </label>
+                        <span className="text-[11px] font-semibold text-purple-600">
+                          {editHabitSetIds.length > 0 ? `${editHabitSetIds.length} selected` : '1 selected'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-medium text-gray-500">Select routines this habit belongs to (can select multiple):</p>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {sortedHabitSets.map((s) => {
+                          const isChecked = editHabitSetIds.length > 0 ? editHabitSetIds.includes(s.id) : s.id === activeSetId;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => {
+                                setEditHabitSetIds((prev) => {
+                                  const effective = prev.length === 0 ? [activeSetId] : prev;
+                                  if (effective.includes(s.id)) {
+                                    const next = effective.filter((id) => id !== s.id);
+                                    return next.length > 0 ? next : [activeSetId];
+                                  }
+                                  return [...effective, s.id];
+                                });
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                isChecked
+                                  ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-xs scale-[1.02]'
+                                  : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
+                              }`}
+                            >
+                              <div
+                                className={`w-2.5 h-2.5 rounded-full ${isChecked ? 'bg-white' : ''}`}
+                                style={{ backgroundColor: isChecked ? undefined : s.color || '#A78BFA' }}
+                              />
+                              <span>{s.name}</span>
+                              {isChecked && <Check className="w-3.5 h-3.5 text-white ml-0.5" />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* Schedule Section */}

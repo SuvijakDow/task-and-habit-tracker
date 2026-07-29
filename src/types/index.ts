@@ -56,7 +56,8 @@ export interface DailyHabit {
   startTime: string; // HH:MM format, e.g. '09:00'
   endTime: string; // HH:MM format, e.g. '10:00'
   color?: string; // Hex color string, e.g. '#F87171'
-  setId?: string; // Id of the HabitSet it belongs to
+  setId?: string; // Legacy Id of the HabitSet it belongs to
+  setIds?: string[]; // Array of HabitSet IDs it belongs to (multi-routine support)
   order?: number; // For drag-drop reordering
   trackingStartDate?: Date; // Date when tracking started or was last reset
   targetValue?: number; // Quantitative target goal value e.g. 5
@@ -65,6 +66,16 @@ export interface DailyHabit {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export const getHabitSetIds = (habit: Partial<DailyHabit>): string[] => {
+  if (Array.isArray(habit.setIds) && habit.setIds.length > 0) {
+    return habit.setIds;
+  }
+  if (typeof habit.setId === 'string' && habit.setId.trim()) {
+    return [habit.setId];
+  }
+  return [];
+};
 
 export interface UserProfile {
   uid: string;
