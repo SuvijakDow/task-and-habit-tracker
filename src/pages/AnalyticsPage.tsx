@@ -136,10 +136,9 @@ export function AnalyticsPage() {
     });
   }, [filteredHabits, selectedHabitId, searchQuery]);
 
-  const totalStreakSum = useMemo(() => {
+  const totalCompletions = useMemo(() => {
     return filteredHabits.reduce((acc, habit) => {
-      const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
-      return acc + calculateStreak(habit.completedDates || [], days, habit.targetValue, habit.dailyProgress);
+      return acc + (habit.completedDates ? habit.completedDates.length : 0);
     }, 0);
   }, [filteredHabits]);
 
@@ -238,10 +237,10 @@ export function AnalyticsPage() {
                 <div className="text-base sm:text-lg font-black text-white">{filteredHabits.length}</div>
               </div>
               <div className="px-2 py-0.5 border-x border-white/15">
-                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Streaks</div>
+                <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completions</div>
                 <div className="text-base sm:text-lg font-black text-amber-300 flex items-center justify-center gap-1">
-                  <Flame className="w-4 h-4 fill-amber-300 text-amber-300" />
-                  {totalStreakSum}d
+                  <CheckCircle2 className="w-4 h-4 text-amber-300" />
+                  {totalCompletions}
                 </div>
               </div>
               <div className="px-2 py-0.5">
