@@ -226,14 +226,35 @@ export const createDailyHabit = async (
   habitData: Omit<DailyHabit, 'id' | 'createdAt' | 'updatedAt' | 'userId'>
 ): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, DAILY_HABITS_COLLECTION), {
+    const payload: Record<string, any> = {
       userId,
-      ...habitData,
+      title: habitData.title,
       completedDates: habitData.completedDates || [],
+      scheduledDays: habitData.scheduledDays || [0, 1, 2, 3, 4, 5, 6],
+      startTime: habitData.startTime || '09:00',
+      endTime: habitData.endTime || '10:00',
       dailyProgress: habitData.dailyProgress || {},
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-    });
+    };
+
+    if (habitData.color) {
+      payload.color = habitData.color;
+    }
+    if (habitData.setId) {
+      payload.setId = habitData.setId;
+    }
+    if (habitData.targetValue !== undefined && habitData.targetValue !== null && habitData.targetValue > 0) {
+      payload.targetValue = habitData.targetValue;
+    }
+    if (habitData.targetUnit !== undefined && habitData.targetUnit !== null && habitData.targetUnit.trim().length > 0) {
+      payload.targetUnit = habitData.targetUnit.trim();
+    }
+    if (habitData.trackingStartDate) {
+      payload.trackingStartDate = Timestamp.fromDate(habitData.trackingStartDate);
+    }
+
+    const docRef = await addDoc(collection(db, DAILY_HABITS_COLLECTION), payload);
     return docRef.id;
   } catch (error) {
     console.error('Error creating daily habit:', error);
@@ -387,10 +408,13 @@ export const updateDailyHabit = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, DAILY_HABITS_COLLECTION, habitId);
-    await updateDoc(docRef, {
-      ...updates,
-      updatedAt: Timestamp.now(),
+    const cleanUpdates: Record<string, any> = { updatedAt: Timestamp.now() };
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
     });
+    await updateDoc(docRef, cleanUpdates);
   } catch (error) {
     console.error('Error updating daily habit:', error);
     throw error;
