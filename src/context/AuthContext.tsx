@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { User as FirebaseUser } from 'firebase/auth';
 import { ensureUserProfile, getUserProfile } from '@/services/userService';
 import { UserProfile } from '@/types';
+import { applyAppFont } from '@/utils/fontUtils';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -34,6 +35,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               // Ensure the Firestore profile exists (creates on first login)
               const profile = await ensureUserProfile(authUser);
               setUserProfile(profile);
+              if (profile?.selectedFont) {
+                applyAppFont(profile.selectedFont);
+              }
             } catch (error) {
               console.error('Error syncing user profile:', error);
               setUserProfile(null);
@@ -59,10 +63,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const refreshUserProfile = useCallback(async () => {
     if (!user) return;
     try {
-      const profile = await getUserProfile(user.uid);
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Error refreshing user profile:', error);
+      const updated = await getUserProfile(user.uid);
+      if (updated) {
+        setUserProfile(updated);
+        if (updated.selectedFont) {
+          applyAppFont(updated.selectedFont);
+        }
+      }
+    } catch (err) {
+      console.error('Error refreshing user profile:', err);
     }
   }, [user]);
 

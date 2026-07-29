@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@400;500;600;700&display=swap');
+:root {
+  --font-master: 'Bai Jamjuree', system-ui, -apple-system, sans-serif;
+}
 
 @tailwind base;
 @tailwind components;
@@ -11,7 +13,7 @@
 @layer base {
   html, body {
     @apply font-sans;
-    font-family: 'Bai Jamjuree', 'Segoe UI', 'Helvetica', 'Arial', sans-serif !important;
+    font-family: var(--font-master), system-ui, -apple-system, sans-serif !important;
   }
 
   /* Hide spinner arrows for input[type=number] across Desktop browsers */

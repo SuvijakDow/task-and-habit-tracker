@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { AlertTriangle, Settings, Trash2, X, Upload, ImagePlus } from 'lucide-react';
+import { AlertTriangle, Settings, Trash2, X, Upload, ImagePlus, Type, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import {
   updateUserProfile,
@@ -9,6 +9,7 @@ import {
 } from '@/services/userService';
 import { deleteUserData } from '@/services/accountService';
 import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
+import { APP_FONTS, applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const [displayName, setDisplayName] = useState(userProfile?.displayName || '');
   const [selectedAvatar, setSelectedAvatar] = useState(userProfile?.photoURL || '');
+  const [selectedFont, setSelectedFont] = useState(userProfile?.selectedFont || getStoredFontId());
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const isCustomUpload = selectedAvatar
     && !DEFAULT_AVATARS.includes(selectedAvatar)
     && normalizedSelectedAvatar !== normalizedGooglePhotoURL;
+
+  const busy = isSaving || isUploading || isDeletingAccount;
+
+  const handleFontSelect = (fontId: string) => {
+    setSelectedFont(fontId);
+    applyAppFont(fontId);
+  };
+
+  const handleClose = () => {
+    if (busy) return;
+    const initialFont = userProfile?.selectedFont || getStoredFontId();
+    applyAppFont(initialFont);
+    onClose();
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,8 +99,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       await updateUserProfile(user.uid, {
         displayName: displayName.trim(),
         photoURL: normalizeProfilePhotoURL(selectedAvatar),
+        selectedFont,
       });
 
+      applyAppFont(selectedFont);
       await refreshUserProfile();
       setSuccess(true);
 
@@ -129,8 +147,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     if (isOpen) {
       const name = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || '';
       const avatar = userProfile?.photoURL || user?.photoURL || DEFAULT_AVATARS[0];
+      const font = userProfile?.selectedFont || getStoredFontId();
+
       setDisplayName(name);
       setSelectedAvatar(avatar);
+      setSelectedFont(font);
+      applyAppFont(font);
+      preloadAllAppFonts();
+
       setError(null);
       setSuccess(false);
       setIsDeleteDialogOpen(false);
@@ -141,10 +165,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   if (!isOpen) return null;
 
-  const busy = isSaving || isUploading || isDeletingAccount;
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-950/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-      <div className="modal-enter w-full max-w-md max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-2xl border border-purple-100/90 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.25)] overflow-hidden">
+      <div className="modal-enter w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-2xl border border-purple-100/90 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.25)] overflow-hidden">
         {/* Sticky Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-white/95 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -154,7 +177,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">Settings</h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={busy}
             className="h-9 w-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 transition-all flex items-center justify-center border border-purple-100 disabled:opacity-50"
             aria-label="Close settings"
@@ -196,8 +219,54 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             />
           </div>
 
+          {/* Master Font Selection */}
+          <div className="pt-3 border-t border-purple-100/70 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                <Type className="w-4 h-4 text-purple-600" />
+                Application Master Font
+              </label>
+              <span className="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/80">
+                Thai & English
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1 p-0.5">
+              {APP_FONTS.map((font) => {
+                const isSelected = selectedFont === font.id;
+                return (
+                  <button
+                    key={font.id}
+                    type="button"
+                    onClick={() => handleFontSelect(font.id)}
+                    disabled={busy}
+                    className={`flex flex-col text-left p-2.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                      isSelected
+                        ? 'bg-gradient-to-br from-purple-50 to-pink-50/40 border-purple-500 ring-2 ring-purple-500/20 shadow-2xs scale-[1.01]'
+                        : 'bg-white border-purple-100 hover:border-purple-300 hover:bg-purple-50/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 w-full mb-1">
+                      <span className="text-xs font-bold text-gray-900 truncate" style={{ fontFamily: font.fontFamily }}>
+                        {font.name} <span className="text-[11px] font-medium text-gray-500">({font.nameThai})</span>
+                      </span>
+                      {isSelected && (
+                        <div className="h-4 w-4 bg-purple-600 rounded-full flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-600 truncate leading-tight" style={{ fontFamily: font.fontFamily }}>
+                      {font.previewText}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Avatar Selection Section */}
-          <div className="pt-1 border-t border-purple-100/70">
+          <div className="pt-3 border-t border-purple-100/70">
             <p className="text-sm font-bold text-gray-800 mb-3">
               Profile Picture
             </p>
@@ -333,7 +402,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <div className="flex items-center gap-3 p-4 border-t border-purple-100/80 bg-white/95 shrink-0 rounded-b-2xl">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={busy}
             className="flex-1 min-h-[42px] py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl border border-gray-200 transition-all disabled:opacity-50"
           >

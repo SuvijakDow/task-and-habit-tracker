@@ -90,6 +90,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   photoURL: string;
+  selectedFont?: string;
   createdAt: Date;
   updatedAt: Date;
 }
