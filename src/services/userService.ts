@@ -12,27 +12,38 @@ import { ensureDefaultCategories } from '@/services/categoryService';
 const USERS_COLLECTION = 'users';
 
 /**
- * 8 cute default avatars using DiceBear styles
- * Mix of fun-emoji (cute expressive faces) and lorelei (soft illustrated portraits)
+ * 23 cute minimal avatars using DiceBear styles
+ * Focus on colorful, minimal designs with soft outlines, similar to the provided image examples.
+ * Uses avataaars (cute cartoon), fun-emoji (expressive), thumbs (simple, expressive), and personas (diverse, minimal) styles.
  */
 export const DEFAULT_AVATARS = [
-  // Cute RPG Adventurers & Animals
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Felix',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Lily',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Mochi',
-  'https://api.dicebear.com/9.x/adventurer/svg?seed=Panda',
-  // Cute Little Robots
-  'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Sparky',
-  'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Pixel',
-  // Expressive Cute Emojis
-  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Bella&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
-  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cookie&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
-  // Soft Illustrated Portraits
-  'https://api.dicebear.com/9.x/lorelei/svg?seed=Peanut',
-  'https://api.dicebear.com/9.x/lorelei/svg?seed=Muffin',
-  // Cheerful Big Smile
-  'https://api.dicebear.com/9.x/big-smile/svg?seed=Sunny',
-  'https://api.dicebear.com/9.x/big-smile/svg?seed=Cheery',
+  // Avataaars - cute cartoon style (6 avatars)
+  'https://api.dicebear.com/9.x/avataaars/svg?seed=Felix',
+  'https://api.dicebear.com/9.x/avataaars/svg?seed=Lily',
+  'https://api.dicebear.com/9.x/avataaars/svg?seed=Mochi',
+  'https://api.dicebear.com/9.x/avataaars/svg?seed=Panda',
+  'https://api.dicebear.com/9.x/avataaars/svg?seed=Bella',
+  'https://api.dicebear.com/9.x/avataaars/svg?seed=Cookie',
+  // Fun-emoji - expressive cute faces (6 avatars)
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sunny&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Cheery&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Sparky&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Pixel&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Peanut&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  'https://api.dicebear.com/9.x/fun-emoji/svg?seed=Muffin&mouth=cute,kissHeart,lilSmile,smileLol,wideSmile',
+  // Thumbs - simple, expressive, colorful (6 avatars)
+  'https://api.dicebear.com/9.x/thumbs/svg?seed=Aria',
+  'https://api.dicebear.com/9.x/thumbs/svg?seed=Leo',
+  'https://api.dicebear.com/9.x/thumbs/svg?seed=Luna',
+  'https://api.dicebear.com/9.x/thumbs/svg?seed=Max',
+  'https://api.dicebear.com/9.x/thumbs/svg?seed=Zoe',
+  'https://api.dicebear.com/9.x/thumbs/svg?seed=Finn',
+  // Personas - diverse, minimal (5 avatars)
+  'https://api.dicebear.com/9.x/personas/svg?seed=Ruby',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Oliver',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Ivy',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Jasper',
+  'https://api.dicebear.com/9.x/personas/svg?seed=Willow',
 ];
 
 /**
