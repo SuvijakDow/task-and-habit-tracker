@@ -142,6 +142,7 @@ export function TasksPage() {
 
   // Delete confirmation state
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
   // Update tasksRef whenever tasks changes
   useEffect(() => {
@@ -436,37 +437,50 @@ export function TasksPage() {
       playSuccessSound();
     }
 
-    let updatedSubtasks: Subtask[] = [];
-    const updatesToSave: Partial<Task> = { isCompleted: newStatus };
-
-    // Optimistic update: instantly reflect change in UI for main task AND all subtasks
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === taskId) {
-          if (t.subtasks && t.subtasks.length > 0) {
-            updatedSubtasks = t.subtasks.map((st) => ({ ...st, isCompleted: newStatus }));
-            updatesToSave.subtasks = updatedSubtasks;
-          }
-          return {
-            ...t,
-            isCompleted: newStatus,
-            subtasks: updatedSubtasks.length > 0 ? updatedSubtasks : t.subtasks,
-          };
-        }
-        return t;
-      })
-    );
+    setTogglingTaskId(taskId);
 
     try {
-      console.log('Toggle completion for task:', taskId, 'updates:', updatesToSave);
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+
+      // When task is checked: check all subtasks
+      // When task is unchecked: uncheck all subtasks
+      const updatesToSave: Partial<Task> = { isCompleted: newStatus };
+
+      // If task has subtasks, update them to match the task completion status
+      if (task.subtasks && task.subtasks.length > 0) {
+        const updatedSubtasks = task.subtasks.map((st) => ({ ...st, isCompleted: newStatus }));
+        updatesToSave.subtasks = updatedSubtasks;
+      }
+
+      // Save to database first
       await updateTask(taskId, updatesToSave);
-      console.log('Toggle completion saved successfully');
+
+      // Then update state
+      setTasks((prev) =>
+        prev.map((t) => {
+          if (t.id === taskId) {
+            const updatedSubtasks = t.subtasks && t.subtasks.length > 0
+              ? t.subtasks.map((st) => ({ ...st, isCompleted: newStatus }))
+              : t.subtasks;
+
+            return {
+              ...t,
+              isCompleted: newStatus,
+              subtasks: updatedSubtasks,
+            };
+          }
+          return t;
+        })
+      );
     } catch (err) {
       showToast('Task update failed. Please try again.', 'error');
       console.error('Error updating task:', err);
       await loadTasks();
+    } finally {
+      setTogglingTaskId(null);
     }
-  }, []);
+  }, [tasks]);
 
   const handleToggleTaskSubtask = useCallback(async (taskId: string, subtaskId: string) => {
     // Read the current state from ref to avoid stale closure
@@ -479,7 +493,8 @@ export function TasksPage() {
       st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
     );
     
-    // Parent task is complete IF AND ONLY IF all subtasks are checked
+    // When all subtasks are checked: mark task as complete
+    // When any subtask is unchecked: mark task as incomplete
     const isTaskNowComplete = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
 
     // Optimistic update
@@ -620,14 +635,10 @@ export function TasksPage() {
       const subtasks = editFormData.subtasks ?? [];
       const currentTask = tasks.find((t) => t.id === editingTaskId);
       
-      // Calculate isCompleted based on subtasks only if task has subtasks
-      // If task has subtasks, it's complete only when all subtasks are complete
-      // If task has no subtasks, preserve its current completion status
-      const isCompleted = subtasks.length > 0 
-        ? subtasks.every((st) => st.isCompleted)
-        : (currentTask?.isCompleted ?? false);
+      // Preserve current isCompleted status - don't recalculate
+      const isCompleted = currentTask?.isCompleted ?? false;
 
-      // Prepare updates - only include subtasks if they were actually modified
+      // Prepare updates
       const updates: any = {
         title: editFormData.title,
         description: editFormData.description,
@@ -637,7 +648,7 @@ export function TasksPage() {
         isCompleted: isCompleted,
       };
 
-      // Only update subtasks if they were actually modified
+      // Update subtasks if they exist
       if (subtasks.length > 0 || (currentTask?.subtasks && currentTask.subtasks.length > 0)) {
         updates.subtasks = subtasks;
       }
@@ -1301,6 +1312,7 @@ export function TasksPage() {
                   onDelete={handleDeleteTask}
                   onBulkSetCompletion={handleBulkSetCompletion}
                   onBulkDelete={handleBulkDelete}
+                  togglingTaskId={togglingTaskId}
                 />
               </div>
             ) : (
@@ -1335,6 +1347,7 @@ export function TasksPage() {
                           onToggleSubtask={handleToggleTaskSubtask}
                           onEdit={handleEditTask}
                           onDelete={handleDeleteTask}
+                          togglingTaskId={togglingTaskId}
                         />
                       ))}
                     </div>
@@ -1363,6 +1376,7 @@ export function TasksPage() {
                           onToggleSubtask={handleToggleTaskSubtask}
                           onEdit={handleEditTask}
                           onDelete={handleDeleteTask}
+                          togglingTaskId={togglingTaskId}
                         />
                       ))}
                     </div>
@@ -1696,9 +1710,10 @@ interface TaskItemProps {
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
+  togglingTaskId: string | null;
 }
 
-function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit }: TaskItemProps) {
+function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit, togglingTaskId }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const matchedCategory = findCategoryByTaskValue(categories, task.category);
   const categoryName = matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -1725,8 +1740,16 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
   return (
     <div
       className={`group glass-card ${borderStyleClass} ${task.isCompleted ? 'opacity-80' : ''
-        } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl`}
+        } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl relative`}
     >
+      {togglingTaskId === task.id && (
+        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-inherit flex items-center justify-center z-10">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm font-semibold text-purple-700">Updating...</span>
+          </div>
+        </div>
+      )}
       <div className="flex flex-row items-start sm:items-center gap-2.5 sm:gap-3 py-3 sm:py-4 px-3 sm:px-6">
         <div className="flex-shrink-0 mt-1 sm:mt-0">
           <button
@@ -1735,14 +1758,19 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
+            disabled={togglingTaskId === task.id}
             className={`h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 aspect-square rounded-md border transition-all duration-200 flex items-center justify-center shrink-0 ${task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
-              }`}
+              } ${togglingTaskId === task.id ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+            {togglingTaskId === task.id ? (
+              <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
           </button>
         </div>
 

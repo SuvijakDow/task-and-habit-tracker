@@ -43,6 +43,7 @@ interface Props {
   onDelete: (taskId: string) => void;
   onBulkSetCompletion: (taskIds: string[], isCompleted: boolean) => Promise<void>;
   onBulkDelete: (taskIds: string[]) => Promise<void>;
+  togglingTaskId: string | null;
 }
 
 export default function TasksTable({
@@ -54,6 +55,7 @@ export default function TasksTable({
   onDelete,
   onBulkSetCompletion,
   onBulkDelete,
+  togglingTaskId,
 }: Props) {
   const [pendingPage, setPendingPage] = useState(1);
   const [completedPage, setCompletedPage] = useState(1);
@@ -299,7 +301,15 @@ export default function TasksTable({
                   const rowBgClass = isSelected ? selectedBg : statusRowClass;
 
                   return (
-                    <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass}`}>
+                    <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass} relative ${togglingTaskId === t.id ? 'pointer-events-none' : ''}`}>
+                      {togglingTaskId === t.id && (
+                        <td colSpan={6} className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs font-semibold text-purple-700">Updating...</span>
+                          </div>
+                        </td>
+                      )}
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center relative border-r-2 border-purple-200`}>
                         {deadlineType === 'overdue' && (
                           <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-rose-500 shadow-2xs" />
@@ -313,14 +323,19 @@ export default function TasksTable({
                           aria-checked={t.isCompleted}
                           aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
                           onClick={() => onToggleCompletion(t.id, t.isCompleted)}
+                          disabled={togglingTaskId === t.id}
                           className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
                             ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
                             : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                          }`}
+                          } ${togglingTaskId === t.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
+                          {togglingTaskId === t.id ? (
+                            <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
                         </button>
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-purple-100/70`}>
