@@ -90,6 +90,15 @@ export const APP_FONTS: FontOption[] = [
     previewText: 'If one man can do, let him do.',
     category: 'International Minimal',
   },
+  {
+    id: 'outfit',
+    name: 'Outfit',
+    nameThai: 'เอาต์ฟิต',
+    fontFamily: "'Outfit', sans-serif",
+    googleFontQuery: 'Outfit:wght@300;400;500;600;700;800',
+    previewText: 'Hustling all day but still not done yet.',
+    category: 'Modern Sans-Serif',
+  },
 ];
 
 export const DEFAULT_FONT_ID = 'bai_jamjuree';

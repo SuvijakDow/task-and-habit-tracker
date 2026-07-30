@@ -5,10 +5,14 @@ interface DataRefreshContextType {
   refreshHabits: () => void;
   refreshTaskPresets: () => void;
   refreshHabitSets: () => void;
+  refreshCategories: () => void;
+  refreshAnalytics: () => void;
   registerRefreshTasks: (fn: () => void) => void;
   registerRefreshHabits: (fn: () => void) => void;
   registerRefreshTaskPresets: (fn: () => void) => void;
   registerRefreshHabitSets: (fn: () => void) => void;
+  registerRefreshCategories: (fn: () => void) => void;
+  registerRefreshAnalytics: (fn: () => void) => void;
 }
 
 const DataRefreshContext = createContext<DataRefreshContextType | undefined>(undefined);
@@ -18,6 +22,8 @@ export const DataRefreshProvider: React.FC<{ children: ReactNode }> = ({ childre
   const refreshHabitsRef = React.useRef<(() => void) | null>(null);
   const refreshTaskPresetsRef = React.useRef<(() => void) | null>(null);
   const refreshHabitSetsRef = React.useRef<(() => void) | null>(null);
+  const refreshCategoriesRef = React.useRef<(() => void) | null>(null);
+  const refreshAnalyticsRef = React.useRef<(() => void) | null>(null);
 
   const registerRefreshTasks = useCallback((fn: () => void) => {
     refreshTasksRef.current = fn;
@@ -33,6 +39,14 @@ export const DataRefreshProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const registerRefreshHabitSets = useCallback((fn: () => void) => {
     refreshHabitSetsRef.current = fn;
+  }, []);
+
+  const registerRefreshCategories = useCallback((fn: () => void) => {
+    refreshCategoriesRef.current = fn;
+  }, []);
+
+  const registerRefreshAnalytics = useCallback((fn: () => void) => {
+    refreshAnalyticsRef.current = fn;
   }, []);
 
   const refreshTasks = useCallback(() => {
@@ -59,8 +73,20 @@ export const DataRefreshProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   }, []);
 
+  const refreshCategories = useCallback(() => {
+    if (refreshCategoriesRef.current) {
+      refreshCategoriesRef.current();
+    }
+  }, []);
+
+  const refreshAnalytics = useCallback(() => {
+    if (refreshAnalyticsRef.current) {
+      refreshAnalyticsRef.current();
+    }
+  }, []);
+
   return (
-    <DataRefreshContext.Provider value={{ refreshTasks, refreshHabits, refreshTaskPresets, refreshHabitSets, registerRefreshTasks, registerRefreshHabits, registerRefreshTaskPresets, registerRefreshHabitSets }}>
+    <DataRefreshContext.Provider value={{ refreshTasks, refreshHabits, refreshTaskPresets, refreshHabitSets, refreshCategories, refreshAnalytics, registerRefreshTasks, registerRefreshHabits, registerRefreshTaskPresets, registerRefreshHabitSets, registerRefreshCategories, registerRefreshAnalytics }}>
       {children}
     </DataRefreshContext.Provider>
   );

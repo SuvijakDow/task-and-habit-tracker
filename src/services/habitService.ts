@@ -187,7 +187,7 @@ export const setActiveHabitSet = async (userId: string, targetSetId: string): Pr
 
 export const updateHabitSet = async (
   setId: string,
-  updates: Partial<Pick<HabitSet, 'name' | 'color'>>
+  updates: Partial<Pick<HabitSet, 'name' | 'color' | 'isActive'>>
 ): Promise<void> => {
   try {
     const docRef = doc(db, HABIT_SETS_COLLECTION, setId);

@@ -86,7 +86,7 @@ const getCategoryErrorMessage = (error: unknown): string => {
 
 export function TasksPage() {
   const { user, loading: authLoading } = useAuth();
-  const { registerRefreshTasks, registerRefreshTaskPresets } = useDataRefresh();
+  const { registerRefreshTasks, registerRefreshTaskPresets, registerRefreshCategories } = useDataRefresh();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [presets, setPresets] = useState<TaskPreset[]>([]);
@@ -180,6 +180,13 @@ export function TasksPage() {
       loadPresets();
     });
   }, [registerRefreshTaskPresets]);
+
+  // Register categories refresh function with DataRefreshContext
+  useEffect(() => {
+    registerRefreshCategories(() => {
+      loadCategories();
+    });
+  }, [registerRefreshCategories]);
 
   useEffect(() => {
     if (!isPresetDropdownOpen) return;
@@ -437,7 +444,7 @@ export function TasksPage() {
           return {
             ...t,
             isCompleted: newStatus,
-            subtasks: updatedSubtasks.length > 0 ? updatedSubtasks : (t.subtasks || []),
+            subtasks: updatedSubtasks.length > 0 ? updatedSubtasks : t.subtasks,
           };
         }
         return t;
@@ -547,7 +554,7 @@ export function TasksPage() {
         ? task.dueDate.toISOString().split('T')[0]
         : '',
       setId: task.setId || presets[0]?.id || activePresetId,
-      subtasks: task.subtasks || [],
+      subtasks: task.subtasks ?? [],
     });
     setEditSubtaskInputText('');
   };
@@ -573,7 +580,7 @@ export function TasksPage() {
         category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
         setId: editFormData.setId || activePresetId || undefined,
-        subtasks: editFormData.subtasks || [],
+        subtasks: editFormData.subtasks ?? [],
       });
 
       setTasks(
@@ -588,7 +595,7 @@ export function TasksPage() {
                 ? new Date(editFormData.dueDate)
                 : null,
               setId: editFormData.setId || activePresetId || undefined,
-              subtasks: editFormData.subtasks || [],
+              subtasks: editFormData.subtasks ?? [],
             }
             : t
         )

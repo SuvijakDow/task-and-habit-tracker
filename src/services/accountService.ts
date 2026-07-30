@@ -91,3 +91,15 @@ export const resetUserHabitSets = async (userId: string): Promise<void> => {
     }, { merge: true });
   });
 };
+
+/** Clear all user data without creating defaults (for import purposes). */
+export const clearAllUserData = async (userId: string): Promise<void> => {
+  const snapshots = await Promise.all(
+    USER_DATA_COLLECTIONS.map((collectionName) => getDocs(query(
+      collection(db, collectionName),
+      where('userId', '==', userId)
+    )))
+  );
+
+  await deleteInBatches(snapshots.flatMap((snapshot) => snapshot.docs.map((snapshotDoc) => snapshotDoc.ref)));
+};

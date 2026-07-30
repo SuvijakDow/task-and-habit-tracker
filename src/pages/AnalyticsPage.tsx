@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Award, Calendar, CheckCircle2, ChevronDown, Clock, Flame, Layers, Minus, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDataRefresh } from '@/context/DataRefreshContext';
 import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, calculateTotalCompletions, getPast7DaysStatus, getDayAbbreviation, resetHabitData, getHabitColorHex } from '@/services/habitService';
 import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
 import { ContributionHeatmap } from '@/components/habits/ContributionHeatmap';
@@ -18,6 +19,7 @@ const parseDateSafely = (val: any): Date => {
 
 export function AnalyticsPage() {
   const { user } = useAuth();
+  const { registerRefreshAnalytics } = useDataRefresh();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
   const [selectedSetId, setSelectedSetId] = useState<string>('');
@@ -94,6 +96,13 @@ export function AnalyticsPage() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isDropdownOpen]);
+
+  // Register analytics refresh function with DataRefreshContext
+  useEffect(() => {
+    registerRefreshAnalytics(() => {
+      loadAnalytics();
+    });
+  }, [registerRefreshAnalytics]);
 
   useEffect(() => {
     if (!isRoutineDropdownOpen) return;

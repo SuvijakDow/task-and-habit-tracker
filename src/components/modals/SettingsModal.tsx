@@ -22,12 +22,13 @@ import {
   DEFAULT_AVATARS,
   normalizeProfilePhotoURL,
 } from '@/services/userService';
-import { deleteUserData, resetUserTasks, resetUserDailyHabits, resetUserTaskPresets, resetUserHabitSets } from '@/services/accountService';
+import { deleteUserData, resetUserTasks, resetUserDailyHabits, resetUserTaskPresets, resetUserHabitSets, clearAllUserData } from '@/services/accountService';
 import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
 import { APP_FONTS, applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
-import { getUserTasks } from '@/services/taskService';
-import { getUserDailyHabits, getUserHabitSets } from '@/services/habitService';
-import { getUserCategories } from '@/services/categoryService';
+import { getUserTasks, createTask } from '@/services/taskService';
+import { getUserDailyHabits, getUserHabitSets, createDailyHabit, createHabitSet } from '@/services/habitService';
+import { getUserCategories, createCategory } from '@/services/categoryService';
+import { createTaskPreset, getUserTaskPresets } from '@/services/taskPresetService';
 import { showToast } from '@/components/ui/Toast';
 
 interface SettingsModalProps {
@@ -37,7 +38,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, userProfile, refreshUserProfile } = useAuth();
-  const { refreshTasks, refreshHabits, refreshTaskPresets, refreshHabitSets } = useDataRefresh();
+  const { refreshTasks, refreshHabits, refreshTaskPresets, refreshHabitSets, refreshCategories, refreshAnalytics } = useDataRefresh();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'data'>('profile');
   const [displayName, setDisplayName] = useState(userProfile?.displayName || '');
@@ -49,6 +50,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -57,6 +60,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isResetHabitsOpen, setIsResetHabitsOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -160,11 +164,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setError(null);
       setIsExportDialogOpen(false);
 
-      const [userTasks, userHabits, userCategories, userSets] = await Promise.all([
+      const [userTasks, userHabits, userCategories, userSets, userTaskPresets] = await Promise.all([
         getUserTasks(user.uid),
         getUserDailyHabits(user.uid),
         getUserCategories(user.uid),
         getUserHabitSets(user.uid),
+        getUserTaskPresets(user.uid),
       ]);
 
       const backupObj = {
@@ -180,6 +185,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           habits: userHabits,
           categories: userCategories,
           habitSets: userSets,
+          taskPresets: userTaskPresets,
         },
       };
 
@@ -208,6 +214,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setIsResetTasksOpen(false);
       refreshTasks();
       refreshTaskPresets();
+      refreshAnalytics();
       showToast('Reset all tasks and presets.', 'success');
     } catch (err) {
       console.error('Error resetting tasks:', err);
@@ -226,6 +233,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setIsResetHabitsOpen(false);
       refreshHabits();
       refreshHabitSets();
+      refreshAnalytics();
       showToast('Reset all habits and routine presets.', 'success');
     } catch (err) {
       console.error('Error resetting habits:', err);
@@ -235,9 +243,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
-  const handleImportFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  const processImportFile = async (file: File) => {
+    if (!user) return;
 
     try {
       setIsImporting(true);
@@ -255,9 +262,125 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         throw new Error('This backup file is not compatible with this app');
       }
 
-      // Import data (this would require additional service functions)
-      // For now, just show a message that this feature needs implementation
-      showToast('Import feature requires additional service implementation', 'error');
+      // Clear all existing user data if in replace mode
+      if (importMode === 'replace') {
+        await clearAllUserData(user.uid);
+      }
+
+      const { tasks, habits, categories, habitSets, taskPresets } = backupObj.data;
+
+      // Create ID mappings to preserve relationships
+      const categoryMapping = new Map<string, string>();
+      const habitSetMapping = new Map<string, string>();
+      const taskPresetMapping = new Map<string, string>();
+
+      // Import categories first and create mapping
+      if (Array.isArray(categories) && categories.length > 0) {
+        for (const category of categories) {
+          try {
+            const newCategory = await createCategory(user.uid, {
+              name: category.name,
+              color: category.color,
+            });
+            categoryMapping.set(category.id, newCategory.id);
+          } catch (err) {
+            console.warn('Failed to import category:', category.name, err);
+          }
+        }
+      }
+
+      // Import habit sets and create mapping
+      if (Array.isArray(habitSets) && habitSets.length > 0) {
+        for (const set of habitSets) {
+          try {
+            const newSet = await createHabitSet(user.uid, {
+              name: set.name,
+              color: set.color,
+              isActive: importMode === 'replace' ? set.isActive : false, // In merge mode, default to inactive
+            });
+            habitSetMapping.set(set.id, newSet.id);
+          } catch (err) {
+            console.warn('Failed to import habit set:', set.name, err);
+          }
+        }
+      }
+
+      // Import task presets and create mapping
+      if (Array.isArray(taskPresets) && taskPresets.length > 0) {
+        for (const preset of taskPresets) {
+          try {
+            const newPreset = await createTaskPreset(user.uid, preset.name, preset.color);
+            taskPresetMapping.set(preset.id, newPreset.id);
+          } catch (err) {
+            console.warn('Failed to import task preset:', preset.name, err);
+          }
+        }
+      }
+
+      // Import tasks with mapped IDs
+      if (Array.isArray(tasks) && tasks.length > 0) {
+        for (const task of tasks) {
+          try {
+            // Map category ID if it exists in mapping
+            const mappedCategoryId = categoryMapping.get(task.category) || task.category;
+            // Map preset ID if it exists in mapping
+            const mappedPresetId = taskPresetMapping.get(task.setId) || task.setId;
+
+            await createTask(user.uid, {
+              title: task.title,
+              description: task.description,
+              category: mappedCategoryId,
+              dueDate: task.dueDate ? new Date(task.dueDate) : null,
+              isCompleted: task.isCompleted,
+              subtasks: task.subtasks,
+              setId: mappedPresetId,
+            });
+          } catch (err) {
+            console.warn('Failed to import task:', task.title, err);
+          }
+        }
+      }
+
+      // Import habits with mapped IDs
+      if (Array.isArray(habits) && habits.length > 0) {
+        for (const habit of habits) {
+          try {
+            // Map habit set IDs
+            const mappedSetId = habit.setId ? (habitSetMapping.get(habit.setId) || habit.setId) : undefined;
+            const mappedSetIds = Array.isArray(habit.setIds)
+              ? habit.setIds.map((id: string) => habitSetMapping.get(id) || id)
+              : (mappedSetId ? [mappedSetId] : []);
+
+            await createDailyHabit(user.uid, {
+              title: habit.title,
+              completedDates: habit.completedDates || [],
+              scheduledDays: habit.scheduledDays || [0, 1, 2, 3, 4, 5, 6],
+              startTime: habit.startTime || '09:00',
+              endTime: habit.endTime || '10:00',
+              customSchedule: habit.customSchedule,
+              color: habit.color,
+              setId: mappedSetId,
+              setIds: mappedSetIds,
+              targetValue: habit.targetValue,
+              targetUnit: habit.targetUnit,
+              dailyProgress: habit.dailyProgress,
+              trackingStartDate: habit.trackingStartDate ? new Date(habit.trackingStartDate) : undefined,
+            });
+          } catch (err) {
+            console.warn('Failed to import habit:', habit.title, err);
+          }
+        }
+      }
+
+      // Refresh all data
+      await refreshTasks();
+      await refreshHabits();
+      await refreshTaskPresets();
+      await refreshHabitSets();
+      await refreshCategories();
+      await refreshAnalytics();
+
+      showToast('Backup imported successfully!', 'success');
     } catch (err: any) {
       const msg = err.message || 'Failed to import backup file';
       setError(msg);
@@ -270,9 +393,50 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
+  const handleImportFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processImportFile(file);
+      setIsImportDialogOpen(false);
+    }
+  };
+
+  const handleImportBackup = () => {
+    setImportMode('replace'); // Reset to default mode
+    setIsImportDialogOpen(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDraggingOver) {
+      setIsDraggingOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/json') {
+      await processImportFile(file);
+      setIsImportDialogOpen(false);
+    } else {
+      showToast('Please drop a valid JSON backup file', 'error');
+    }
+  };
+
   const usesPasswordProvider = user?.providerData.some((provider) => provider.providerId === 'password') ?? false;
   const handleDeleteAccount = async () => {
-    if (!user || deleteConfirmation !== 'DELETE') return;
+    if (!user || deleteConfirmation !== displayName) return;
     try {
       setIsDeletingAccount(true);
       setError(null);
@@ -305,12 +469,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       applyAppFont(font);
       preloadAllAppFonts();
 
+      setActiveTab('profile'); // Always default to Profile & Theme tab
       setError(null);
       setSuccess(false);
       setIsResetTasksOpen(false);
       setIsResetHabitsOpen(false);
       setIsDeleteDialogOpen(false);
       setIsExportDialogOpen(false);
+      setIsImportDialogOpen(false);
       setDeleteConfirmation('');
       setDeletePassword('');
     }
@@ -536,7 +702,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             </div>
                           )}
                         </div>
-                        <p className="text-[11px] text-gray-600 truncate leading-tight" style={{ fontFamily: font.fontFamily }}>
+                        <p className="text-[11px] text-gray-600 leading-snug" style={{ fontFamily: font.fontFamily }}>
                           {font.previewText}
                         </p>
                       </button>
@@ -551,7 +717,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {activeTab === 'data' && (
             <div className="space-y-6">
               {/* Export/Import Backup JSON Section */}
-              <div className="p-4 rounded-2xl bg-blue-50/70 border-2 border-blue-200/90 space-y-2.5 shadow-sm">
+              <div className="p-4 sm:p-6 rounded-2xl bg-blue-50/70 border-2 border-blue-200/90 space-y-2.5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
@@ -564,12 +730,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="flex flex-col sm:flex-row gap-2.5">
                   <button
                     type="button"
                     onClick={handleExportBackup}
                     disabled={busy}
-                    className="inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 text-xs sm:text-sm shadow-sm"
+                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 text-xs sm:text-sm shadow-sm"
                   >
                     <Download size={15} />
                     {isExporting ? 'Exporting...' : 'Export Backup'}
@@ -577,22 +743,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                   <button
                     type="button"
-                    onClick={() => importFileInputRef.current?.click()}
+                    onClick={handleImportBackup}
                     disabled={busy}
-                    className="inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-white border-2 border-blue-300 text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-all disabled:opacity-50 text-xs sm:text-sm shadow-sm"
+                    className="flex-1 inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-white border-2 border-blue-300 text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-all disabled:opacity-50 text-xs sm:text-sm shadow-sm"
                   >
                     <Upload size={15} />
-                    {isImporting ? 'Importing...' : 'Import Backup'}
+                    Import Backup
                   </button>
                 </div>
-                <input
-                  ref={importFileInputRef}
-                  type="file"
-                  accept="application/json"
-                  onChange={handleImportFileSelect}
-                  className="hidden"
-                  aria-label="Import backup file"
-                />
               </div>
 
               {/* Data Reset Actions (Tasks & Habits) */}
@@ -789,6 +947,116 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
       )}
 
+      {/* Import Backup Dialog */}
+      {isImportDialogOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="modal-enter w-full max-w-lg rounded-2xl border border-blue-200 bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-blue-700 font-bold">
+              <Upload size={20} />
+              <span>Import Data Backup</span>
+            </div>
+
+            {/* Import Mode Selection */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-gray-700">Import Mode:</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setImportMode('replace')}
+                  className={`flex-1 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                    importMode === 'replace'
+                      ? 'border-rose-500 bg-rose-50 text-rose-700'
+                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="font-bold mb-1">Replace</div>
+                  <div className="text-xs font-normal">Delete existing data</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImportMode('merge')}
+                  className={`flex-1 p-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                    importMode === 'merge'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="font-bold mb-1">Merge</div>
+                  <div className="text-xs font-normal">Add to existing data</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Warning Message */}
+            <div className={`${importMode === 'replace' ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200'} border rounded-xl p-3`}>
+              <p className={`text-xs font-semibold flex items-start gap-2 ${importMode === 'replace' ? 'text-rose-800' : 'text-amber-800'}`}>
+                <ShieldAlert size={14} className="mt-0.5 flex-shrink-0" />
+                <span>
+                  <span className={`font-bold ${importMode === 'replace' ? 'text-rose-900' : 'text-amber-900'}`}>Warning:</span>{' '}
+                  {importMode === 'replace'
+                    ? 'This will delete all your existing data and replace it with the backup file. This action cannot be undone.'
+                    : 'This will add the backup data to your existing data. Routines from the backup will be imported as inactive (your existing routines will remain unchanged).'}
+                </span>
+              </p>
+            </div>
+            <div
+              className={`border-2 border-dashed rounded-xl p-6 text-center transition-all min-h-[140px] flex items-center justify-center ${
+                isImporting ? 'border-blue-500 bg-blue-100' : isDraggingOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              {isImporting ? (
+                <div className="w-full">
+                  <div className="animate-spin mx-auto mb-2">
+                    <Upload size={32} className="text-blue-500" />
+                  </div>
+                  <p className="text-sm font-semibold text-blue-700">Importing backup file...</p>
+                  <p className="text-xs text-gray-500 mt-1">Please wait while we restore your data</p>
+                </div>
+              ) : isDraggingOver ? (
+                <div className="w-full">
+                  <Upload size={32} className="mx-auto text-blue-500 mb-2" />
+                  <p className="text-sm font-semibold text-blue-700">Drop your backup file here</p>
+                </div>
+              ) : (
+                <div className="w-full">
+                  <Upload size={32} className="mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm font-medium text-gray-600 mb-2">Drag and drop your backup file here</p>
+                  <p className="text-xs text-gray-500">or</p>
+                  <button
+                    type="button"
+                    onClick={() => importFileInputRef.current?.click()}
+                    className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-all"
+                  >
+                    Select File
+                  </button>
+                </div>
+              )}
+            </div>
+            <input
+              ref={importFileInputRef}
+              type="file"
+              accept="application/json"
+              onChange={handleImportFileSelect}
+              className="hidden"
+              aria-label="Import backup file"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsImportDialogOpen(false)}
+                disabled={isImporting}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Account Dialog */}
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
@@ -819,13 +1087,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
               <div>
                 <label htmlFor="delete-confirmation" className="mb-1 block text-sm font-semibold text-gray-700">
-                  Type <span className="font-bold text-rose-600">DELETE</span> to confirm
+                  Type <span className="font-bold text-rose-600">{displayName}</span> to confirm
                 </label>
                 <input
                   id="delete-confirmation"
                   value={deleteConfirmation}
                   onChange={(event) => setDeleteConfirmation(event.target.value)}
                   disabled={isDeletingAccount}
+                  placeholder={displayName}
                   className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
                   autoComplete="off"
                 />
@@ -843,7 +1112,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={handleDeleteAccount}
-                disabled={isDeletingAccount || deleteConfirmation !== 'DELETE' || (usesPasswordProvider && !deletePassword)}
+                disabled={isDeletingAccount || deleteConfirmation !== displayName || (usesPasswordProvider && !deletePassword)}
                 className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
               >
                 {isDeletingAccount ? 'Deleting...' : 'Permanently Delete Account'}

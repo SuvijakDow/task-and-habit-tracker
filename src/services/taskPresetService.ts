@@ -142,7 +142,7 @@ export const createTaskPreset = async (userId: string, name: string, color = '#C
 
 export const updateTaskPreset = async (
   presetId: string,
-  updates: Partial<Pick<TaskPreset, 'name' | 'color'>>
+  updates: Partial<Pick<TaskPreset, 'name' | 'color' | 'isActive'>>
 ): Promise<void> => {
   await updateDoc(doc(db, TASK_PRESETS_COLLECTION, presetId), {
     ...updates,
