@@ -52,22 +52,64 @@ A modern, full-featured productivity web application for managing tasks by time 
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── habits/         # Habit-related components
-│   ├── modals/         # Modal dialogs
-│   ├── tasks/          # Task-related components
-│   └── ui/             # Global UI components
-├── config/             # Firebase configuration
-├── context/            # React Context providers
-├── constants/          # Application constants
-├── hooks/              # Custom React hooks
-├── pages/              # Page components
-├── services/           # Firebase service layer
-├── types/              # TypeScript type definitions
-├── utils/              # Utility functions
-├── App.tsx             # Root component
-├── main.tsx            # Entry point
-└── index.css           # Global styles
+├── components/              # Reusable UI components
+│   ├── habits/             # Habit-related components
+│   │   ├── ContributionHeatmap.tsx    # GitHub-style activity heatmap
+│   │   ├── HabitTimeline.tsx          # Visual habit timeline component
+│   │   └── HabitsTable.tsx            # Main habits table component
+│   ├── modals/             # Modal dialogs
+│   │   ├── CategoriesModal.tsx       # Category management modal
+│   │   ├── ManageHabitSetsModal.tsx   # Habit set/routine management
+│   │   ├── ManageTaskPresetsModal.tsx # Task period management
+│   │   ├── SettingsModal.tsx         # App settings modal
+│   │   └── WeeklyScheduleModal.tsx   # Weekly timetable modal
+│   ├── tasks/              # Task-related components
+│   │   └── TasksTable.tsx            # Main tasks table component
+│   └── ui/                 # Global UI components
+│       ├── TimePickerInput.tsx       # Custom time picker
+│       └── Toast.tsx                 # Toast notification component
+├── config/                 # Configuration files
+│   ├── firebase.config.ts   # Firebase SDK configuration
+│   └── firebase.ts          # Firebase initialization
+├── context/                # React Context providers
+│   ├── AuthContext.tsx     # Authentication context
+│   └── DataRefreshContext.tsx # Data refresh state management
+├── constants/              # Application constants
+│   ├── categoryConstants.ts # Category-related constants
+│   ├── colorConstants.ts   # Color palettes and themes
+│   └── taskConstants.ts    # Task-related constants
+├── pages/                  # Page components
+│   ├── AnalyticsPage.tsx   # Analytics dashboard page
+│   ├── AuthPage.tsx        # Authentication page
+│   ├── HabitsPage.tsx      # Habits management page
+│   ├── MainPage.tsx        # Main navigation page
+│   └── TasksPage.tsx       # Tasks management page
+├── services/               # Firebase service layer
+│   ├── accountService.ts   # Account operations (delete, reset)
+│   ├── authService.ts      # Authentication operations
+│   ├── categoryService.ts  # Category CRUD operations
+│   ├── habitService.ts     # Habit CRUD operations
+│   ├── taskPresetService.ts # Task period CRUD operations
+│   ├── taskService.ts      # Task CRUD operations
+│   └── userService.ts      # User profile operations
+├── types/                  # TypeScript type definitions
+│   └── index.ts            # Shared TypeScript interfaces
+├── utils/                  # Utility functions
+│   ├── audio.ts            # Audio helper functions
+│   ├── dateUtils.ts        # Date manipulation utilities
+│   ├── fontUtils.ts        # Font management utilities
+│   └── taskUtils.ts        # Task-related utilities
+├── App.tsx                 # Root component with routing
+├── main.tsx                # Application entry point
+└── index.css               # Global styles and Tailwind imports
+
+Root Configuration Files:
+├── index.html              # HTML template
+├── package.json            # Dependencies and scripts
+├── tailwind.config.js      # Tailwind CSS configuration
+├── tsconfig.json           # TypeScript configuration
+├── vite.config.ts          # Vite build configuration
+└── postcss.config.js       # PostCSS configuration
 ```
 
 ## Getting Started
