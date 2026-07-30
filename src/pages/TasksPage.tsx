@@ -1747,10 +1747,13 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
         } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl relative`}
     >
       {togglingTaskId === task.id && (
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-inherit flex items-center justify-center z-10">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-semibold text-purple-700">Updating...</span>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg sm:rounded-xl flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative">
+              <div className="w-8 h-8 border-4 border-purple-200 rounded-full" />
+              <div className="absolute top-0 left-0 w-8 h-8 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin" />
+            </div>
+            <span className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Updating...</span>
           </div>
         </div>
       )}

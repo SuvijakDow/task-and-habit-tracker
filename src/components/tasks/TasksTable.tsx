@@ -303,10 +303,13 @@ export default function TasksTable({
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass} relative ${togglingTaskId === t.id ? 'pointer-events-none' : ''}`}>
                       {togglingTaskId === t.id && (
-                        <td colSpan={6} className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center z-10">
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-xs font-semibold text-purple-700">Updating...</span>
+                        <td colSpan={6} className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg flex items-center justify-center z-10">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="relative">
+                              <div className="w-6 h-6 border-4 border-purple-200 rounded-full" />
+                              <div className="absolute top-0 left-0 w-6 h-6 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin" />
+                            </div>
+                            <span className="text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Updating...</span>
                           </div>
                         </td>
                       )}
@@ -429,7 +432,7 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70 text-center`}>
                         {t.dueDate ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700 whitespace-nowrap shadow-2xs">
                             <CalendarDays className="w-3.5 h-3.5 text-purple-600" />
@@ -439,7 +442,7 @@ export default function TasksTable({
                           <span className="text-xs text-gray-400 font-medium">—</span>
                         )}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70 text-center`}>
                         {t.dueDate ? (
                           (() => {
                             const deadlineStatus = getDeadlineStatus(t.dueDate);
