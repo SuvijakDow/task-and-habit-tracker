@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { useDataRefresh } from '@/context/DataRefreshContext';
 import {
   createTask,
   getUserTasks,
@@ -85,6 +86,7 @@ const getCategoryErrorMessage = (error: unknown): string => {
 
 export function TasksPage() {
   const { user, loading: authLoading } = useAuth();
+  const { registerRefreshTasks, registerRefreshTaskPresets } = useDataRefresh();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [presets, setPresets] = useState<TaskPreset[]>([]);
@@ -164,6 +166,20 @@ export function TasksPage() {
 
     loadData();
   }, [user]);
+
+  // Register refresh function with DataRefreshContext
+  useEffect(() => {
+    registerRefreshTasks(() => {
+      loadTasks();
+    });
+  }, [registerRefreshTasks]);
+
+  // Register preset refresh function with DataRefreshContext
+  useEffect(() => {
+    registerRefreshTaskPresets(() => {
+      loadPresets();
+    });
+  }, [registerRefreshTaskPresets]);
 
   useEffect(() => {
     if (!isPresetDropdownOpen) return;

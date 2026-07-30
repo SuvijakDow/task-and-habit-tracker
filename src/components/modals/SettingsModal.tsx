@@ -15,13 +15,14 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useDataRefresh } from '@/context/DataRefreshContext';
 import {
   updateUserProfile,
   uploadProfilePhoto,
   DEFAULT_AVATARS,
   normalizeProfilePhotoURL,
 } from '@/services/userService';
-import { deleteUserData, resetUserTasks, resetUserDailyHabits } from '@/services/accountService';
+import { deleteUserData, resetUserTasks, resetUserDailyHabits, resetUserTaskPresets, resetUserHabitSets } from '@/services/accountService';
 import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
 import { APP_FONTS, applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
 import { getUserTasks } from '@/services/taskService';
@@ -36,6 +37,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, userProfile, refreshUserProfile } = useAuth();
+  const { refreshTasks, refreshHabits, refreshTaskPresets, refreshHabitSets } = useDataRefresh();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'data'>('profile');
   const [displayName, setDisplayName] = useState(userProfile?.displayName || '');
@@ -202,8 +204,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     try {
       setIsResetting(true);
       await resetUserTasks(user.uid);
+      await resetUserTaskPresets(user.uid);
       setIsResetTasksOpen(false);
-      showToast('Reset all tasks successfully', 'success');
+      refreshTasks();
+      refreshTaskPresets();
+      showToast('Reset all tasks and presets.', 'success');
     } catch (err) {
       console.error('Error resetting tasks:', err);
       showToast('Failed to reset tasks', 'error');
@@ -217,8 +222,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     try {
       setIsResetting(true);
       await resetUserDailyHabits(user.uid);
+      await resetUserHabitSets(user.uid);
       setIsResetHabitsOpen(false);
-      showToast('Reset all habits successfully', 'success');
+      refreshHabits();
+      refreshHabitSets();
+      showToast('Reset all habits and routine presets.', 'success');
     } catch (err) {
       console.error('Error resetting habits:', err);
       showToast('Failed to reset habits', 'error');

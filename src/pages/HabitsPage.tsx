@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2, Sun } from 'lucide-react';
 import { DailyHabit, HabitSet, TimeSlot, getHabitSetIds } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { useDataRefresh } from '@/context/DataRefreshContext';
 import {
   createDailyHabit,
   getUserDailyHabits,
@@ -31,6 +32,7 @@ import HabitsTable from '@/components/habits/HabitsTable';
 
 export function HabitsPage() {
   const { user, loading: authLoading } = useAuth();
+  const { registerRefreshHabits, registerRefreshHabitSets } = useDataRefresh();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
   const [activeSetId, setActiveSetId] = useState<string>('');
@@ -87,6 +89,20 @@ export function HabitsPage() {
 
     loadHabits();
   }, [user]);
+
+  // Register refresh function with DataRefreshContext
+  useEffect(() => {
+    registerRefreshHabits(() => {
+      loadHabits();
+    });
+  }, [registerRefreshHabits]);
+
+  // Register habit sets refresh function with DataRefreshContext
+  useEffect(() => {
+    registerRefreshHabitSets(() => {
+      loadHabits();
+    });
+  }, [registerRefreshHabitSets]);
 
   useEffect(() => {
     if (!isRoutineDropdownOpen) return;

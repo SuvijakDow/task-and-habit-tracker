@@ -86,7 +86,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
 
   return (
     <div
-      className={`pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-lg text-white text-sm font-medium shadow-lg ${bgColor} max-w-sm transition-all duration-300 ${
+      className={`pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-lg text-white text-sm font-medium shadow-lg ${bgColor} w-[calc(100vw-2rem)] sm:max-w-md transition-all duration-300 ${
         isVisible && !isExiting
           ? 'opacity-100 translate-y-0'
           : 'opacity-0 translate-y-4'
@@ -99,7 +99,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
           setIsExiting(true);
           setTimeout(() => onDismiss(toast.id), 300);
         }}
-        className="ml-2 text-white/70 hover:text-white transition-colors flex-shrink-0"
+        className="ml-auto text-white/70 hover:text-white transition-colors flex-shrink-0"
         aria-label="Dismiss"
       >
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
