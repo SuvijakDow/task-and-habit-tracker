@@ -45,6 +45,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -53,11 +54,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isResetTasksOpen, setIsResetTasksOpen] = useState(false);
   const [isResetHabitsOpen, setIsResetHabitsOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   // Build the avatar options: 12 cute defaults + Google photo if available
   const googlePhotoURL = user?.photoURL || null;
@@ -74,7 +77,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     && !DEFAULT_AVATARS.includes(selectedAvatar)
     && normalizedSelectedAvatar !== normalizedGooglePhotoURL;
 
-  const busy = isSaving || isUploading || isDeletingAccount || isExporting || isResetting;
+  const busy = isSaving || isUploading || isDeletingAccount || isExporting || isImporting || isResetting;
 
   const handleFontSelect = (fontId: string) => {
     setSelectedFont(fontId);
@@ -145,10 +148,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   const handleExportBackup = async () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const confirmExportBackup = async () => {
     if (!user) return;
     try {
       setIsExporting(true);
       setError(null);
+      setIsExportDialogOpen(false);
 
       const [userTasks, userHabits, userCategories, userSets] = await Promise.all([
         getUserTasks(user.uid),
@@ -219,6 +227,41 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
+  const handleImportFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      setIsImporting(true);
+      setError(null);
+
+      const text = await file.text();
+      const backupObj = JSON.parse(text);
+
+      // Validate backup structure
+      if (!backupObj.data || !backupObj.appName) {
+        throw new Error('Invalid backup file format');
+      }
+
+      if (backupObj.appName !== 'Task & Habit Tracker') {
+        throw new Error('This backup file is not compatible with this app');
+      }
+
+      // Import data (this would require additional service functions)
+      // For now, just show a message that this feature needs implementation
+      showToast('Import feature requires additional service implementation', 'error');
+    } catch (err: any) {
+      const msg = err.message || 'Failed to import backup file';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setIsImporting(false);
+      if (importFileInputRef.current) {
+        importFileInputRef.current.value = '';
+      }
+    }
+  };
+
   const usesPasswordProvider = user?.providerData.some((provider) => provider.providerId === 'password') ?? false;
   const handleDeleteAccount = async () => {
     if (!user || deleteConfirmation !== 'DELETE') return;
@@ -259,6 +302,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setIsResetTasksOpen(false);
       setIsResetHabitsOpen(false);
       setIsDeleteDialogOpen(false);
+      setIsExportDialogOpen(false);
       setDeleteConfirmation('');
       setDeletePassword('');
     }
@@ -306,10 +350,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <button
               type="button"
               onClick={() => setActiveTab('data')}
-              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                 activeTab === 'data'
-                  ? 'bg-purple-600 text-white shadow-xs'
-                  : 'bg-white/80 text-gray-600 hover:bg-purple-50 hover:text-purple-900 border border-purple-100'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-white/80 text-gray-600 hover:bg-rose-50 hover:text-rose-900 border border-purple-100'
               }`}
             >
               <Database size={15} />
@@ -339,7 +383,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {activeTab === 'profile' && (
             <div className="space-y-5">
               {/* Display Name Container */}
-              <div className="p-4 rounded-2xl bg-purple-50/40 border border-purple-100/90 space-y-2">
+              <div className="p-4 rounded-2xl bg-purple-100/60 border border-purple-200/90 space-y-2">
                 <label htmlFor="settings-displayName" className="block text-xs font-extrabold text-purple-900 uppercase tracking-wider">
                   Display Name
                 </label>
@@ -355,7 +399,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
 
               {/* Profile Picture Section */}
-              <div className="p-4 rounded-2xl bg-purple-50/40 border border-purple-100/90 space-y-3">
+              <div className="p-4 rounded-2xl bg-purple-100/60 border border-purple-200/90 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-extrabold text-purple-900 uppercase tracking-wider">
                     Profile Avatar
@@ -448,13 +492,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
 
               {/* Master Font Selection Card */}
-              <div className="p-4 rounded-2xl bg-purple-50/40 border border-purple-100/90 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <Type className="w-4 h-4 text-purple-700" />
-                    Application Master Font
+              <div className="p-4 rounded-2xl bg-purple-100/60 border border-purple-200/90 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+                    <Type className="w-4 h-4 text-purple-700 flex-shrink-0" />
+                    <span className="truncate">Website Font</span>
                   </label>
-                  <span className="text-[11px] font-semibold text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200/80">
+                  <span className="text-[11px] font-semibold text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200/80 flex-shrink-0 whitespace-nowrap">
                     Thai & English
                   </span>
                 </div>
@@ -497,41 +541,61 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           {/* TAB 2: DATA & DANGER ZONE */}
           {activeTab === 'data' && (
-            <div className="space-y-5">
-              {/* Export Backup JSON Section */}
-              <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/90 space-y-2.5 shadow-2xs">
+            <div className="space-y-6">
+              {/* Export/Import Backup JSON Section */}
+              <div className="p-4 rounded-2xl bg-blue-50/70 border-2 border-blue-200/90 space-y-2.5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
                       <Download size={16} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-blue-950 text-xs sm:text-sm">Export Data Backup (JSON)</h3>
-                      <p className="text-[11px] text-blue-700 font-medium">Download a complete backup file of your tasks, habits, and presets.</p>
+                      <h3 className="font-bold text-blue-950 text-sm sm:text-base">Data Backup (JSON)</h3>
+                      <p className="text-xs text-blue-700 font-medium">Download or restore a backup file of your tasks, habits, and presets.</p>
                     </div>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleExportBackup}
-                  disabled={busy}
-                  className="w-full inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 text-xs sm:text-sm shadow-2xs"
-                >
-                  <Download size={15} />
-                  {isExporting ? 'Exporting Backup...' : 'Download JSON Backup'}
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleExportBackup}
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 text-xs sm:text-sm shadow-sm"
+                  >
+                    <Download size={15} />
+                    {isExporting ? 'Exporting...' : 'Export Backup'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => importFileInputRef.current?.click()}
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-2 min-h-[38px] px-4 py-2 bg-white border-2 border-blue-300 text-blue-700 font-bold rounded-xl hover:bg-blue-50 transition-all disabled:opacity-50 text-xs sm:text-sm shadow-sm"
+                  >
+                    <Upload size={15} />
+                    {isImporting ? 'Importing...' : 'Import Backup'}
+                  </button>
+                </div>
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept="application/json"
+                  onChange={handleImportFileSelect}
+                  className="hidden"
+                  aria-label="Import backup file"
+                />
               </div>
 
               {/* Data Reset Actions (Tasks & Habits) */}
-              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/90 space-y-3 shadow-2xs">
+              <div className="p-4 rounded-2xl bg-amber-50/70 border-2 border-amber-200/90 space-y-3 shadow-sm">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
                     <RotateCcw size={16} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-amber-950 text-xs sm:text-sm">Module Data Reset</h3>
-                    <p className="text-[11px] text-amber-800 font-medium">Clear specific modules without deleting your account.</p>
+                    <h3 className="font-bold text-amber-950 text-sm sm:text-base">Module Data Reset</h3>
+                    <p className="text-xs text-amber-800 font-medium">Clear specific modules without deleting your account.</p>
                   </div>
                 </div>
 
@@ -540,7 +604,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     type="button"
                     onClick={() => setIsResetTasksOpen(true)}
                     disabled={busy}
-                    className="inline-flex items-center justify-center gap-1.5 min-h-[38px] px-3 py-2 bg-white border border-amber-300 text-amber-900 font-bold rounded-xl hover:bg-amber-100/50 transition-all text-xs disabled:opacity-50 shadow-2xs"
+                    className="inline-flex items-center justify-center gap-1.5 min-h-[38px] px-3 py-2 bg-white border-2 border-amber-300 text-amber-900 font-bold rounded-xl hover:bg-amber-100/50 transition-all text-xs disabled:opacity-50 shadow-sm"
                   >
                     <RotateCcw size={13} />
                     Reset All Tasks
@@ -550,7 +614,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     type="button"
                     onClick={() => setIsResetHabitsOpen(true)}
                     disabled={busy}
-                    className="inline-flex items-center justify-center gap-1.5 min-h-[38px] px-3 py-2 bg-white border border-amber-300 text-amber-900 font-bold rounded-xl hover:bg-amber-100/50 transition-all text-xs disabled:opacity-50 shadow-2xs"
+                    className="inline-flex items-center justify-center gap-1.5 min-h-[38px] px-3 py-2 bg-white border-2 border-amber-300 text-amber-900 font-bold rounded-xl hover:bg-amber-100/50 transition-all text-xs disabled:opacity-50 shadow-sm"
                   >
                     <RotateCcw size={13} />
                     Reset All Habits
@@ -559,14 +623,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </div>
 
               {/* Danger Zone Account Deletion */}
-              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/90 space-y-3 shadow-2xs">
+              <div className="p-4 rounded-2xl bg-rose-50/70 border-2 border-rose-200/90 space-y-3 shadow-md">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
                     <ShieldAlert size={17} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-rose-950 text-xs sm:text-sm">Account Danger Zone</h3>
-                    <p className="text-[11px] text-rose-700 font-medium">Permanently remove your profile and all associated data.</p>
+                    <h3 className="font-bold text-rose-950 text-sm sm:text-base">Account Danger Zone</h3>
+                    <p className="text-xs text-rose-700 font-medium">Permanently remove your profile and all associated data.</p>
                   </div>
                 </div>
 
@@ -574,7 +638,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   type="button"
                   onClick={() => setIsDeleteDialogOpen(true)}
                   disabled={busy}
-                  className="w-full inline-flex items-center justify-center gap-1.5 min-h-[38px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm transition shadow-2xs disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-1.5 min-h-[38px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm transition shadow-md disabled:opacity-50"
                 >
                   <Trash2 size={15} />
                   Delete Account Permanently
@@ -585,24 +649,37 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </div>
 
         {/* Sticky Footer Action Buttons */}
-        <div className="flex items-center gap-3 p-4 border-t border-purple-100/80 bg-white/95 shrink-0 rounded-b-2xl">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={busy}
-            className="flex-1 min-h-[42px] py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl border border-gray-200 transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={busy}
-            className="flex-1 min-h-[42px] py-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white text-sm font-bold rounded-xl shadow-md shadow-purple-500/25 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50"
-          >
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
+        {activeTab === 'profile' ? (
+          <div className="flex items-center gap-3 p-4 border-t border-purple-100/80 bg-white/95 shrink-0 rounded-b-2xl">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={busy}
+              className="flex-1 min-h-[42px] py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl border border-gray-200 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={busy}
+              className="flex-1 min-h-[42px] py-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white text-sm font-bold rounded-xl shadow-md shadow-purple-500/25 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-50"
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-end p-4 border-t border-purple-100/80 bg-white/95 shrink-0 rounded-b-2xl">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={busy}
+              className="min-h-[42px] px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl border border-gray-200 transition-all disabled:opacity-50"
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Reset Tasks Confirmation Dialog */}
@@ -629,7 +706,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 type="button"
                 onClick={handleResetTasks}
                 disabled={isResetting}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-60 text-white hover:bg-amber-700"
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700"
               >
                 {isResetting ? 'Resetting...' : 'Yes, Reset Tasks'}
               </button>
@@ -665,6 +742,39 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700"
               >
                 {isResetting ? 'Resetting...' : 'Yes, Reset Habits'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Backup Confirmation Dialog */}
+      {isExportDialogOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="modal-enter w-full max-w-sm rounded-2xl border border-blue-200 bg-white p-5 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-blue-700 font-bold">
+              <Download size={20} />
+              <span>Export Data Backup?</span>
+            </div>
+            <p className="text-xs text-gray-600 font-medium leading-relaxed">
+              This will download a JSON file containing all your tasks, habits, categories, and routine presets.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsExportDialogOpen(false)}
+                disabled={isExporting}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmExportBackup}
+                disabled={isExporting}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700"
+              >
+                {isExporting ? 'Exporting...' : 'Yes, Export'}
               </button>
             </div>
           </div>

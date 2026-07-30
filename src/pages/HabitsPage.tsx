@@ -908,7 +908,7 @@ export function HabitsPage() {
                           </span>
                         </div>
                       </div>
-                      <p className="text-[11px] font-medium text-gray-500">Select routines this habit belongs to (can select multiple):</p>
+                      <p className="text-[11px] font-medium text-gray-500">Select routines this habit belongs to (can select multiple)</p>
 
                       {/* Mini search bar if many routines exist */}
                       {sortedHabitSets.length > 6 && (
@@ -1029,13 +1029,23 @@ export function HabitsPage() {
                         <button
                           type="button"
                           onClick={() => setIsAdvancedSchedule(!isAdvancedSchedule)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all border ${
+                          className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${
                             isAdvancedSchedule
                               ? 'bg-purple-600 text-white border-transparent shadow-xs'
                               : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
                           }`}
                         >
-                          {isAdvancedSchedule ? '✓ Custom Per-Day' : '+ Customize Per-Day'}
+                          {isAdvancedSchedule ? (
+                            <>
+                              <span className="hidden sm:inline">✓ Custom Per-Day</span>
+                              <span className="sm:hidden">✓ Custom</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="hidden sm:inline">+ Customize Per-Day</span>
+                              <span className="sm:hidden">+ Customize</span>
+                            </>
+                          )}
                         </button>
                       </div>
 
@@ -1698,13 +1708,23 @@ export function HabitsPage() {
                         <button
                           type="button"
                           onClick={() => setEditIsAdvancedSchedule(!editIsAdvancedSchedule)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all border ${
+                          className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${
                             editIsAdvancedSchedule
                               ? 'bg-purple-600 text-white border-transparent shadow-xs'
                               : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
                           }`}
                         >
-                          {editIsAdvancedSchedule ? '✓ Custom Per-Day' : '+ Customize Per-Day'}
+                          {editIsAdvancedSchedule ? (
+                            <>
+                              <span className="hidden sm:inline">✓ Custom Per-Day</span>
+                              <span className="sm:hidden">✓ Custom</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="hidden sm:inline">+ Customize Per-Day</span>
+                              <span className="sm:hidden">+ Customize</span>
+                            </>
+                          )}
                         </button>
                       </div>
 
