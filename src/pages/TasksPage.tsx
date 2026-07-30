@@ -11,6 +11,7 @@ import {
   updateTask,
   deleteTask,
 } from '@/services/taskService';
+import { ensureDefaultCategories } from '@/services/categoryService';
 import TasksTable from '@/components/tasks/TasksTable';
 import { CategoriesModal } from '@/components/modals/CategoriesModal';
 import {
@@ -231,6 +232,9 @@ export function TasksPage() {
     if (!user) return;
 
     try {
+      // Ensure default categories exist before loading (uses lock to prevent duplicates)
+      await ensureDefaultCategories(user.uid);
+
       const userCategories = await getUserCategories(user.uid);
       setCategories(userCategories);
 

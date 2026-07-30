@@ -4,7 +4,6 @@ import {
   doc,
   getDocs,
   query,
-  runTransaction,
   Timestamp,
   where,
   writeBatch,
@@ -14,6 +13,9 @@ import { Category } from '@/types';
 
 const CATEGORIES_COLLECTION = 'categories';
 const TASKS_COLLECTION = 'tasks';
+
+// Simple in-memory lock to prevent race conditions
+const categoryCreationLocks = new Map<string, Promise<void>>();
 
 export const PASTEL_CATEGORY_COLORS = [
   '#93C5FD', // blue
@@ -27,8 +29,8 @@ export const PASTEL_CATEGORY_COLORS = [
 ] as const;
 
 const DEFAULT_CATEGORIES: Array<{ name: string; color: string }> = [
-  { name: 'Academic', color: '#93C5FD' },
   { name: 'Personal', color: '#C4B5FD' },
+  { name: 'Education', color: '#F9A8D4' },
   { name: 'Health', color: '#86EFAC' },
 ];
 
@@ -112,39 +114,50 @@ export const getUserCategories = async (userId: string): Promise<Category[]> => 
  * Ensure default categories exist for a user.
  */
 export const ensureDefaultCategories = async (userId: string): Promise<void> => {
-  try {
-    const q = query(
-      collection(db, CATEGORIES_COLLECTION),
-      where('userId', '==', userId)
-    );
-    const existing = await getDocs(q);
-    if (!existing.empty) {
-      return;
-    }
-
-    await runTransaction(db, async (transaction) => {
-      const defaultRefs = DEFAULT_CATEGORIES.map((category) =>
-        doc(db, CATEGORIES_COLLECTION, `${userId}_default_${category.name.toLowerCase()}`)
-      );
-      const snapshots = await Promise.all(defaultRefs.map((ref) => transaction.get(ref)));
-
-      snapshots.forEach((snapshot, index) => {
-        if (!snapshot.exists()) {
-          const category = DEFAULT_CATEGORIES[index];
-          transaction.set(defaultRefs[index], {
-            userId,
-            name: category.name,
-            color: category.color,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now(),
-          });
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Error ensuring default categories:', error);
-    throw error;
+  // Check if there's already an ongoing creation for this user
+  const existingLock = categoryCreationLocks.get(userId);
+  if (existingLock) {
+    await existingLock;
+    return;
   }
+
+  // Create a new lock
+  const creationPromise = (async () => {
+    try {
+      const now = Timestamp.now();
+
+      // Check and create each default category individually to avoid duplicates
+      await Promise.all(
+        DEFAULT_CATEGORIES.map(async (category) => {
+          const categoryQuery = query(
+            collection(db, CATEGORIES_COLLECTION),
+            where('userId', '==', userId),
+            where('name', '==', category.name)
+          );
+          const existingCategory = await getDocs(categoryQuery);
+
+          if (existingCategory.empty) {
+            await addDoc(collection(db, CATEGORIES_COLLECTION), {
+              userId,
+              name: category.name,
+              color: category.color,
+              createdAt: now,
+              updatedAt: now,
+            });
+          }
+        })
+      );
+    } catch (error) {
+      console.error('Error ensuring default categories:', error);
+      // Don't throw error to avoid blocking sign-in
+    } finally {
+      // Remove the lock after completion
+      categoryCreationLocks.delete(userId);
+    }
+  })();
+
+  categoryCreationLocks.set(userId, creationPromise);
+  await creationPromise;
 };
 
 /**

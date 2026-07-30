@@ -13,9 +13,12 @@ A modern, full-featured productivity web application for managing tasks by time 
 ### Task Management
 - **Task Periods (Presets)**: Group tasks by custom terms, semesters, or timeframes (e.g., "2569/1", "Summer Break", "Project A")
 - **Subtasks Support**: Break down complex tasks into actionable checklists with live completion progress
+- **Subtask Sync**: Toggling parent task automatically syncs all subtasks to the same completion state
 - **Smart Sorting**: Pending tasks sorted by due date, completed tasks sorted by completion history
 - **Categories**: Color-coded task categories with automatic fallback reassignment
+- **Default Categories**: New accounts get Personal, Education, and Health categories automatically
 - **View Modes**: Switch between List View and Table View
+- **Loading States**: Visual feedback during task completion with loading overlays
 
 ### Habit Tracking
 - **Multi-Routine Tagging**: Habits can belong to multiple routines simultaneously
@@ -71,13 +74,13 @@ src/
 ├── config/                 # Configuration files
 │   ├── firebase.config.ts   # Firebase SDK configuration
 │   └── firebase.ts          # Firebase initialization
-├── context/                # React Context providers
-│   ├── AuthContext.tsx     # Authentication context
-│   └── DataRefreshContext.tsx # Data refresh state management
 ├── constants/              # Application constants
 │   ├── categoryConstants.ts # Category-related constants
 │   ├── colorConstants.ts   # Color palettes and themes
 │   └── taskConstants.ts    # Task-related constants
+├── context/                # React Context providers
+│   ├── AuthContext.tsx     # Authentication context
+│   └── DataRefreshContext.tsx # Data refresh state management
 ├── pages/                  # Page components
 │   ├── AnalyticsPage.tsx   # Analytics dashboard page
 │   ├── AuthPage.tsx        # Authentication page
@@ -87,7 +90,7 @@ src/
 ├── services/               # Firebase service layer
 │   ├── accountService.ts   # Account operations (delete, reset)
 │   ├── authService.ts      # Authentication operations
-│   ├── categoryService.ts  # Category CRUD operations
+│   ├── categoryService.ts  # Category CRUD operations with default categories
 │   ├── habitService.ts     # Habit CRUD operations
 │   ├── taskPresetService.ts # Task period CRUD operations
 │   ├── taskService.ts      # Task CRUD operations
@@ -100,16 +103,18 @@ src/
 │   ├── fontUtils.ts        # Font management utilities
 │   └── taskUtils.ts        # Task-related utilities
 ├── App.tsx                 # Root component with routing
-├── main.tsx                # Application entry point
-└── index.css               # Global styles and Tailwind imports
+├── index.css               # Global styles and Tailwind imports
+└── main.tsx                # Application entry point
 
 Root Configuration Files:
+├── .gitignore              # Git ignore rules
 ├── index.html              # HTML template
 ├── package.json            # Dependencies and scripts
+├── package-lock.json       # Dependency lock file
+├── postcss.config.js       # PostCSS configuration
 ├── tailwind.config.js      # Tailwind CSS configuration
 ├── tsconfig.json           # TypeScript configuration
-├── vite.config.ts          # Vite build configuration
-└── postcss.config.js       # PostCSS configuration
+└── vite.config.ts          # Vite build configuration
 ```
 
 ## Getting Started
