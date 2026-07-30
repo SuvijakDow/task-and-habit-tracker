@@ -1,6 +1,6 @@
-# ⚡ Task & Habit Tracker
+# Task & Habit Tracker
 
-A modern, full-featured productivity web application for managing tasks by time periods, building daily routines, and tracking habits with rich visual analytics. Built with **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Firebase**.
+A modern, full-featured productivity web application for managing tasks by time periods, building daily routines, and tracking habits with rich visual analytics. Built with React 18, TypeScript, Vite, Tailwind CSS, and Firebase.
 
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6?logo=typescript&logoColor=white)
@@ -8,162 +8,134 @@ A modern, full-featured productivity web application for managing tasks by time 
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.3-38B2AC?logo=tailwindcss&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-10.7-FFCA28?logo=firebase&logoColor=black)
 
----
+## Features
 
-## ✨ Key Features & Capabilities
+### Task Management
+- **Task Periods (Presets)**: Group tasks by custom terms, semesters, or timeframes (e.g., "2569/1", "Summer Break", "Project A")
+- **Subtasks Support**: Break down complex tasks into actionable checklists with live completion progress
+- **Smart Sorting**: Pending tasks sorted by due date, completed tasks sorted by completion history
+- **Categories**: Color-coded task categories with automatic fallback reassignment
+- **View Modes**: Switch between List View and Table View
 
-### 📝 Smart Task & Period Management
-- **Task Periods (Presets)**: Group tasks by custom terms, semesters, or timeframes (e.g. *2569/1*, *Summer Break*, *Project A*). Easily switch active periods or manage them via the **Manage Task Periods** modal.
-- **Subtasks Support**: Break down complex tasks into actionable checklists with live completion progress bars and quick toggles.
-- **Smart Status Sorting**: 
-  - **Pending Tasks**: Automatically sorted by nearest upcoming due date (overdue items highlighted first).
-  - **Completed Tasks**: Sorted by completion history (least overdue items at the top).
-- **Categories**: Color-coded custom task categories with task count tracking and fallback category reassignments.
-- **View Modes**: Dynamic switching between **List View** and **Table View**.
+### Habit Tracking
+- **Multi-Routine Tagging**: Habits can belong to multiple routines simultaneously
+- **Partial Progress Logging**: Set target values (e.g., read 10 pages) and log partial progress
+- **Weekly Timetable**: Visual daily schedule displaying habit time blocks across the week
+- **Drag-and-Drop Reordering**: Custom ordering for daily habit lists
 
-### 🎯 Daily Habits & Multi-Routine Tracking
-- **Multi-Routine Tagging**: Habits can belong to **multiple routines** simultaneously (e.g., *Morning Routine*, *Workouts*, *Semester 2568/2*).
-- **Partial Progress Logging**: Set target values (e.g. read 10 pages) and log partial progress throughout the day.
-- **Accurate Today % Formula**: Today's completion percentage incorporates exact partial progress ratios across all habits scheduled for today.
-- **Smart Inactive Routine Filtering**: Deactivating one routine will not affect habit tracking or status in other active routines where the habit belongs.
-- **Weekly Timetable Modal**: Visual daily schedule displaying habit time blocks across the week.
-- **Drag-and-Drop Reordering**: Custom drag-and-drop ordering for daily habit lists.
+### Analytics
+- **Contribution Heatmap**: GitHub-style activity matrix for daily completion tracking
+- **Consistency Scoring**: Calculates adherence based on custom tracking start dates
+- **Stable Analytics**: Stats remain stable across routine presets while filtering
+- **Decimal Precision**: Supports partial goal progress with up to 2 decimal places
 
-### 📊 Analytics & Performance Insights
-- **Contribution Heatmap**: GitHub-style activity matrix displaying daily completion frequency over time.
-- **Total Completions & Decimal Precision**: Tracks aggregate completions in the Hero Banner and individual habit cards, supporting decimal precision (up to 2 decimal places) for partial goal progress.
-- **Stable Routine Analytics**: Top Hero Banner stats (**HABITS**, **COMPLETIONS**, **CONSISTENCY**) remain stable across all habits in the selected Routine preset while search filtering habit cards in real time.
-- **Consistency Scoring**: Calculates adherence percentage based on custom tracking start dates and scheduled days of the week.
-- **Analytics Reset Options**: Flexibility to reset analytics for a single habit or all habits per user.
+### Data Management
+- **Backup & Restore**: Export/import data as JSON with Replace or Merge modes
+- **Module Reset**: Reset tasks or habits independently without deleting account
+- **Account Deletion**: Secure account deletion with display name confirmation
 
-### 🎨 Graphic Design & Responsive Layouts
-- **Custom Graphic Empty States**: Vibrant, celebratory empty state cards with custom glowing icon rings (e.g., *Free Day Ahead! ☀️*, *All caught up! 🎉*).
-- **Adaptive Responsive Banner**: Glassmorphic Hero Dashboard Banners optimized across Mobile, Tablet, and Desktop screens.
-- **Aesthetic UI**: Smooth gradients, glassmorphism cards, micro-animations, and modern typography (*Bai Jamjuree* & *Inter*).
+### User Experience
+- **Custom Fonts**: Multiple Thai and English font options (Bai Jamjuree, Sarabun, Prompt, Kanit, Pridi, Chakra Petch, Mitr, Krub, Inter, Outfit)
+- **Profile Customization**: Display name editing and avatar selection
+- **Responsive Design**: Optimized for mobile, tablet, and desktop
+- **Glassmorphic UI**: Modern aesthetic with smooth gradients and animations
 
-### 🔐 Authentication & Security
-- **Auth Options**: Email/Password Sign Up & Sign In, plus Google OAuth popup authentication.
-- **Confirmation Modals**: Secure confirmation popups before Sign Out and Account Deletion.
-- **Profile Customization**: Display name editing and client-side photo processing (auto-resized to 200x200 JPEG).
+## Tech Stack
 
----
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS
+- **Backend**: Firebase (Authentication, Cloud Firestore)
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
 
-## 📁 Project Structure
+## Project Structure
 
-```text
+```
 src/
-├── components/                  # Reusable UI & Component modules
-│   ├── habits/                      # Habit visualizations & views
-│   │   ├── ContributionHeatmap.tsx      # GitHub-style activity matrix heatmap
-│   │   ├── HabitTimeline.tsx            # Visual daily time block schedule
-│   │   └── HabitsTable.tsx              # Interactive habit list & partial logging
-│   ├── modals/                      # Modals & Dialog overlays
-│   │   ├── CategoriesModal.tsx          # Task category manager & fallback reassignment
-│   │   ├── ManageHabitSetsModal.tsx     # Routine manager modal
-│   │   ├── ManageTaskPresetsModal.tsx   # Task period manager modal
-│   │   ├── SettingsModal.tsx            # User profile & account security settings
-│   │   └── WeeklyScheduleModal.tsx      # Weekly timetable overview modal
-│   ├── tasks/                       # Task components
-│   │   └── TasksTable.tsx               # Interactive task list & subtask checklist
-│   └── ui/                          # Global UI helpers
-│       ├── TimePickerInput.tsx          # Time selection popover input
-│       └── Toast.tsx                    # Notification toast system
-├── config/                      # Application Configurations
-│   ├── firebase.config.ts           # Firebase credentials & API keys
-│   └── firebase.ts                  # Firebase app & Firestore initialization
-├── context/                     # React Context Providers
-│   └── AuthContext.tsx              # Authentication state & user session context
-├── pages/                       # Top-level Page Views
-│   ├── AnalyticsPage.tsx            # Heatmap, streak & consistency analytics
-│   ├── AuthPage.tsx                 # Glassmorphic Sign In / Sign Up page
-│   ├── HabitsPage.tsx               # Daily habits & routine tracker page
-│   ├── MainPage.tsx                 # App layout & top navigation container
-│   └── TasksPage.tsx                # Task & period management page
-├── services/                    # Firebase Firestore API Layer
-│   ├── accountService.ts            # Account deletion & re-authentication
-│   ├── authService.ts               # Email/Password & Google OAuth authentication
-│   ├── categoryService.ts           # Task categories CRUD & reassignments
-│   ├── habitService.ts              # Daily habits & routine sets CRUD
-│   ├── taskPresetService.ts         # Task periods CRUD & auto-deduplication
-│   ├── taskService.ts               # Tasks CRUD & subtasks state updates
-│   └── userService.ts               # User profile & client photo processing
-├── types/                       # Shared TypeScript Interfaces
-│   └── index.ts                     # Data models (Tasks, Habits, Periods, Routines)
-├── utils/                       # Utility Functions
-│   ├── audio.ts                     # Sound effects generator
-│   ├── dateUtils.ts                 # Date formatting & date-fns helpers
-│   └── taskUtils.ts                 # Status-based task sorting logic
-├── App.tsx                      # Root application router
-├── main.tsx                     # Vite entry point
-└── index.css                    # Tailwind CSS & global design system
+├── components/          # Reusable UI components
+│   ├── habits/         # Habit-related components
+│   ├── modals/         # Modal dialogs
+│   ├── tasks/          # Task-related components
+│   └── ui/             # Global UI components
+├── config/             # Firebase configuration
+├── context/            # React Context providers
+├── constants/          # Application constants
+├── hooks/              # Custom React hooks
+├── pages/              # Page components
+├── services/           # Firebase service layer
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions
+├── App.tsx             # Root component
+├── main.tsx            # Entry point
+└── index.css           # Global styles
 ```
 
----
+## Getting Started
 
-## 🗄️ Firestore Database Schema
+### Prerequisites
+- Node.js v18.0.0 or higher
+- npm or yarn
+- Firebase project with Authentication and Firestore enabled
 
-### `tasks`
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/SuvijakDow/task-and-habit-tracker.git
+cd task_and_habit_tracker
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Configure environment variables:
+Create a `.env.local` file in the root directory:
+```env
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+```
+
+4. Start development server:
+```bash
+npm run dev
+```
+
+5. Build for production:
+```bash
+npm run build
+```
+
+## Database Schema
+
+### Tasks
 ```typescript
 {
   id: string;
   userId: string;
   title: string;
   description?: string;
-  category: string;       // Category ID or name
+  category: string;
   dueDate: Date | null;
   isCompleted: boolean;
-  setId?: string;         // Task Period document ID
-  subtasks?: {            // Subtasks array
-    id: string;
-    title: string;
-    completed: boolean;
-  }[];
+  setId?: string;
+  subtasks?: Subtask[];
   createdAt: Date;
   updatedAt: Date;
 }
 ```
 
-### `taskPresets` (Task Periods)
+### Task Presets (Periods)
 ```typescript
 {
   id: string;
   userId: string;
-  name: string;           // e.g., '2569/1', 'Summer Break'
-  color?: string;         // Hex color string
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-### `dailyHabits`
-```typescript
-{
-  id: string;
-  userId: string;
-  title: string;
-  completedDates: string[]; // Format: 'YYYY-MM-DD'
-  dailyProgress?: Record<string, number>; // 'YYYY-MM-DD': loggedValue
-  targetValue?: number;     // e.g., 10 (pages/mins)
-  targetUnit?: string;      // e.g., 'pages', 'mins'
-  scheduledDays: number[];  // 0-6 (Sun-Sat)
-  startTime: string;        // 'HH:MM'
-  endTime: string;          // 'HH:MM'
-  color?: string;           // Tag hex color
-  setIds?: string[];        // Routine document IDs (multi-routine support)
-  order?: number;           // Reordering index
-  trackingStartDate?: Date; // Analytics baseline date
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-### `habitSets` (Routines)
-```typescript
-{
-  id: string;
-  userId: string;
-  name: string;           // e.g., 'Morning Routine', 'Workouts'
+  name: string;
   color?: string;
   isActive: boolean;
   createdAt: Date;
@@ -171,7 +143,42 @@ src/
 }
 ```
 
-### `categories`
+### Daily Habits
+```typescript
+{
+  id: string;
+  userId: string;
+  title: string;
+  completedDates: string[];
+  dailyProgress?: Record<string, number>;
+  targetValue?: number;
+  targetUnit?: string;
+  scheduledDays: number[];
+  startTime: string;
+  endTime: string;
+  color?: string;
+  setIds?: string[];
+  order?: number;
+  trackingStartDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Habit Sets (Routines)
+```typescript
+{
+  id: string;
+  userId: string;
+  name: string;
+  color?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Categories
 ```typescript
 {
   id: string;
@@ -183,55 +190,7 @@ src/
 }
 ```
 
----
-
-## 🚀 Getting Started
-
-### 1. Prerequisites
-- **Node.js**: `v18.0.0` or higher
-- **npm** or **yarn**
-- A **Firebase Project** with Authentication and Cloud Firestore enabled
-
-### 2. Installation & Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/SuvijakDow/task-and-habit-tracker.git
-   cd task_and_habit_tracker
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables**:
-   Create a `.env.local` file in the root directory:
-   ```env
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
-   ```
-
-4. **Start the local development server**:
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:5173` in your browser.
-
-5. **Build for Production**:
-   ```bash
-   npm run build
-   ```
-
----
-
-## 🔒 Firebase Security Rules
-
-Add the following security rules to your Firebase Console under **Firestore Database > Rules**:
+## Firebase Security Rules
 
 ```firestore rules
 rules_version = '2';
@@ -270,8 +229,6 @@ service cloud.firestore {
 }
 ```
 
----
+## License
 
-## 📄 License
-
-This project is licensed under the **MIT License**.
+MIT License

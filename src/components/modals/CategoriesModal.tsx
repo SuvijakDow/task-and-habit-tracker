@@ -12,8 +12,7 @@ import {
   PASTEL_CATEGORY_COLORS,
   updateCategory,
 } from '@/services/categoryService';
-
-const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
+import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/categoryConstants';
 
 const getCategoryErrorMessage = (error: unknown): string => {
   if (error instanceof FirebaseError) {

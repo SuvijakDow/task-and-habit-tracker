@@ -4,10 +4,7 @@ import { Task, Category } from '@/types';
 import { CalendarDays, Check, CheckCircle2, ChevronDown, ListChecks, ListTodo, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
-
-const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
-const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
-const COLOR_HEX_REGEX = /^#[0-9A-F]{6}$/i;
+import { DEFAULT_TASK_CATEGORY_NAME, DEFAULT_TASK_CATEGORY_COLOR, COLOR_HEX_REGEX } from '@/constants/taskConstants';
 
 type QuickFilter = 'all' | 'today' | 'overdue' | 'week';
 
