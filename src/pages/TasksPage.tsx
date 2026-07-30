@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X, Sparkles, ClipboardList } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
@@ -88,6 +88,7 @@ export function TasksPage() {
   const { user, loading: authLoading } = useAuth();
   const { registerRefreshTasks, registerRefreshTaskPresets, registerRefreshCategories } = useDataRefresh();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const tasksRef = useRef(tasks);
   const [categories, setCategories] = useState<Category[]>([]);
   const [presets, setPresets] = useState<TaskPreset[]>([]);
   const [activePresetId, setActivePresetId] = useState('');
@@ -141,6 +142,11 @@ export function TasksPage() {
 
   // Delete confirmation state
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+
+  // Update tasksRef whenever tasks changes
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
 
   // Load tasks when user changes
   useEffect(() => {
@@ -452,7 +458,9 @@ export function TasksPage() {
     );
 
     try {
+      console.log('Toggle completion for task:', taskId, 'updates:', updatesToSave);
       await updateTask(taskId, updatesToSave);
+      console.log('Toggle completion saved successfully');
     } catch (err) {
       showToast('Task update failed. Please try again.', 'error');
       console.error('Error updating task:', err);
@@ -461,20 +469,23 @@ export function TasksPage() {
   }, []);
 
   const handleToggleTaskSubtask = useCallback(async (taskId: string, subtaskId: string) => {
-    let updatedSubtasks: Subtask[] = [];
-    let isTaskNowComplete = false;
-    let wasAlreadyComplete = false;
+    // Read the current state from ref to avoid stale closure
+    const currentTask = tasksRef.current.find((t) => t.id === taskId);
+    if (!currentTask) return;
 
+    const wasAlreadyComplete = currentTask.isCompleted;
+    const currentSubtasks = currentTask.subtasks || [];
+    const updatedSubtasks = currentSubtasks.map((st) =>
+      st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
+    );
+    
+    // Parent task is complete IF AND ONLY IF all subtasks are checked
+    const isTaskNowComplete = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
+
+    // Optimistic update
     setTasks((prevTasks) =>
       prevTasks.map((t) => {
         if (t.id === taskId) {
-          wasAlreadyComplete = t.isCompleted;
-          const currentSubtasks = t.subtasks || [];
-          updatedSubtasks = currentSubtasks.map((st) =>
-            st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
-          );
-          // Parent task is complete IF AND ONLY IF all subtasks are checked
-          isTaskNowComplete = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
           return {
             ...t,
             subtasks: updatedSubtasks,
@@ -485,19 +496,21 @@ export function TasksPage() {
       })
     );
 
-    if (isTaskNowComplete && !wasAlreadyComplete) {
-      playSuccessSound();
-      showToast('All subtasks completed! Task marked as done 🎉', 'success');
-    }
-
     try {
       await updateTask(taskId, {
         subtasks: updatedSubtasks,
         isCompleted: isTaskNowComplete,
       });
+      
+      // Only show toast after successful save
+      if (isTaskNowComplete && !wasAlreadyComplete) {
+        playSuccessSound();
+        showToast('All subtasks completed! Task marked as done 🎉', 'success');
+      }
     } catch (err) {
       console.error('Error toggling subtask:', err);
-      showToast('Subtask update failed.', 'error');
+      showToast('Subtask update failed. Please try again.', 'error');
+      // Reload tasks to revert optimistic update
       await loadTasks();
     }
   }, []);
@@ -510,11 +523,42 @@ export function TasksPage() {
     }
 
     try {
-      await Promise.all(taskIds.map((taskId) => updateTask(taskId, { isCompleted })));
       const idSet = new Set(taskIds);
+      
+      // Prepare updates for each task - update subtasks to match the task completion status
+      const updatePromises = taskIds.map((taskId) => {
+        const task = tasks.find((t) => t.id === taskId);
+        if (!task) return updateTask(taskId, { isCompleted });
+        
+        // If task has subtasks, update them to match the task completion status
+        if (task.subtasks && task.subtasks.length > 0) {
+          const updatedSubtasks = task.subtasks.map((st) => ({ ...st, isCompleted }));
+          return updateTask(taskId, { isCompleted, subtasks: updatedSubtasks });
+        }
+        
+        return updateTask(taskId, { isCompleted });
+      });
+
+      await Promise.all(updatePromises);
+      
       setTasks((prev) =>
-        prev.map((task) => (idSet.has(task.id) ? { ...task, isCompleted } : task))
+        prev.map((task) => {
+          if (idSet.has(task.id)) {
+            // Update subtasks to match the task completion status
+            const updatedSubtasks = task.subtasks && task.subtasks.length > 0
+              ? task.subtasks.map((st) => ({ ...st, isCompleted }))
+              : task.subtasks;
+            
+            return {
+              ...task,
+              isCompleted,
+              subtasks: updatedSubtasks,
+            };
+          }
+          return task;
+        })
       );
+      
       showToast(
         isCompleted
           ? `Marked ${taskIds.length} task(s) as completed.`
@@ -573,15 +617,32 @@ export function TasksPage() {
       setError(null);
 
       const selectedCategory = findCategoryByTaskValue(categories, editFormData.category);
+      const subtasks = editFormData.subtasks ?? [];
+      const currentTask = tasks.find((t) => t.id === editingTaskId);
+      
+      // Calculate isCompleted based on subtasks only if task has subtasks
+      // If task has subtasks, it's complete only when all subtasks are complete
+      // If task has no subtasks, preserve its current completion status
+      const isCompleted = subtasks.length > 0 
+        ? subtasks.every((st) => st.isCompleted)
+        : (currentTask?.isCompleted ?? false);
 
-      await updateTask(editingTaskId, {
+      // Prepare updates - only include subtasks if they were actually modified
+      const updates: any = {
         title: editFormData.title,
         description: editFormData.description,
         category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
         setId: editFormData.setId || activePresetId || undefined,
-        subtasks: editFormData.subtasks ?? [],
-      });
+        isCompleted: isCompleted,
+      };
+
+      // Only update subtasks if they were actually modified
+      if (subtasks.length > 0 || (currentTask?.subtasks && currentTask.subtasks.length > 0)) {
+        updates.subtasks = subtasks;
+      }
+
+      await updateTask(editingTaskId, updates);
 
       setTasks(
         tasks.map((t) =>
@@ -595,7 +656,8 @@ export function TasksPage() {
                 ? new Date(editFormData.dueDate)
                 : null,
               setId: editFormData.setId || activePresetId || undefined,
-              subtasks: editFormData.subtasks ?? [],
+              subtasks: updates.subtasks !== undefined ? subtasks : t.subtasks,
+              isCompleted: isCompleted,
             }
             : t
         )

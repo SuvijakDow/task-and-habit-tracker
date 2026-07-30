@@ -21,12 +21,18 @@ const normalizeTaskCategory = (value: unknown): string => {
 };
 
 export const normalizeSubtasks = (rawSubtasks: any): Subtask[] => {
-  if (!Array.isArray(rawSubtasks)) return [];
-  return rawSubtasks.map((st, index) => ({
+  if (!Array.isArray(rawSubtasks)) {
+    console.log('⚠️ [Normalize] Subtasks is not an array:', rawSubtasks);
+    return [];
+  }
+  console.log('🔍 [Normalize] Input subtasks:', rawSubtasks);
+  const normalized = rawSubtasks.map((st, index) => ({
     id: typeof st?.id === 'string' && st.id ? st.id : `st-${Date.now()}-${index}`,
     title: typeof st?.title === 'string' ? st.title : (st?.name || st?.text || ''),
     isCompleted: Boolean(st?.isCompleted ?? st?.completed ?? false),
   }));
+  console.log('🔍 [Normalize] Output subtasks:', normalized);
+  return normalized;
 };
 
 /**
@@ -195,7 +201,9 @@ export const updateTask = async (
     }
 
     if (updates.subtasks !== undefined) {
-      dataToUpdate.subtasks = normalizeSubtasks(updates.subtasks);
+      // Ensure subtasks is an array before normalizing
+      const subtasksToSave = Array.isArray(updates.subtasks) ? updates.subtasks : [];
+      dataToUpdate.subtasks = normalizeSubtasks(subtasksToSave);
     }
     
     await updateDoc(docRef, dataToUpdate);
