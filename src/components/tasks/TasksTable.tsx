@@ -261,15 +261,15 @@ export default function TasksTable({
               <tr>
                 <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
                 <th className="px-3.5 py-2.5 text-left font-semibold w-full min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-white/15">Title</th>
-                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Category</th>
-                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">
-                  <span className="inline-flex items-center gap-2">
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Category</th>
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">
+                  <span className="inline-flex items-center justify-center gap-2">
                     Due
                     <CalendarDays className={`h-4 w-4 ${iconColor}`} />
                   </span>
                 </th>
-                <th className="px-3.5 py-2.5 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Status</th>
-                <th className="px-3.5 py-2.5 text-right font-semibold whitespace-nowrap w-px">Actions</th>
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Status</th>
+                <th className="px-3.5 py-2.5 text-center font-semibold whitespace-nowrap w-px">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -409,7 +409,7 @@ export default function TasksTable({
                           );
                         })()}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70`}>
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap border-r border-purple-100/70 text-center`}>
                         {(() => {
                           const matchedCategory = getCategory(t.category);
                           const categoryName = matchedCategory?.name || t.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -458,8 +458,8 @@ export default function TasksTable({
                           <div className="text-sm text-gray-400">—</div>
                         )}
                       </td>
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-right`}>
-                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center`}>
+                        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => toggleSelected(t.id)}

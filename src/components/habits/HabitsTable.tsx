@@ -150,10 +150,10 @@ export default function HabitsTable({
                 <tr>
                   <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r-2 border-white/30">Done</th>
                   <th className="px-3.5 py-3 text-left font-semibold w-full min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-white/15">Habit Title</th>
-                  <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Schedule</th>
-                  <th className="px-3.5 py-3 text-left font-semibold whitespace-nowrap w-px border-r border-white/15">Time</th>
+                  <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Schedule</th>
+                  <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Time</th>
                   <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px border-r border-white/15">Streak</th>
-                  <th className="px-3.5 py-3 text-right font-semibold whitespace-nowrap w-px">Actions</th>
+                  <th className="px-3.5 py-3 text-center font-semibold whitespace-nowrap w-px">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -271,7 +271,7 @@ export default function HabitsTable({
                         </td>
 
                         {/* Schedule */}
-                        <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
+                        <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70 text-center">
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100/70 border border-purple-200/80 text-purple-700">
                             {formatScheduledDays(habit.scheduledDays)}
                           </span>
@@ -283,7 +283,7 @@ export default function HabitsTable({
                         </td>
 
                         {/* Time */}
-                        <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70">
+                        <td className="px-3.5 py-3 align-middle whitespace-nowrap border-r border-purple-100/70 text-center">
                           {(() => {
                             const hasCustomSchedule = habit.customSchedule && Object.keys(habit.customSchedule).length > 0;
                             if (hasCustomSchedule) {
@@ -329,8 +329,8 @@ export default function HabitsTable({
                         </td>
 
                         {/* Actions */}
-                        <td className="px-3.5 py-3 align-middle text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                        <td className="px-3.5 py-3 align-middle text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => toggleSelected(habit.id)}

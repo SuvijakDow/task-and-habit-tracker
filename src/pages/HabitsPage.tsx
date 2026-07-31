@@ -1040,7 +1040,7 @@ export function HabitsPage() {
                             <Clock className="w-4 h-4 text-purple-700" />
                             Time & Slots
                           </span>
-                          <p className="text-[11px] text-gray-500 font-medium">Configure single or per-day custom times</p>
+                          <p className="text-[11px] text-gray-500 font-medium">Single or per-day custom times</p>
                         </div>
                         <button
                           type="button"
@@ -1058,8 +1058,8 @@ export function HabitsPage() {
                             </>
                           ) : (
                             <>
-                              <span className="hidden sm:inline">+ Customize Per-Day</span>
-                              <span className="sm:hidden">+ Customize</span>
+                              <span className="hidden sm:inline">+ Custom Per-Day</span>
+                              <span className="sm:hidden">+ Custom</span>
                             </>
                           )}
                         </button>
