@@ -3,7 +3,6 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { ensureUserProfile, getUserProfile } from '@/services/userService';
 import { UserProfile } from '@/types';
 import { applyAppFont } from '@/utils/fontUtils';
-import { getBackgroundGradient } from '@/constants/backgroundThemeConstants';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -39,17 +38,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (profile?.selectedFont) {
                 applyAppFont(profile.selectedFont);
               }
-              // Apply background theme
-              const backgroundGradient = getBackgroundGradient(profile?.backgroundTheme);
-              document.body.style.background = backgroundGradient;
             } catch (error) {
               console.error('Error syncing user profile:', error);
               setUserProfile(null);
             }
           } else {
             setUserProfile(null);
-            // Reset to default background when logged out
-            document.body.style.background = '';
           }
 
           setLoading(false);
@@ -75,9 +69,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (updated.selectedFont) {
           applyAppFont(updated.selectedFont);
         }
-        // Apply background theme
-        const backgroundGradient = getBackgroundGradient(updated.backgroundTheme);
-        document.body.style.background = backgroundGradient;
       }
     } catch (err) {
       console.error('Error refreshing user profile:', err);
