@@ -85,12 +85,23 @@ export const getHabitSetIds = (habit: Partial<DailyHabit>): string[] => {
   return [];
 };
 
+export type BackgroundThemeType = 'preset' | 'custom-gradient' | 'custom-image';
+
+export interface BackgroundTheme {
+  type: BackgroundThemeType;
+  presetId?: string; // For preset themes
+  gradientStart?: string; // Hex color for custom gradient start
+  gradientEnd?: string; // Hex color for custom gradient end
+  imageUrl?: string; // URL for custom background image
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
   photoURL: string;
   selectedFont?: string;
+  backgroundTheme?: BackgroundTheme;
   createdAt: Date;
   updatedAt: Date;
 }

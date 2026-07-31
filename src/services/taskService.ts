@@ -22,16 +22,13 @@ const normalizeTaskCategory = (value: unknown): string => {
 
 export const normalizeSubtasks = (rawSubtasks: any): Subtask[] => {
   if (!Array.isArray(rawSubtasks)) {
-    console.log('⚠️ [Normalize] Subtasks is not an array:', rawSubtasks);
     return [];
   }
-  console.log('🔍 [Normalize] Input subtasks:', rawSubtasks);
   const normalized = rawSubtasks.map((st, index) => ({
     id: typeof st?.id === 'string' && st.id ? st.id : `st-${Date.now()}-${index}`,
     title: typeof st?.title === 'string' ? st.title : (st?.name || st?.text || ''),
     isCompleted: Boolean(st?.isCompleted ?? st?.completed ?? false),
   }));
-  console.log('🔍 [Normalize] Output subtasks:', normalized);
   return normalized;
 };
 

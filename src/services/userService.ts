@@ -138,7 +138,7 @@ export const createUserProfile = async (
  */
 export const updateUserProfile = async (
   uid: string,
-  updates: Partial<Pick<UserProfile, 'displayName' | 'photoURL' | 'selectedFont'>>
+  updates: Partial<Pick<UserProfile, 'displayName' | 'photoURL' | 'selectedFont' | 'backgroundTheme'>>
 ): Promise<void> => {
   try {
     const docRef = doc(db, USERS_COLLECTION, uid);

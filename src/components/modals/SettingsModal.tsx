@@ -13,6 +13,7 @@ import {
   Download,
   RotateCcw,
   ShieldAlert,
+  Palette,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useDataRefresh } from '@/context/DataRefreshContext';
@@ -25,6 +26,7 @@ import {
 import { deleteUserData, resetUserTasks, resetUserDailyHabits, resetUserTaskPresets, resetUserHabitSets, clearAllUserData } from '@/services/accountService';
 import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
 import { APP_FONTS, applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
+import { BACKGROUND_THEME_PRESETS, DEFAULT_BACKGROUND_THEME } from '@/constants/backgroundThemeConstants';
 import { getUserTasks, createTask } from '@/services/taskService';
 import { getUserDailyHabits, getUserHabitSets, createDailyHabit, createHabitSet } from '@/services/habitService';
 import { getUserCategories, createCategory } from '@/services/categoryService';
@@ -44,6 +46,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [displayName, setDisplayName] = useState(userProfile?.displayName || '');
   const [selectedAvatar, setSelectedAvatar] = useState(userProfile?.photoURL || '');
   const [selectedFont, setSelectedFont] = useState(userProfile?.selectedFont || getStoredFontId());
+  const [backgroundThemeType, setBackgroundThemeType] = useState<'preset' | 'custom-gradient' | 'custom-image'>(
+    userProfile?.backgroundTheme?.type || 'preset'
+  );
+  const [selectedPresetId, setSelectedPresetId] = useState(
+    userProfile?.backgroundTheme?.presetId || DEFAULT_BACKGROUND_THEME.presetId
+  );
+  const [customGradientStart, setCustomGradientStart] = useState(
+    userProfile?.backgroundTheme?.gradientStart || '#E9D5FF'
+  );
+  const [customGradientEnd, setCustomGradientEnd] = useState(
+    userProfile?.backgroundTheme?.gradientEnd || '#FBCFE8'
+  );
+  const [customBackgroundImageUrl, setCustomBackgroundImageUrl] = useState(
+    userProfile?.backgroundTheme?.imageUrl || ''
+  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -131,10 +148,24 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setError(null);
       setSuccess(false);
 
+      const backgroundTheme = (() => {
+        if (backgroundThemeType === 'preset') {
+          return { type: 'preset' as const, presetId: selectedPresetId };
+        }
+        if (backgroundThemeType === 'custom-gradient') {
+          return { type: 'custom-gradient' as const, gradientStart: customGradientStart, gradientEnd: customGradientEnd };
+        }
+        if (backgroundThemeType === 'custom-image' && customBackgroundImageUrl) {
+          return { type: 'custom-image' as const, imageUrl: customBackgroundImageUrl };
+        }
+        return { type: 'preset' as const, presetId: DEFAULT_BACKGROUND_THEME.presetId };
+      })();
+
       await updateUserProfile(user.uid, {
         displayName: displayName.trim(),
         photoURL: normalizeProfilePhotoURL(selectedAvatar),
         selectedFont,
+        backgroundTheme,
       });
 
       applyAppFont(selectedFont);
@@ -462,12 +493,19 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       const name = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || '';
       const avatar = userProfile?.photoURL || user?.photoURL || DEFAULT_AVATARS[0];
       const font = userProfile?.selectedFont || getStoredFontId();
+      const bgTheme = userProfile?.backgroundTheme;
 
       setDisplayName(name);
       setSelectedAvatar(avatar);
       setSelectedFont(font);
       applyAppFont(font);
       preloadAllAppFonts();
+
+      setBackgroundThemeType(bgTheme?.type || 'preset');
+      setSelectedPresetId(bgTheme?.presetId || DEFAULT_BACKGROUND_THEME.presetId);
+      setCustomGradientStart(bgTheme?.gradientStart || '#E9D5FF');
+      setCustomGradientEnd(bgTheme?.gradientEnd || '#FBCFE8');
+      setCustomBackgroundImageUrl(bgTheme?.imageUrl || '');
 
       setActiveTab('profile'); // Always default to Profile & Theme tab
       setError(null);
@@ -709,6 +747,169 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Background Theme Section */}
+              <div className="p-4 rounded-2xl bg-purple-100/60 border border-purple-200/90 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+                    <Palette className="w-4 h-4 text-purple-700 flex-shrink-0" />
+                    <span className="truncate">Background Theme</span>
+                  </label>
+                </div>
+
+                {/* Theme Type Selector */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBackgroundThemeType('preset')}
+                    disabled={busy}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      backgroundThemeType === 'preset'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-white/80 text-gray-600 hover:bg-purple-50 border border-purple-100'
+                    }`}
+                  >
+                    Preset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBackgroundThemeType('custom-gradient')}
+                    disabled={busy}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      backgroundThemeType === 'custom-gradient'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-white/80 text-gray-600 hover:bg-purple-50 border border-purple-100'
+                    }`}
+                  >
+                    Custom Gradient
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBackgroundThemeType('custom-image')}
+                    disabled={busy}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                      backgroundThemeType === 'custom-image'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-white/80 text-gray-600 hover:bg-purple-50 border border-purple-100'
+                    }`}
+                  >
+                    Custom Image
+                  </button>
+                </div>
+
+                {/* Preset Themes */}
+                {backgroundThemeType === 'preset' && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {BACKGROUND_THEME_PRESETS.map((preset) => {
+                      const isSelected = selectedPresetId === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => setSelectedPresetId(preset.id)}
+                          disabled={busy}
+                          className={`relative h-20 rounded-xl border-2 transition-all overflow-hidden ${
+                            isSelected
+                              ? 'border-purple-500 ring-2 ring-purple-500/20 shadow-xs scale-[1.02]'
+                              : 'border-purple-200 hover:border-purple-300'
+                          }`}
+                          style={{
+                            background: `linear-gradient(135deg, ${preset.gradientStart} 0%, ${preset.gradientEnd} 100%)`,
+                          }}
+                        >
+                          {isSelected && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                              <div className="h-6 w-6 bg-white rounded-full flex items-center justify-center shadow-md">
+                                <Check className="w-3.5 h-3.5 text-purple-600" />
+                              </div>
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-white/90 backdrop-blur-sm">
+                            <span className="text-[10px] font-bold text-gray-900 block truncate">{preset.name}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Custom Gradient */}
+                {backgroundThemeType === 'custom-gradient' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">Start Color</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={customGradientStart}
+                            onChange={(e) => setCustomGradientStart(e.target.value)}
+                            disabled={busy}
+                            className="h-10 w-10 rounded-lg border border-purple-200 cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            value={customGradientStart}
+                            onChange={(e) => setCustomGradientStart(e.target.value)}
+                            disabled={busy}
+                            placeholder="#E9D5FF"
+                            className="flex-1 min-h-[38px] px-3 py-2 bg-white border border-purple-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:opacity-50 transition-all text-sm font-mono text-gray-900"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">End Color</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={customGradientEnd}
+                            onChange={(e) => setCustomGradientEnd(e.target.value)}
+                            disabled={busy}
+                            className="h-10 w-10 rounded-lg border border-purple-200 cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            value={customGradientEnd}
+                            onChange={(e) => setCustomGradientEnd(e.target.value)}
+                            disabled={busy}
+                            placeholder="#FBCFE8"
+                            className="flex-1 min-h-[38px] px-3 py-2 bg-white border border-purple-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:opacity-50 transition-all text-sm font-mono text-gray-900"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      className="h-16 rounded-xl border-2 border-purple-200"
+                      style={{
+                        background: `linear-gradient(135deg, ${customGradientStart} 0%, ${customGradientEnd} 100%)`,
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Custom Image */}
+                {backgroundThemeType === 'custom-image' && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">Image URL</label>
+                      <input
+                        type="text"
+                        value={customBackgroundImageUrl}
+                        onChange={(e) => setCustomBackgroundImageUrl(e.target.value)}
+                        disabled={busy}
+                        placeholder="https://example.com/image.jpg"
+                        className="w-full min-h-[38px] px-3 py-2 bg-white border border-purple-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:opacity-50 transition-all text-sm font-semibold text-gray-900 placeholder-gray-400"
+                      />
+                    </div>
+                    {customBackgroundImageUrl && (
+                      <div
+                        className="h-32 rounded-xl border-2 border-purple-200 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${customBackgroundImageUrl})` }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
