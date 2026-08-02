@@ -238,9 +238,9 @@ export function AnalyticsPage() {
   }
 
   return (
-    <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3.5 sm:pt-4 md:pt-2 pb-6 md:pb-12">
+    <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3.5 sm:pt-4 md:pt-2 pb-28 md:pb-12">
       {/* Hero Dashboard Overview Banner */}
-      <div className="glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white rounded-3xl border border-pink-400/30 shadow-xl shadow-fuchsia-950/40 relative overflow-hidden">
+      <div className="hero-banner-compact glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white rounded-3xl border border-pink-400/30 shadow-xl shadow-fuchsia-950/40 relative overflow-hidden">
         <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -249,13 +249,13 @@ export function AnalyticsPage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 border border-white/25 backdrop-blur-md shadow-2xs">
                   <TrendingUp className="w-5 h-5 text-amber-300" />
                 </div>
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h1 className="hero-banner-title text-xl sm:text-2xl font-black text-white tracking-tight">
                   Analytics & Insights
                 </h1>
               </div>
             </div>
 
-            <div className="grid grid-cols-[0.8fr_1.4fr_1.1fr] gap-1 sm:gap-2 lg:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 xl:p-3.5 rounded-2xl border border-white/15 text-center w-full sm:flex-1 sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
+            <div className="hero-banner-stats grid grid-cols-[0.8fr_1.4fr_1.1fr] gap-1 sm:gap-2 lg:gap-3 bg-white/10 backdrop-blur-md p-2.5 sm:p-3 xl:p-3.5 rounded-2xl border border-white/15 text-center w-full sm:flex-1 sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl">
               <div className="px-1.5 sm:px-3 py-0.5 min-w-0">
                 <div className="text-[10px] sm:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Habits</div>
                 <div className="text-base sm:text-lg font-black text-white">{filteredHabits.length}</div>

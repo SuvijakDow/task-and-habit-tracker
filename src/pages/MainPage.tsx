@@ -83,7 +83,7 @@ export function MainPage() {
       </nav>
 
       {/* Page Content */}
-      <div key={currentPage} className="page-enter pt-1 pb-[5.5rem] md:pb-0 md:pt-0">
+      <div key={currentPage} className="page-enter pt-1 pb-28 md:pb-0 md:pt-0">
         <Suspense fallback={<div className="p-4">Loading page...</div>}>
           {currentPageContent}
         </Suspense>

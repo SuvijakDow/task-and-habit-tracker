@@ -69,7 +69,7 @@ export function AuthPage() {
           <div className="absolute left-1/4 -top-10 w-64 h-24 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute right-1/4 -bottom-10 w-64 h-24 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 md:py-3.5">
+          <div className="profile-header-compact relative z-10 max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-2 md:py-3.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex items-center gap-3">
                 <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-400 shadow-md shadow-purple-500/30 shrink-0">

@@ -177,46 +177,52 @@ body {
 
 /* Mobile Landscape Mode Optimizations (Height <= 540px) */
 @media (max-height: 540px) {
+  /* Ensure generous bottom padding so fixed navbar NEVER covers content */
   .page-enter {
-    padding-bottom: 3.5rem !important;
+    padding-bottom: 6.5rem !important;
+  }
+
+  .profile-header-compact {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
   }
 
   /* Compact Hero Banner in Mobile Landscape */
   .hero-banner-compact {
-    padding: 0.6rem 0.8rem !important;
-    margin-bottom: 0.6rem !important;
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 0.5rem !important;
     border-radius: 1.25rem !important;
   }
 
   .hero-banner-title {
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
   }
 
   .hero-banner-stats {
-    padding: 0.35rem 0.5rem !important;
+    padding: 0.25rem 0.5rem !important;
     border-radius: 0.75rem !important;
   }
 
   .hero-banner-stats-val {
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
   }
 
   /* Compact Navbar in Mobile Landscape */
   .mobile-bottom-nav {
-    padding-top: 0.2rem !important;
-    padding-bottom: max(0.2rem, env(safe-area-inset-bottom)) !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: max(0.15rem, env(safe-area-inset-bottom)) !important;
   }
 
   .mobile-bottom-nav button {
-    min-height: 32px !important;
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
-    font-size: 10px !important;
+    min-height: 30px !important;
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    font-size: 9.5px !important;
   }
 
   .mobile-bottom-nav svg {
-    width: 14px !important;
-    height: 14px !important;
+    width: 13px !important;
+    height: 13px !important;
   }
 }
 
