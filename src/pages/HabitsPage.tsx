@@ -218,9 +218,14 @@ export function HabitsPage() {
       ? scheduleMap[dayIndex]
       : [{ startTime: fallbackStart, endTime: fallbackEnd }];
     const lastSlot = existing[existing.length - 1];
-    const newSlot: TimeSlot = lastSlot
-      ? { startTime: lastSlot.endTime, endTime: '21:00' }
-      : { startTime: fallbackStart, endTime: fallbackEnd };
+    let nextStart = lastSlot ? lastSlot.endTime : fallbackStart;
+    let nextEnd = '21:00';
+    if (nextStart >= nextEnd) {
+      const [h, m] = nextStart.split(':').map(Number);
+      const endH = Math.min(23, (h + 1) % 24);
+      nextEnd = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    const newSlot: TimeSlot = { startTime: nextStart, endTime: nextEnd };
 
     setScheduleMap((prev) => ({
       ...prev,
@@ -233,12 +238,18 @@ export function HabitsPage() {
     slotIndex: number,
     field: 'startTime' | 'endTime',
     value: string,
-    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>
+    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>,
+    fallbackStart = '09:00',
+    fallbackEnd = '10:00'
   ) => {
     setScheduleMap((prev) => {
-      const daySlots = [...(prev[dayIndex] || [])];
-      if (!daySlots[slotIndex]) return prev;
-      daySlots[slotIndex] = { ...daySlots[slotIndex], [field]: value };
+      const currentSlots = prev[dayIndex] && prev[dayIndex].length > 0
+        ? prev[dayIndex]
+        : [{ startTime: fallbackStart, endTime: fallbackEnd }];
+      const daySlots = [...currentSlots];
+      if (slotIndex >= 0 && slotIndex < daySlots.length) {
+        daySlots[slotIndex] = { ...daySlots[slotIndex], [field]: value };
+      }
       return { ...prev, [dayIndex]: daySlots };
     });
   };
@@ -246,10 +257,15 @@ export function HabitsPage() {
   const removeSlotFromCustomSchedule = (
     dayIndex: number,
     slotIndex: number,
-    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>
+    setScheduleMap: React.Dispatch<React.SetStateAction<Record<number, TimeSlot[]>>>,
+    fallbackStart = '09:00',
+    fallbackEnd = '10:00'
   ) => {
     setScheduleMap((prev) => {
-      const daySlots = (prev[dayIndex] || []).filter((_, idx) => idx !== slotIndex);
+      const currentSlots = prev[dayIndex] && prev[dayIndex].length > 0
+        ? prev[dayIndex]
+        : [{ startTime: fallbackStart, endTime: fallbackEnd }];
+      const daySlots = currentSlots.filter((_, idx) => idx !== slotIndex);
       return { ...prev, [dayIndex]: daySlots };
     });
   };
@@ -349,7 +365,21 @@ export function HabitsPage() {
       setError(null);
 
       const targetSetIds = habitSetIds.length > 0 ? habitSetIds : [activeSetId];
-      const scheduleToSave = isAdvancedSchedule && Object.keys(customSchedule).length > 0 ? customSchedule : undefined;
+
+      let scheduleToSave: Record<number, TimeSlot[]> | undefined = undefined;
+      if (isAdvancedSchedule) {
+        const finalSchedule: Record<number, TimeSlot[]> = {};
+        for (const dayId of scheduledDays) {
+          if (customSchedule[dayId] && customSchedule[dayId].length > 0) {
+            finalSchedule[dayId] = customSchedule[dayId];
+          } else {
+            finalSchedule[dayId] = [{ startTime, endTime }];
+          }
+        }
+        if (Object.keys(finalSchedule).length > 0) {
+          scheduleToSave = finalSchedule;
+        }
+      }
 
       const newHabitId = await createDailyHabit(user.uid, {
         title: habitTitle.trim(),
@@ -535,7 +565,21 @@ export function HabitsPage() {
       setEditError(null);
 
       const targetSetIds = editHabitSetIds.length > 0 ? editHabitSetIds : [activeSetId];
-      const scheduleToSave = editIsAdvancedSchedule && Object.keys(editCustomSchedule).length > 0 ? editCustomSchedule : null;
+
+      let scheduleToSave: Record<number, TimeSlot[]> | null = null;
+      if (editIsAdvancedSchedule) {
+        const finalSchedule: Record<number, TimeSlot[]> = {};
+        for (const dayId of editScheduledDays) {
+          if (editCustomSchedule[dayId] && editCustomSchedule[dayId].length > 0) {
+            finalSchedule[dayId] = editCustomSchedule[dayId];
+          } else {
+            finalSchedule[dayId] = [{ startTime: editStartTime, endTime: editEndTime }];
+          }
+        }
+        if (Object.keys(finalSchedule).length > 0) {
+          scheduleToSave = finalSchedule;
+        }
+      }
 
       await updateDoc(doc(db, 'dailyHabits', editingHabitId), {
         title: editHabitTitle.trim(),
@@ -1044,7 +1088,17 @@ export function HabitsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setIsAdvancedSchedule(!isAdvancedSchedule)}
+                          onClick={() => {
+                            const next = !isAdvancedSchedule;
+                            setIsAdvancedSchedule(next);
+                            if (next && Object.keys(customSchedule).length === 0) {
+                              const initSchedule: Record<number, TimeSlot[]> = {};
+                              scheduledDays.forEach((dayId) => {
+                                initSchedule[dayId] = [{ startTime, endTime }];
+                              });
+                              setCustomSchedule(initSchedule);
+                            }
+                          }}
                           className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${
                             isAdvancedSchedule
                               ? 'bg-purple-600 text-white border-transparent shadow-xs'
@@ -1119,14 +1173,14 @@ export function HabitsPage() {
                                         <div className="flex-1 grid grid-cols-2 gap-2">
                                           <TimePickerInput
                                             value={slot.startTime}
-                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'startTime', val, setCustomSchedule)}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'startTime', val, setCustomSchedule, startTime, endTime)}
                                             label={`Start ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
                                             popoverPosition="top"
                                             align="left"
                                           />
                                           <TimePickerInput
                                             value={slot.endTime}
-                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'endTime', val, setCustomSchedule)}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'endTime', val, setCustomSchedule, startTime, endTime)}
                                             label={`End ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
                                             popoverPosition="top"
                                             align="right"
@@ -1135,7 +1189,7 @@ export function HabitsPage() {
                                         {daySlots.length > 1 && (
                                           <button
                                             type="button"
-                                            onClick={() => removeSlotFromCustomSchedule(dayId, sIdx, setCustomSchedule)}
+                                            onClick={() => removeSlotFromCustomSchedule(dayId, sIdx, setCustomSchedule, startTime, endTime)}
                                             className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition shrink-0 mt-4"
                                             title="Remove time slot"
                                           >
@@ -1723,7 +1777,17 @@ export function HabitsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setEditIsAdvancedSchedule(!editIsAdvancedSchedule)}
+                          onClick={() => {
+                            const next = !editIsAdvancedSchedule;
+                            setEditIsAdvancedSchedule(next);
+                            if (next && Object.keys(editCustomSchedule).length === 0) {
+                              const initSchedule: Record<number, TimeSlot[]> = {};
+                              editScheduledDays.forEach((dayId) => {
+                                initSchedule[dayId] = [{ startTime: editStartTime, endTime: editEndTime }];
+                              });
+                              setEditCustomSchedule(initSchedule);
+                            }
+                          }}
                           className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${
                             editIsAdvancedSchedule
                               ? 'bg-purple-600 text-white border-transparent shadow-xs'
@@ -1798,14 +1862,14 @@ export function HabitsPage() {
                                         <div className="flex-1 grid grid-cols-2 gap-2">
                                           <TimePickerInput
                                             value={slot.startTime}
-                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'startTime', val, setEditCustomSchedule)}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'startTime', val, setEditCustomSchedule, editStartTime, editEndTime)}
                                             label={`Start ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
                                             popoverPosition="top"
                                             align="left"
                                           />
                                           <TimePickerInput
                                             value={slot.endTime}
-                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'endTime', val, setEditCustomSchedule)}
+                                            onChange={(val) => updateSlotInCustomSchedule(dayId, sIdx, 'endTime', val, setEditCustomSchedule, editStartTime, editEndTime)}
                                             label={`End ${sIdx > 0 ? `#${sIdx + 1}` : ''}`}
                                             popoverPosition="top"
                                             align="right"
@@ -1814,7 +1878,7 @@ export function HabitsPage() {
                                         {daySlots.length > 1 && (
                                           <button
                                             type="button"
-                                            onClick={() => removeSlotFromCustomSchedule(dayId, sIdx, setEditCustomSchedule)}
+                                            onClick={() => removeSlotFromCustomSchedule(dayId, sIdx, setEditCustomSchedule, editStartTime, editEndTime)}
                                             className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition shrink-0 mt-4"
                                             title="Remove time slot"
                                           >
