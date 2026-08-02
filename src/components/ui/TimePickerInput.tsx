@@ -108,8 +108,16 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
 
   // Handlers for typing numbers in Keyboard View
   const handleHoursBoxChange = (val: string) => {
-    const rawDigits = val.replace(/\D/g, '');
-    const digits = rawDigits.length > 2 ? rawDigits.slice(-2) : rawDigits;
+    const raw = val.replace(/\D/g, '');
+    let digits = raw;
+
+    // If previous string was already 2 digits (e.g. "09") and user appended a new digit (e.g. "091")
+    if (hoursInputStr.length >= 2 && raw.length > hoursInputStr.length) {
+      digits = raw.slice(hoursInputStr.length);
+    } else if (raw.length > 2) {
+      digits = raw.slice(-2);
+    }
+
     setHoursInputStr(digits);
 
     if (digits.length > 0) {
@@ -126,8 +134,16 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
   };
 
   const handleMinutesBoxChange = (val: string) => {
-    const rawDigits = val.replace(/\D/g, '');
-    const digits = rawDigits.length > 2 ? rawDigits.slice(-2) : rawDigits;
+    const raw = val.replace(/\D/g, '');
+    let digits = raw;
+
+    // If previous string was already 2 digits (e.g. "00") and user appended a new digit (e.g. "003")
+    if (minutesInputStr.length >= 2 && raw.length > minutesInputStr.length) {
+      digits = raw.slice(minutesInputStr.length);
+    } else if (raw.length > 2) {
+      digits = raw.slice(-2);
+    }
+
     setMinutesInputStr(digits);
 
     if (digits.length > 0) {
