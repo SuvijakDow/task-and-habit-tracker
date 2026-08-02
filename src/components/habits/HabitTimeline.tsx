@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Calendar, RotateCcw, ChevronDown } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { formatToDateString } from '@/utils/dateUtils';
@@ -40,6 +40,19 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
 
   // State for currently selected day of week (defaults to today)
   const [selectedDay, setSelectedDay] = useState<number>(todayDayOfWeek);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close custom dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Flatten all time slots scheduled for selected day across habits
   const selectedDaySlots = useMemo(() => {
@@ -165,29 +178,55 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
 
   return (
     <div className="mt-5 sm:mt-6 p-3 sm:p-5 rounded-3xl bg-slate-900/90 border border-purple-500/30 text-white shadow-xl">
-      {/* Sleek Single-Line Header: Icon + Day Dropdown + Today Reset */}
+      {/* Sleek Single-Line Header: Icon + Custom Glassmorphic Day Dropdown + Today Reset */}
       <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-slate-800">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Calendar className="w-4 h-4 text-pink-400 shrink-0" />
+          <Calendar className="w-4.5 h-4.5 text-pink-400 shrink-0" />
           
-          {/* Day Selector Dropdown Menu */}
-          <div className="relative inline-block">
-            <select
-              value={selectedDay}
-              onChange={(e) => setSelectedDay(Number(e.target.value))}
-              className="appearance-none bg-slate-800 hover:bg-slate-700/90 text-white font-extrabold text-xs sm:text-sm pl-3 pr-8 py-1.5 rounded-xl border border-purple-500/30 focus:border-pink-500 focus:outline-none cursor-pointer transition shadow-sm"
-              aria-label="Select Schedule Day"
+          {/* Custom Glassmorphic Day Selector Dropdown Menu */}
+          <div ref={dropdownRef} className="relative inline-block ml-1.5">
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-950/90 via-slate-900 to-purple-950/90 hover:from-purple-900 hover:to-slate-800 text-white font-extrabold text-xs sm:text-sm border border-purple-400/40 hover:border-pink-400/60 shadow-md shadow-purple-950/50 transition-all active:scale-95"
             >
-              {DAYS.map((day) => {
-                const isToday = day.index === todayDayOfWeek;
-                return (
-                  <option key={day.index} value={day.index} className="bg-slate-900 text-white font-semibold">
-                    {isToday ? `Today's Schedule (${day.short})` : `${day.full}'s Schedule`}
-                  </option>
-                );
-              })}
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-purple-300 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <span>{isViewingToday ? `Today's Schedule (${selectedDayInfo.short})` : `${selectedDayInfo.full}'s Schedule`}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-purple-300 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-pink-400' : ''}`} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 z-[100] w-60 rounded-2xl bg-slate-900/98 border border-purple-500/40 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.85)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+                {DAYS.map((day) => {
+                  const isSelected = day.index === selectedDay;
+                  const isToday = day.index === todayDayOfWeek;
+
+                  return (
+                    <button
+                      key={day.index}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDay(day.index);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-between my-0.5 ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-extrabold shadow-md shadow-purple-500/30'
+                          : 'text-gray-200 hover:bg-purple-950/60 hover:text-white font-semibold'
+                      }`}
+                    >
+                      <span>{isToday ? `Today's Schedule (${day.short})` : `${day.full}'s Schedule`}</span>
+                      {isToday && (
+                        <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+                          isSelected ? 'bg-amber-400/30 text-amber-100' : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                        }`}>
+                          Today
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Jump to Today Shortcut Button (Shown only when viewing another day) */}
@@ -195,7 +234,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
             <button
               type="button"
               onClick={() => setSelectedDay(todayDayOfWeek)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/30 text-xs font-bold transition shrink-0"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/30 text-xs font-bold transition shrink-0 ml-1"
               title="Jump back to Today"
             >
               <RotateCcw className="w-3 h-3 text-pink-300" />
