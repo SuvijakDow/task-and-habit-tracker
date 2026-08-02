@@ -555,7 +555,7 @@ export const calculateTotalCompletions = (
   dailyProgress?: Record<string, number>
 ): number => {
   if (!targetValue || targetValue <= 0) {
-    return completedDates.length;
+    return Number(completedDates.length.toFixed(2));
   }
 
   const allDates = new Set([...completedDates, ...Object.keys(dailyProgress || {})]);
@@ -568,7 +568,7 @@ export const calculateTotalCompletions = (
     totalScore += ratio;
   });
 
-  return Number.isInteger(totalScore) ? totalScore : Number(totalScore.toFixed(2));
+  return Number(totalScore.toFixed(2));
 };
 
 /**

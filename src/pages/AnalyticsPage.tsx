@@ -163,7 +163,7 @@ export function AnalyticsPage() {
       return acc + habitRatioSum;
     }, 0);
 
-    return Number.isInteger(rawTotal) ? rawTotal : Number(rawTotal.toFixed(2));
+    return Number(rawTotal.toFixed(2));
   }, [filteredHabits]);
 
   const avgConsistency = useMemo(() => {
