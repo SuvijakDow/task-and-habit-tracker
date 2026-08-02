@@ -34,6 +34,9 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
   // Temporary selected time while modal is open
   const [tempHours, setTempHours] = useState<number>(9);
   const [tempMinutes, setTempMinutes] = useState<number>(0);
+  const tempHoursRef = useRef<number>(9);
+  const tempMinutesRef = useRef<number>(0);
+
   const [hoursInputStr, setHoursInputStr] = useState<string>('09');
   const [minutesInputStr, setMinutesInputStr] = useState<string>('00');
   const [isDragging, setIsDragging] = useState(false);
@@ -44,22 +47,32 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     const [h, m] = (value || '09:00').split(':').map(Number);
     const validH = isNaN(h) ? 9 : Math.max(0, Math.min(23, h));
     const validM = isNaN(m) ? 0 : Math.max(0, Math.min(59, m));
+    
+    tempHoursRef.current = validH;
+    tempMinutesRef.current = validM;
     setTempHours(validH);
     setTempMinutes(validM);
     setHoursInputStr(String(validH).padStart(2, '0'));
     setMinutesInputStr(String(validM).padStart(2, '0'));
   }, [value, isOpen]);
 
+  // High performance update from dial (only triggers re-render if value changed!)
   const updateTempHoursFromDial = (h: number) => {
     const validH = Math.max(0, Math.min(23, h));
-    setTempHours(validH);
-    setHoursInputStr(String(validH).padStart(2, '0'));
+    if (validH !== tempHoursRef.current) {
+      tempHoursRef.current = validH;
+      setTempHours(validH);
+      setHoursInputStr(String(validH).padStart(2, '0'));
+    }
   };
 
   const updateTempMinutesFromDial = (m: number) => {
     const validM = Math.max(0, Math.min(59, m));
-    setTempMinutes(validM);
-    setMinutesInputStr(String(validM).padStart(2, '0'));
+    if (validM !== tempMinutesRef.current) {
+      tempMinutesRef.current = validM;
+      setTempMinutes(validM);
+      setMinutesInputStr(String(validM).padStart(2, '0'));
+    }
   };
 
   const handleOpen = () => {
@@ -67,6 +80,9 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     const [h, m] = (value || '09:00').split(':').map(Number);
     const validH = isNaN(h) ? 9 : Math.max(0, Math.min(23, h));
     const validM = isNaN(m) ? 0 : Math.max(0, Math.min(59, m));
+    
+    tempHoursRef.current = validH;
+    tempMinutesRef.current = validM;
     setTempHours(validH);
     setTempMinutes(validM);
     setHoursInputStr(String(validH).padStart(2, '0'));
@@ -112,6 +128,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     if (val !== '') {
       const parsed = parseInt(val, 10);
       if (!isNaN(parsed) && parsed >= 0 && parsed <= 23) {
+        tempHoursRef.current = parsed;
         setTempHours(parsed);
       }
     }
@@ -122,6 +139,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     if (val !== '') {
       const parsed = parseInt(val, 10);
       if (!isNaN(parsed) && parsed >= 0 && parsed <= 59) {
+        tempMinutesRef.current = parsed;
         setTempMinutes(parsed);
       }
     }
@@ -135,7 +153,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     setMinutesInputStr(String(tempMinutes).padStart(2, '0'));
   };
 
-  // Pointer / Drag logic for Radial Clock Dial
+  // Optimized Pointer / Drag logic for Radial Clock Dial
   const updateTimeFromPointer = useCallback((clientX: number, clientY: number, isFinal = false) => {
     if (!dialRef.current) return;
     const rect = dialRef.current.getBoundingClientRect();
@@ -208,10 +226,10 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     }
   }, [isDragging, handlePointerMove, handlePointerUp]);
 
-  // Geometry calculation for rendering radial clock elements (Dial size: 250px x 250px)
-  const dialRadius = 125; // half of 250px
-  const outerR = 94;
-  const innerR = 60;
+  // Geometry calculation for rendering radial clock elements (Responsive Dial: 240px x 240px)
+  const dialRadius = 120; // half of 240px
+  const outerR = 90;
+  const innerR = 58;
 
   // Calculate hand endpoint for SVG / Pointer Line
   let handAngleDeg = 0;
@@ -264,17 +282,17 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
         </button>
       </div>
 
-      {/* Prominent Fixed Overlay Modal for Time Picker */}
+      {/* High Performance Responsive Fixed Overlay Modal */}
       {isOpen && !disabled && (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-2 sm:p-4 bg-black/75 overflow-y-auto animate-in fade-in duration-150">
           <div
-            className="w-[330px] sm:w-[360px] max-w-[95vw] bg-slate-900 border border-purple-500/30 rounded-3xl p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.8)] text-white select-none relative animate-in zoom-in-95 duration-200"
+            className="w-[310px] sm:w-[350px] max-w-[96vw] max-h-[96vh] overflow-y-auto bg-slate-900 border border-purple-500/30 rounded-3xl p-3.5 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.9)] text-white select-none relative animate-in zoom-in-95 duration-150 transform-gpu"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <span className="text-xs font-extrabold text-purple-300 tracking-wider uppercase flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-pink-400" />
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-400" />
                 Select Time
               </span>
               
@@ -284,52 +302,52 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                 className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-slate-800 transition"
                 title="Close"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
             {/* Time Display Cards (Clock Mode vs Keyboard Mode) */}
             {inputType === 'dial' ? (
               /* Dial Mode: Big button cards (No keyboard popup on mobile) */
-              <div className="flex flex-col items-center mb-3">
-                <div className="flex items-center justify-center gap-3">
+              <div className="flex flex-col items-center mb-2 sm:mb-3">
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
                   <div className="flex flex-col items-center">
                     <button
                       type="button"
                       onClick={() => setMode('hours')}
-                      className={`w-28 h-20 rounded-2xl flex items-center justify-center text-4xl font-extrabold transition-all duration-200 ${
+                      className={`w-24 sm:w-28 h-16 sm:h-20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-extrabold transition-all duration-150 ${
                         mode === 'hours'
-                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
+                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
                           : 'bg-slate-800/90 text-gray-300 border border-slate-700/80 hover:bg-slate-700/60'
                       }`}
                     >
                       {String(tempHours).padStart(2, '0')}
                     </button>
-                    <span className="text-[11px] font-bold text-gray-400 mt-1">Hours</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5">Hours</span>
                   </div>
 
-                  <span className="text-3xl font-black text-purple-400/90 pb-5 animate-pulse">:</span>
+                  <span className="text-2xl sm:text-3xl font-black text-purple-400/90 pb-4 animate-pulse">:</span>
 
                   <div className="flex flex-col items-center">
                     <button
                       type="button"
                       onClick={() => setMode('minutes')}
-                      className={`w-28 h-20 rounded-2xl flex items-center justify-center text-4xl font-extrabold transition-all duration-200 ${
+                      className={`w-24 sm:w-28 h-16 sm:h-20 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl font-extrabold transition-all duration-150 ${
                         mode === 'minutes'
-                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
+                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
                           : 'bg-slate-800/90 text-gray-300 border border-slate-700/80 hover:bg-slate-700/60'
                       }`}
                     >
                       {String(tempMinutes).padStart(2, '0')}
                     </button>
-                    <span className="text-[11px] font-bold text-gray-400 mt-1">Minutes</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5">Minutes</span>
                   </div>
                 </div>
               </div>
             ) : (
               /* Keyboard Mode: Standard numeric inputs (Pops up Numpad keyboard on mobile) */
-              <div className="flex flex-col items-center mb-3">
-                <div className="flex items-center justify-center gap-3">
+              <div className="flex flex-col items-center mb-2 sm:mb-3">
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
                   <div className="flex flex-col items-center">
                     <input
                       ref={hoursInputRef}
@@ -344,16 +362,16 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                       }}
                       onChange={(e) => handleHoursBoxChange(e.target.value)}
                       onBlur={handleHoursBoxBlur}
-                      className={`w-28 h-20 rounded-2xl text-center text-4xl font-extrabold transition-all duration-200 focus:outline-none ${
+                      className={`w-24 sm:w-28 h-16 sm:h-20 rounded-2xl text-center text-3xl sm:text-4xl font-extrabold transition-all duration-150 focus:outline-none ${
                         mode === 'hours'
-                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white border-2 border-purple-400 shadow-xl shadow-purple-500/40'
+                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white border-2 border-purple-400 shadow-lg shadow-purple-500/40'
                           : 'bg-slate-800/90 text-gray-300 border border-slate-700/80'
                       }`}
                     />
-                    <span className="text-[11px] font-bold text-gray-400 mt-1">Hours</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5">Hours</span>
                   </div>
 
-                  <span className="text-3xl font-black text-purple-400/90 pb-5 animate-pulse">:</span>
+                  <span className="text-2xl sm:text-3xl font-black text-purple-400/90 pb-4 animate-pulse">:</span>
 
                   <div className="flex flex-col items-center">
                     <input
@@ -369,13 +387,13 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                       }}
                       onChange={(e) => handleMinutesBoxChange(e.target.value)}
                       onBlur={handleMinutesBoxBlur}
-                      className={`w-28 h-20 rounded-2xl text-center text-4xl font-extrabold transition-all duration-200 focus:outline-none ${
+                      className={`w-24 sm:w-28 h-16 sm:h-20 rounded-2xl text-center text-3xl sm:text-4xl font-extrabold transition-all duration-150 focus:outline-none ${
                         mode === 'minutes'
-                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white border-2 border-purple-400 shadow-xl shadow-purple-500/40'
+                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white border-2 border-purple-400 shadow-lg shadow-purple-500/40'
                           : 'bg-slate-800/90 text-gray-300 border border-slate-700/80'
                       }`}
                     />
-                    <span className="text-[11px] font-bold text-gray-400 mt-1">Minutes</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 mt-0.5">Minutes</span>
                   </div>
                 </div>
               </div>
@@ -383,17 +401,17 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
 
             {/* Interactive Content: Clock Dial vs Keyboard View */}
             {inputType === 'dial' ? (
-              <div className="relative my-2">
+              <div className="relative my-1 sm:my-2">
                 <div
                   ref={dialRef}
                   onMouseDown={handlePointerDown}
                   onTouchStart={handlePointerDown}
-                  className="relative w-[250px] h-[250px] mx-auto rounded-full bg-slate-800/90 border border-purple-500/20 shadow-inner flex items-center justify-center cursor-pointer touch-none"
+                  className="relative w-[230px] h-[230px] sm:w-[240px] sm:h-[240px] mx-auto rounded-full bg-slate-800/90 border border-purple-500/20 shadow-inner flex items-center justify-center cursor-pointer touch-none transform-gpu"
                 >
-                  {/* SVG Pointer Hand */}
+                  {/* SVG Pointer Hand: Uses gradientUnits="userSpaceOnUse" */}
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
                     <defs>
-                      <linearGradient id="purplePinkGrad" x1="0" y1="0" x2="250" y2="250" gradientUnits="userSpaceOnUse">
+                      <linearGradient id="purplePinkGrad" x1="0" y1="0" x2="240" y2="240" gradientUnits="userSpaceOnUse">
                         <stop offset="0%" stopColor="#A855F7" />
                         <stop offset="100%" stopColor="#EC4899" />
                       </linearGradient>
@@ -405,11 +423,11 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                       x2={handX}
                       y2={handY}
                       stroke="url(#purplePinkGrad)"
-                      strokeWidth="4"
+                      strokeWidth="3.5"
                       strokeLinecap="round"
                     />
                     {/* Center Dot */}
-                    <circle cx={dialRadius} cy={dialRadius} r="6" fill="#EC4899" />
+                    <circle cx={dialRadius} cy={dialRadius} r="5" fill="#EC4899" />
                   </svg>
 
                   {/* Hand End Circle Bubble */}
@@ -419,7 +437,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                       top: `${handY}px`,
                       transform: 'translate(-50%, -50%)',
                     }}
-                    className="absolute w-9 h-9 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 text-white font-extrabold text-xs flex items-center justify-center shadow-lg shadow-pink-500/40 pointer-events-none z-20"
+                    className="absolute w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 text-white font-extrabold text-xs flex items-center justify-center shadow-lg shadow-pink-500/40 pointer-events-none z-20"
                   >
                     {mode === 'hours'
                       ? String(tempHours).padStart(2, '0')
@@ -444,7 +462,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                               top: `${ny}px`,
                               transform: 'translate(-50%, -50%)',
                             }}
-                            className={`absolute text-sm font-extrabold pointer-events-none ${
+                            className={`absolute text-xs sm:text-sm font-extrabold pointer-events-none ${
                               isSelected ? 'text-transparent' : 'text-gray-300'
                             }`}
                           >
@@ -468,7 +486,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                               top: `${ny}px`,
                               transform: 'translate(-50%, -50%)',
                             }}
-                            className={`absolute text-xs font-bold pointer-events-none ${
+                            className={`absolute text-[10px] sm:text-xs font-bold pointer-events-none ${
                               isSelected ? 'text-transparent' : 'text-gray-400'
                             }`}
                           >
@@ -493,7 +511,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                             top: `${ny}px`,
                             transform: 'translate(-50%, -50%)',
                           }}
-                          className={`absolute text-xs font-extrabold pointer-events-none ${
+                          className={`absolute text-xs sm:text-sm font-extrabold pointer-events-none ${
                             isSelected ? 'text-transparent' : 'text-gray-300'
                           }`}
                         >
@@ -506,9 +524,9 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
               </div>
             ) : (
               /* Keyboard Mode Extra Options (Quick Presets) */
-              <div className="py-2 px-1 my-2">
-                <label className="block text-[11px] font-bold text-purple-300/80 mb-2 uppercase tracking-wider text-center">Quick Select</label>
-                <div className="grid grid-cols-4 gap-2">
+              <div className="py-1 px-1 my-1">
+                <label className="block text-[10px] font-bold text-purple-300/80 mb-1.5 uppercase tracking-wider text-center">Quick Select</label>
+                <div className="grid grid-cols-4 gap-1.5">
                   {['06:00', '09:00', '12:00', '13:00', '17:00', '18:00', '20:00', '21:00'].map((timeStr) => (
                     <button
                       key={timeStr}
@@ -518,7 +536,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                         updateTempHoursFromDial(h);
                         updateTempMinutesFromDial(m);
                       }}
-                      className="py-2 px-2 rounded-xl bg-slate-800 hover:bg-purple-600 text-xs font-bold text-purple-200 hover:text-white border border-slate-700 transition shadow-sm"
+                      className="py-1.5 px-1.5 rounded-xl bg-slate-800 hover:bg-purple-600 text-xs font-bold text-purple-200 hover:text-white border border-slate-700 transition shadow-sm"
                     >
                       {timeStr}
                     </button>
@@ -528,29 +546,29 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
             )}
 
             {/* Action Bar Footer */}
-            <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-2.5 sm:pt-3 mt-1 sm:mt-2 border-t border-slate-800">
               {/* Bottom Left Mode Toggle Button (Google Style) */}
               <button
                 type="button"
                 onClick={() => handleSwitchInputType(inputType === 'dial' ? 'keyboard' : 'dial')}
-                className="p-2.5 text-purple-300 hover:text-white rounded-xl bg-slate-800/80 border border-slate-700 hover:bg-purple-600/80 transition"
+                className="p-2 text-purple-300 hover:text-white rounded-xl bg-slate-800/80 border border-slate-700 hover:bg-purple-600/80 transition"
                 title={inputType === 'dial' ? 'Type time using keyboard' : 'Select time using clock dial'}
               >
-                {inputType === 'dial' ? <Keyboard className="w-5 h-5 text-pink-400" /> : <Clock className="w-5 h-5 text-purple-400" />}
+                {inputType === 'dial' ? <Keyboard className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400" /> : <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />}
               </button>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-slate-800 transition"
+                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-gray-300 hover:text-white hover:bg-slate-800 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirm}
-                  className="px-6 py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/40 hover:opacity-95 active:scale-95 transition"
+                  className="px-5 sm:px-6 py-1.5 sm:py-2 rounded-xl text-xs font-extrabold bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-600/40 hover:opacity-95 active:scale-95 transition"
                 >
                   OK
                 </button>

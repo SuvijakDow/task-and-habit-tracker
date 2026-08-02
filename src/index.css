@@ -147,13 +147,10 @@ body {
 .list-stagger > *:nth-child(11) { animation-delay: 320ms; }
 .list-stagger > *:nth-child(12) { animation-delay: 350ms; }
 
-@media (max-width: 640px) {
-  html {
-    font-size: 15px;
-  }
-
+/* Global Mobile & Touch Performance Optimizations (Both Portrait & Landscape) */
+@media (max-width: 768px), (max-height: 550px), (pointer: coarse) {
   body {
-    background-attachment: scroll;
+    background-attachment: scroll !important;
   }
 
   .page-enter,
@@ -166,8 +163,8 @@ body {
 
   .glass-card,
   .glass-header {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .nav-item-motion {
@@ -175,6 +172,51 @@ body {
       background-color 180ms ease,
       color 180ms ease,
       border-color 180ms ease;
+  }
+}
+
+/* Mobile Landscape Mode Optimizations (Height <= 540px) */
+@media (max-height: 540px) {
+  .page-enter {
+    padding-bottom: 3.5rem !important;
+  }
+
+  /* Compact Hero Banner in Mobile Landscape */
+  .hero-banner-compact {
+    padding: 0.6rem 0.8rem !important;
+    margin-bottom: 0.6rem !important;
+    border-radius: 1.25rem !important;
+  }
+
+  .hero-banner-title {
+    font-size: 1.1rem !important;
+  }
+
+  .hero-banner-stats {
+    padding: 0.35rem 0.5rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  .hero-banner-stats-val {
+    font-size: 0.95rem !important;
+  }
+
+  /* Compact Navbar in Mobile Landscape */
+  .mobile-bottom-nav {
+    padding-top: 0.2rem !important;
+    padding-bottom: max(0.2rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .mobile-bottom-nav button {
+    min-height: 32px !important;
+    padding-top: 0.2rem !important;
+    padding-bottom: 0.2rem !important;
+    font-size: 10px !important;
+  }
+
+  .mobile-bottom-nav svg {
+    width: 14px !important;
+    height: 14px !important;
   }
 }
 

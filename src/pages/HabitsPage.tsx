@@ -703,7 +703,7 @@ export function HabitsPage() {
     <div className="min-h-screen pt-3.5 sm:pt-4 md:pt-2 pb-6 md:pb-12">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6">
         {/* Hero Dashboard Overview Banner */}
-        <div className="glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white rounded-3xl border border-pink-400/30 shadow-xl shadow-fuchsia-950/40 relative overflow-hidden">
+        <div className="hero-banner-compact glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white rounded-3xl border border-pink-400/30 shadow-xl shadow-fuchsia-950/40 relative overflow-hidden">
           <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -715,7 +715,7 @@ export function HabitsPage() {
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 border border-white/25 backdrop-blur-md shadow-2xs">
                     <Flame className="w-5 h-5 text-amber-300 animate-pulse" />
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  <h1 className="hero-banner-title text-xl sm:text-2xl font-black text-white tracking-tight">
                     Daily Habits
                   </h1>
                 </div>
@@ -743,18 +743,18 @@ export function HabitsPage() {
             </div>
 
             {/* Desktop Center: Stats Badges (Full width on mobile/tablet, expanded box on desktop) */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 xl:gap-4 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 xl:p-3 rounded-2xl border border-white/15 text-center w-full xl:flex-1 xl:max-w-xl xl:mx-4 shrink-0">
+            <div className="hero-banner-stats grid grid-cols-3 gap-1.5 sm:gap-2 xl:gap-4 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 xl:p-3 rounded-2xl border border-white/15 text-center w-full xl:flex-1 xl:max-w-xl xl:mx-4 shrink-0">
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Scheduled</div>
-                <div className="text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
+                <div className="hero-banner-stats-val text-base sm:text-lg font-black text-amber-300">{scheduledTodayCount}</div>
               </div>
               <div className="px-1 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
-                <div className="text-base sm:text-lg font-black text-emerald-300">{completedTodayCount}</div>
+                <div className="hero-banner-stats-val text-base sm:text-lg font-black text-emerald-300">{completedTodayCount}</div>
               </div>
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Today %</div>
-                <div className="text-base sm:text-lg font-black text-pink-300">
+                <div className="hero-banner-stats-val text-base sm:text-lg font-black text-pink-300">
                   {todayPercent}%
                 </div>
               </div>
