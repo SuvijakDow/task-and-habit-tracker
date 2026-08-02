@@ -23,6 +23,10 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const dialRef = useRef<HTMLDivElement>(null);
 
+  // Keyboard input mode refs
+  const hoursInputRef = useRef<HTMLInputElement>(null);
+  const minutesInputRef = useRef<HTMLInputElement>(null);
+
   // Time picker internal state
   const [mode, setMode] = useState<'hours' | 'minutes'>('hours');
   const [inputType, setInputType] = useState<'dial' | 'keyboard'>('dial');
@@ -30,6 +34,8 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
   // Temporary selected time while modal is open
   const [tempHours, setTempHours] = useState<number>(9);
   const [tempMinutes, setTempMinutes] = useState<number>(0);
+  const [hoursInputStr, setHoursInputStr] = useState<string>('09');
+  const [minutesInputStr, setMinutesInputStr] = useState<string>('00');
   const [isDragging, setIsDragging] = useState(false);
 
   // Sync internal state with prop value when modal opens or prop changes
@@ -40,16 +46,20 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     const validM = isNaN(m) ? 0 : Math.max(0, Math.min(59, m));
     setTempHours(validH);
     setTempMinutes(validM);
+    setHoursInputStr(String(validH).padStart(2, '0'));
+    setMinutesInputStr(String(validM).padStart(2, '0'));
   }, [value, isOpen]);
 
   const updateTempHours = (h: number) => {
     const validH = Math.max(0, Math.min(23, h));
     setTempHours(validH);
+    setHoursInputStr(String(validH).padStart(2, '0'));
   };
 
   const updateTempMinutes = (m: number) => {
     const validM = Math.max(0, Math.min(59, m));
     setTempMinutes(validM);
+    setMinutesInputStr(String(validM).padStart(2, '0'));
   };
 
   const handleOpen = () => {
@@ -59,6 +69,8 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     const validM = isNaN(m) ? 0 : Math.max(0, Math.min(59, m));
     setTempHours(validH);
     setTempMinutes(validM);
+    setHoursInputStr(String(validH).padStart(2, '0'));
+    setMinutesInputStr(String(validM).padStart(2, '0'));
     setMode('hours');
     setInputType('dial');
     setIsOpen(true);
@@ -76,19 +88,47 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     setIsOpen(false);
   };
 
-  const handleExternalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/[^\d:]/g, '');
-    setDisplayValue(val);
+  // Switch between Dial and Keyboard input views
+  const handleSwitchInputType = (type: 'dial' | 'keyboard') => {
+    setInputType(type);
+    if (type === 'keyboard') {
+      setTimeout(() => {
+        if (hoursInputRef.current) {
+          hoursInputRef.current.focus();
+          hoursInputRef.current.select();
+        }
+      }, 50);
+    } else {
+      // Dismiss mobile keyboard when switching back to dial
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
+  };
 
-    // Auto-format when typing complete time HH:MM
-    if (val.length === 5 && val[2] === ':') {
-      const [h, m] = val.split(':').map(Number);
-      if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-        const formatted = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        onChange(formatted);
-        setDisplayValue(formatted);
-        updateTempHours(h);
-        updateTempMinutes(m);
+  // Handlers for typing numbers in Keyboard View
+  const handleHoursBoxChange = (val: string) => {
+    const digits = val.replace(/\D/g, '').slice(0, 2);
+    setHoursInputStr(digits);
+    if (digits.length > 0) {
+      const parsed = parseInt(digits, 10);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 23) {
+        setTempHours(parsed);
+      }
+    }
+    if (digits.length === 2 && minutesInputRef.current) {
+      minutesInputRef.current.focus();
+      minutesInputRef.current.select();
+    }
+  };
+
+  const handleMinutesBoxChange = (val: string) => {
+    const digits = val.replace(/\D/g, '').slice(0, 2);
+    setMinutesInputStr(digits);
+    if (digits.length > 0) {
+      const parsed = parseInt(digits, 10);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 59) {
+        setTempMinutes(parsed);
       }
     }
   };
@@ -201,12 +241,15 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
         <input
           type="text"
           value={displayValue}
-          onChange={handleExternalInputChange}
-          onFocus={handleOpen}
+          readOnly
+          onClick={handleOpen}
+          onFocus={(e) => {
+            e.target.blur();
+            handleOpen();
+          }}
           placeholder="00:00"
-          maxLength={5}
           disabled={disabled}
-          className="w-full min-h-[36px] sm:min-h-[44px] rounded-xl border border-purple-200 bg-white/90 px-3 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base font-semibold text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/40 focus:outline-none disabled:bg-gray-100 disabled:text-gray-500"
+          className="w-full min-h-[36px] sm:min-h-[44px] rounded-xl border border-purple-200 bg-white/90 px-3 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-base font-semibold text-gray-800 placeholder:text-gray-400 shadow-sm transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/40 focus:outline-none disabled:bg-gray-100 disabled:text-gray-500 cursor-pointer"
         />
         <button
           type="button"
@@ -227,7 +270,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-extrabold text-purple-300 tracking-wider uppercase flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-pink-400" />
                 Select Time
@@ -243,44 +286,92 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
               </button>
             </div>
 
-            {/* Digital Clock Display Header Cards */}
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('hours');
-                  setInputType('dial');
-                }}
-                className={`w-28 h-20 rounded-2xl flex items-center justify-center text-4xl font-extrabold transition-all duration-200 ${
-                  mode === 'hours' && inputType === 'dial'
-                    ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
-                    : 'bg-slate-800/90 text-gray-300 border border-slate-700/80 hover:bg-slate-700/60'
-                }`}
-              >
-                {String(tempHours).padStart(2, '0')}
-              </button>
+            {/* Time Display Display Cards (Clock Mode vs Keyboard Mode) */}
+            {inputType === 'dial' ? (
+              /* Dial Mode: Big button cards (No keyboard popup on mobile) */
+              <div className="flex flex-col items-center mb-3">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => setMode('hours')}
+                      className={`w-28 h-20 rounded-2xl flex items-center justify-center text-4xl font-extrabold transition-all duration-200 ${
+                        mode === 'hours'
+                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
+                          : 'bg-slate-800/90 text-gray-300 border border-slate-700/80 hover:bg-slate-700/60'
+                      }`}
+                    >
+                      {String(tempHours).padStart(2, '0')}
+                    </button>
+                    <span className="text-[11px] font-bold text-gray-400 mt-1">Hours</span>
+                  </div>
 
-              <span className="text-3xl font-black text-purple-400/90 animate-pulse">:</span>
+                  <span className="text-3xl font-black text-purple-400/90 pb-5 animate-pulse">:</span>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('minutes');
-                  setInputType('dial');
-                }}
-                className={`w-28 h-20 rounded-2xl flex items-center justify-center text-4xl font-extrabold transition-all duration-200 ${
-                  mode === 'minutes' && inputType === 'dial'
-                    ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
-                    : 'bg-slate-800/90 text-gray-300 border border-slate-700/80 hover:bg-slate-700/60'
-                }`}
-              >
-                {String(tempMinutes).padStart(2, '0')}
-              </button>
-            </div>
+                  <div className="flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => setMode('minutes')}
+                      className={`w-28 h-20 rounded-2xl flex items-center justify-center text-4xl font-extrabold transition-all duration-200 ${
+                        mode === 'minutes'
+                          ? 'bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-xl shadow-purple-500/40 ring-2 ring-purple-400 scale-105'
+                          : 'bg-slate-800/90 text-gray-300 border border-slate-700/80 hover:bg-slate-700/60'
+                      }`}
+                    >
+                      {String(tempMinutes).padStart(2, '0')}
+                    </button>
+                    <span className="text-[11px] font-bold text-gray-400 mt-1">Minutes</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Keyboard Mode: Google Material Style Inputs (Pops up Numpad keyboard on mobile) */
+              <div className="flex flex-col items-center mb-3">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex flex-col items-center">
+                    <input
+                      ref={hoursInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      value={hoursInputStr}
+                      onFocus={() => {
+                        setMode('hours');
+                        if (hoursInputRef.current) hoursInputRef.current.select();
+                      }}
+                      onChange={(e) => handleHoursBoxChange(e.target.value)}
+                      onBlur={() => setHoursInputStr(String(tempHours).padStart(2, '0'))}
+                      className="w-28 h-20 rounded-2xl text-center text-4xl font-extrabold bg-gradient-to-br from-purple-600 to-pink-500 text-white border-2 border-purple-400 shadow-xl shadow-purple-500/40 focus:outline-none"
+                    />
+                    <span className="text-[11px] font-bold text-gray-400 mt-1">Hours</span>
+                  </div>
+
+                  <span className="text-3xl font-black text-purple-400/90 pb-5 animate-pulse">:</span>
+
+                  <div className="flex flex-col items-center">
+                    <input
+                      ref={minutesInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      value={minutesInputStr}
+                      onFocus={() => {
+                        setMode('minutes');
+                        if (minutesInputRef.current) minutesInputRef.current.select();
+                      }}
+                      onChange={(e) => handleMinutesBoxChange(e.target.value)}
+                      onBlur={() => setMinutesInputStr(String(tempMinutes).padStart(2, '0'))}
+                      className="w-28 h-20 rounded-2xl text-center text-4xl font-extrabold bg-slate-800/90 text-white border border-slate-700/80 focus:border-purple-400 focus:outline-none"
+                    />
+                    <span className="text-[11px] font-bold text-gray-400 mt-1">Minutes</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Interactive Content: Clock Dial vs Keyboard View */}
             {inputType === 'dial' ? (
-              <div className="relative my-3">
+              <div className="relative my-2">
                 <div
                   ref={dialRef}
                   onMouseDown={handlePointerDown}
@@ -402,68 +493,34 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                 </div>
               </div>
             ) : (
-              /* Keyboard Input Mode Window */
-              <div className="py-4 px-2 space-y-4 my-3 bg-slate-800/60 rounded-2xl p-4 border border-purple-500/20">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1.5">Hours (0-23)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="23"
-                      value={tempHours}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        updateTempHours(isNaN(val) ? 0 : val);
+              /* Keyboard Mode Extra Options (Quick Presets) */
+              <div className="py-2 px-1 my-2">
+                <label className="block text-[11px] font-bold text-purple-300/80 mb-2 uppercase tracking-wider text-center">Quick Select</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {['06:00', '09:00', '12:00', '13:00', '17:00', '18:00', '20:00', '21:00'].map((timeStr) => (
+                    <button
+                      key={timeStr}
+                      type="button"
+                      onClick={() => {
+                        const [h, m] = timeStr.split(':').map(Number);
+                        updateTempHours(h);
+                        updateTempMinutes(m);
                       }}
-                      className="w-full h-14 text-center text-2xl font-bold bg-slate-900 border border-purple-500/40 rounded-2xl text-white focus:border-pink-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-1.5">Minutes (0-59)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="59"
-                      value={tempMinutes}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        updateTempMinutes(isNaN(val) ? 0 : val);
-                      }}
-                      className="w-full h-14 text-center text-2xl font-bold bg-slate-900 border border-purple-500/40 rounded-2xl text-white focus:border-pink-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Time Presets */}
-                <div>
-                  <label className="block text-[11px] font-bold text-purple-300/80 mb-2 uppercase tracking-wider">Quick Select</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {['06:00', '09:00', '12:00', '13:00', '17:00', '18:00', '20:00', '21:00'].map((timeStr) => (
-                      <button
-                        key={timeStr}
-                        type="button"
-                        onClick={() => {
-                          const [h, m] = timeStr.split(':').map(Number);
-                          updateTempHours(h);
-                          updateTempMinutes(m);
-                        }}
-                        className="py-1.5 px-2 rounded-xl bg-slate-900 hover:bg-purple-600 text-xs font-bold text-purple-200 hover:text-white border border-slate-700 transition shadow-sm"
-                      >
-                        {timeStr}
-                      </button>
-                    ))}
-                  </div>
+                      className="py-2 px-2 rounded-xl bg-slate-800 hover:bg-purple-600 text-xs font-bold text-purple-200 hover:text-white border border-slate-700 transition shadow-sm"
+                    >
+                      {timeStr}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* Action Bar Footer */}
-            <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800">
               {/* Bottom Left Mode Toggle Button (Google Style) */}
               <button
                 type="button"
-                onClick={() => setInputType(inputType === 'dial' ? 'keyboard' : 'dial')}
+                onClick={() => handleSwitchInputType(inputType === 'dial' ? 'keyboard' : 'dial')}
                 className="p-2.5 text-purple-300 hover:text-white rounded-xl bg-slate-800/80 border border-slate-700 hover:bg-purple-600/80 transition"
                 title={inputType === 'dial' ? 'Type time using keyboard' : 'Select time using clock dial'}
               >
