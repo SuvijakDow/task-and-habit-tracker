@@ -700,7 +700,7 @@ export function HabitsPage() {
   }
 
   return (
-    <div className="min-h-screen pt-3.5 sm:pt-4 md:pt-2 pb-28 md:pb-12">
+    <div className="min-h-screen pt-3.5 sm:pt-4 md:pt-2 pb-6 md:pb-12">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6">
         {/* Hero Dashboard Overview Banner */}
         <div className="hero-banner-compact glass-card p-4 sm:p-6 mb-5 sm:mb-6 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white rounded-3xl border border-pink-400/30 shadow-xl shadow-fuchsia-950/40 relative overflow-hidden">
@@ -783,7 +783,7 @@ export function HabitsPage() {
         </div>
 
         {/* Unified Control Bar: Routine Preset Selector & View Toggle */}
-        <div className="relative z-30 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-3 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
+        <div className="relative z-10 mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-3 rounded-2xl border border-purple-100/90 bg-white/80 p-1.5 shadow-xs backdrop-blur-md sm:p-2">
           {/* View Toggle */}
           <div className="flex items-center gap-1 bg-white border border-purple-200/80 rounded-xl p-1 shadow-2xs">
             <button

@@ -58,7 +58,7 @@ export function MainPage() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="mobile-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-purple-800/40 bg-[#14082e]/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(15,23,42,0.4)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
+      <nav className="mobile-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-purple-800/40 bg-[#14082e]/95 backdrop-blur-xl shadow-[0_-8px_30px_rgba(15,23,42,0.4)] pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5">
         <div className="grid grid-cols-3 gap-1.5 px-2">
           {navItems.map((item) => (
             <button
