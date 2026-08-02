@@ -106,48 +106,21 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
     }
   };
 
-  // Handlers for typing numbers in Keyboard View
+  // Direct, simple handlers for typing numbers in Keyboard View
   const handleHoursBoxChange = (val: string) => {
-    const raw = val.replace(/\D/g, '');
-    let digits = raw;
-
-    // If previous string was already 2 digits (e.g. "09") and user appended a new digit (e.g. "091")
-    if (hoursInputStr.length >= 2 && raw.length > hoursInputStr.length) {
-      digits = raw.slice(hoursInputStr.length);
-    } else if (raw.length > 2) {
-      digits = raw.slice(-2);
-    }
-
-    setHoursInputStr(digits);
-
-    if (digits.length > 0) {
-      const parsed = parseInt(digits, 10);
+    setHoursInputStr(val);
+    if (val !== '') {
+      const parsed = parseInt(val, 10);
       if (!isNaN(parsed) && parsed >= 0 && parsed <= 23) {
         setTempHours(parsed);
       }
     }
-
-    if (digits.length === 2 && minutesInputRef.current) {
-      minutesInputRef.current.focus();
-      minutesInputRef.current.select();
-    }
   };
 
   const handleMinutesBoxChange = (val: string) => {
-    const raw = val.replace(/\D/g, '');
-    let digits = raw;
-
-    // If previous string was already 2 digits (e.g. "00") and user appended a new digit (e.g. "003")
-    if (minutesInputStr.length >= 2 && raw.length > minutesInputStr.length) {
-      digits = raw.slice(minutesInputStr.length);
-    } else if (raw.length > 2) {
-      digits = raw.slice(-2);
-    }
-
-    setMinutesInputStr(digits);
-
-    if (digits.length > 0) {
-      const parsed = parseInt(digits, 10);
+    setMinutesInputStr(val);
+    if (val !== '') {
+      const parsed = parseInt(val, 10);
       if (!isNaN(parsed) && parsed >= 0 && parsed <= 59) {
         setTempMinutes(parsed);
       }
@@ -354,15 +327,16 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                 </div>
               </div>
             ) : (
-              /* Keyboard Mode: Google Material Style Inputs (Pops up Numpad keyboard on mobile) */
+              /* Keyboard Mode: Standard numeric inputs (Pops up Numpad keyboard on mobile) */
               <div className="flex flex-col items-center mb-3">
                 <div className="flex items-center justify-center gap-3">
                   <div className="flex flex-col items-center">
                     <input
                       ref={hoursInputRef}
-                      type="text"
+                      type="number"
                       inputMode="numeric"
-                      maxLength={2}
+                      min={0}
+                      max={23}
                       value={hoursInputStr}
                       onFocus={(e) => {
                         setMode('hours');
@@ -384,9 +358,10 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                   <div className="flex flex-col items-center">
                     <input
                       ref={minutesInputRef}
-                      type="text"
+                      type="number"
                       inputMode="numeric"
-                      maxLength={2}
+                      min={0}
+                      max={59}
                       value={minutesInputStr}
                       onFocus={(e) => {
                         setMode('minutes');
@@ -415,7 +390,7 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
                   onTouchStart={handlePointerDown}
                   className="relative w-[250px] h-[250px] mx-auto rounded-full bg-slate-800/90 border border-purple-500/20 shadow-inner flex items-center justify-center cursor-pointer touch-none"
                 >
-                  {/* SVG Pointer Hand: Uses gradientUnits="userSpaceOnUse" so stroke NEVER disappears at 0, 90, 180, 270 degrees */}
+                  {/* SVG Pointer Hand */}
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
                     <defs>
                       <linearGradient id="purplePinkGrad" x1="0" y1="0" x2="250" y2="250" gradientUnits="userSpaceOnUse">
