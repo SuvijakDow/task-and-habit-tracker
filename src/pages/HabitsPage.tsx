@@ -466,10 +466,10 @@ export function HabitsPage() {
         prev.map((h) =>
           h.id === habitId
             ? {
-                ...h,
-                dailyProgress: updatedDailyProgress,
-                completedDates: updatedCompletedDates,
-              }
+              ...h,
+              dailyProgress: updatedDailyProgress,
+              completedDates: updatedCompletedDates,
+            }
             : h
         )
       );
@@ -598,19 +598,19 @@ export function HabitsPage() {
       const updatedHabits = habits.map((habit) =>
         habit.id === editingHabitId
           ? {
-              ...habit,
-              title: editHabitTitle.trim(),
-              scheduledDays: editScheduledDays,
-              startTime: editStartTime,
-              endTime: editEndTime,
-              customSchedule: scheduleToSave || undefined,
-              color: editHabitColor,
-              setIds: targetSetIds,
-              setId: targetSetIds[0],
-              targetValue: editTargetValue && editTargetValue > 0 ? editTargetValue : undefined,
-              targetUnit: editTargetUnit?.trim() || undefined,
-              updatedAt: new Date(),
-            }
+            ...habit,
+            title: editHabitTitle.trim(),
+            scheduledDays: editScheduledDays,
+            startTime: editStartTime,
+            endTime: editEndTime,
+            customSchedule: scheduleToSave || undefined,
+            color: editHabitColor,
+            setIds: targetSetIds,
+            setId: targetSetIds[0],
+            targetValue: editTargetValue && editTargetValue > 0 ? editTargetValue : undefined,
+            targetUnit: editTargetUnit?.trim() || undefined,
+            updatedAt: new Date(),
+          }
           : habit
       );
 
@@ -789,9 +789,8 @@ export function HabitsPage() {
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                viewMode === 'list' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${viewMode === 'list' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'
+                }`}
               aria-pressed={viewMode === 'list'}
               aria-label="List view"
             >
@@ -800,9 +799,8 @@ export function HabitsPage() {
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${
-                viewMode === 'table' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition ${viewMode === 'table' ? 'bg-purple-600 text-white shadow-xs' : 'text-gray-700 hover:bg-gray-50'
+                }`}
               aria-pressed={viewMode === 'table'}
               aria-label="Table view"
             >
@@ -850,9 +848,8 @@ export function HabitsPage() {
                           handleSelectActiveSet(set.id);
                           setIsRoutineDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-3.5 py-2 text-xs sm:text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${
-                          isActive ? 'bg-purple-50 text-purple-900 font-bold' : 'text-gray-700'
-                        }`}
+                        className={`w-full text-left px-3.5 py-2 text-xs sm:text-sm transition-all hover:bg-purple-50 flex items-center justify-between ${isActive ? 'bg-purple-50 text-purple-900 font-bold' : 'text-gray-700'
+                          }`}
                       >
                         <div className="flex items-center gap-2 truncate">
                           <span
@@ -1001,11 +998,10 @@ export function HabitsPage() {
                                     return [...effective, s.id];
                                   });
                                 }}
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                                  isChecked
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${isChecked
                                     ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-2xs scale-[1.01]'
                                     : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
-                                }`}
+                                  }`}
                               >
                                 <div
                                   className={`w-2 h-2 rounded-full ${isChecked ? 'bg-white' : ''}`}
@@ -1099,11 +1095,10 @@ export function HabitsPage() {
                               setCustomSchedule(initSchedule);
                             }
                           }}
-                          className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${
-                            isAdvancedSchedule
+                          className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${isAdvancedSchedule
                               ? 'bg-purple-600 text-white border-transparent shadow-xs'
                               : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
-                          }`}
+                            }`}
                         >
                           {isAdvancedSchedule ? (
                             <>
@@ -1219,11 +1214,10 @@ export function HabitsPage() {
                             key={c}
                             type="button"
                             onClick={() => setHabitColor(c)}
-                            className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
-                              habitColor === c
+                            className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${habitColor === c
                                 ? 'border-purple-600 scale-110 shadow-md ring-2 ring-purple-400/40'
                                 : 'border-white/80 hover:scale-105'
-                            }`}
+                              }`}
                             style={{ backgroundColor: c }}
                             aria-label={`Select color ${c}`}
                             disabled={isSubmitting}
@@ -1353,8 +1347,8 @@ export function HabitsPage() {
                 const cardStyleClass = isCompletedToday
                   ? 'bg-gradient-to-r from-emerald-50/60 via-white/80 to-purple-50/40 border border-emerald-200/80'
                   : isDueToday
-                  ? 'bg-gradient-to-r from-purple-50/90 via-white to-pink-50/50 border-l-4 border-l-purple-600 border border-purple-300/90 shadow-md ring-1 ring-purple-400/20'
-                  : 'bg-white/40 border border-gray-200/60 opacity-65 hover:opacity-100';
+                    ? 'bg-gradient-to-r from-purple-50/90 via-white to-pink-50/50 border-l-4 border-l-purple-600 border border-purple-300/90 shadow-md ring-1 ring-purple-400/20'
+                    : 'bg-white/40 border border-gray-200/60 opacity-65 hover:opacity-100';
 
                 return (
                   <div key={habit.id}>
@@ -1368,11 +1362,10 @@ export function HabitsPage() {
                           aria-checked={isCompletedToday}
                           aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
                           onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
-                          className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${
-                            isCompletedToday
+                          className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${isCompletedToday
                               ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                               : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
-                          }`}
+                            }`}
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1380,9 +1373,8 @@ export function HabitsPage() {
                         </button>
 
                         <span
-                          className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${
-                            isCompletedToday ? 'text-purple-700 line-through opacity-70' : 'text-gray-900'
-                          }`}
+                          className={`flex-1 truncate text-[13px] sm:text-base md:text-lg font-medium transition-all ${isCompletedToday ? 'text-purple-700 line-through opacity-70' : 'text-gray-900'
+                            }`}
                         >
                           {habit.title}
                         </span>
@@ -1690,11 +1682,10 @@ export function HabitsPage() {
                                     return [...effective, s.id];
                                   });
                                 }}
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
-                                  isChecked
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${isChecked
                                     ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white border-transparent shadow-2xs scale-[1.01]'
                                     : 'bg-white text-gray-700 border-purple-200 hover:border-purple-300'
-                                }`}
+                                  }`}
                               >
                                 <div
                                   className={`w-2 h-2 rounded-full ${isChecked ? 'bg-white' : ''}`}
@@ -1788,11 +1779,10 @@ export function HabitsPage() {
                               setEditCustomSchedule(initSchedule);
                             }
                           }}
-                          className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${
-                            editIsAdvancedSchedule
+                          className={`px-2 py-1 sm:px-2.5 rounded-lg text-[11px] font-extrabold transition-all border ${editIsAdvancedSchedule
                               ? 'bg-purple-600 text-white border-transparent shadow-xs'
                               : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
-                          }`}
+                            }`}
                         >
                           {editIsAdvancedSchedule ? (
                             <>
@@ -1908,11 +1898,10 @@ export function HabitsPage() {
                             key={c}
                             type="button"
                             onClick={() => setEditHabitColor(c)}
-                            className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
-                              editHabitColor === c
+                            className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${editHabitColor === c
                                 ? 'border-purple-600 scale-110 shadow-md ring-2 ring-purple-400/40'
                                 : 'border-white/80 hover:scale-105'
-                            }`}
+                              }`}
                             style={{ backgroundColor: c }}
                             aria-label={`Select color ${c}`}
                             disabled={isSubmitting}
