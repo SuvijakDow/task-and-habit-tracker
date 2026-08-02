@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, RotateCcw } from 'lucide-react';
+import { Calendar, RotateCcw, ChevronDown } from 'lucide-react';
 import { DailyHabit } from '@/types';
 import { formatToDateString } from '@/utils/dateUtils';
 import { timeToMinutes, getHabitTimeSlotsForDay } from '@/services/habitService';
@@ -164,64 +164,50 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
   const isViewingToday = selectedDay === todayDayOfWeek;
 
   return (
-    <div className="mt-6 sm:mt-8 p-3.5 sm:p-6 rounded-3xl bg-slate-900/90 border border-purple-500/30 text-white shadow-xl">
-      {/* Header & Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5">
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-pink-400" />
-          <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
-            {isViewingToday ? "Today's Schedule" : `${selectedDayInfo.full}'s Schedule`}
-          </h3>
+    <div className="mt-5 sm:mt-6 p-3 sm:p-5 rounded-3xl bg-slate-900/90 border border-purple-500/30 text-white shadow-xl">
+      {/* Sleek Single-Line Header: Icon + Day Dropdown + Today Reset */}
+      <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-slate-800">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Calendar className="w-4 h-4 text-pink-400 shrink-0" />
+          
+          {/* Day Selector Dropdown Menu */}
+          <div className="relative inline-block">
+            <select
+              value={selectedDay}
+              onChange={(e) => setSelectedDay(Number(e.target.value))}
+              className="appearance-none bg-slate-800 hover:bg-slate-700/90 text-white font-extrabold text-xs sm:text-sm pl-3 pr-8 py-1.5 rounded-xl border border-purple-500/30 focus:border-pink-500 focus:outline-none cursor-pointer transition shadow-sm"
+              aria-label="Select Schedule Day"
+            >
+              {DAYS.map((day) => {
+                const isToday = day.index === todayDayOfWeek;
+                return (
+                  <option key={day.index} value={day.index} className="bg-slate-900 text-white font-semibold">
+                    {isToday ? `Today's Schedule (${day.short})` : `${day.full}'s Schedule`}
+                  </option>
+                );
+              })}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-purple-300 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Jump to Today Shortcut Button (Shown only when viewing another day) */}
           {!isViewingToday && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-              {selectedDayInfo.short}
-            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedDay(todayDayOfWeek)}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/30 text-xs font-bold transition shrink-0"
+              title="Jump back to Today"
+            >
+              <RotateCcw className="w-3 h-3 text-pink-300" />
+              <span>Today</span>
+            </button>
           )}
         </div>
-
-        {!isViewingToday && (
-          <button
-            type="button"
-            onClick={() => setSelectedDay(todayDayOfWeek)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/30 text-xs font-bold transition self-start sm:self-auto"
-          >
-            <RotateCcw className="w-3 h-3 text-pink-300" />
-            <span>Today</span>
-          </button>
-        )}
-      </div>
-
-      {/* Responsive 7-Day Selector Tabs */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4 bg-slate-950/70 p-1.5 rounded-2xl border border-purple-500/20">
-        {DAYS.map((day) => {
-          const isSelected = day.index === selectedDay;
-          const isToday = day.index === todayDayOfWeek;
-
-          return (
-            <button
-              key={day.short}
-              type="button"
-              onClick={() => setSelectedDay(day.index)}
-              className={`relative py-1.5 sm:py-2 px-0.5 rounded-xl text-center transition-all ${
-                isSelected
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-extrabold shadow-md shadow-purple-500/40 scale-[1.02]'
-                  : 'bg-slate-800/80 text-gray-300 hover:bg-slate-700/80 font-semibold border border-slate-700/60'
-              }`}
-            >
-              <span className="block text-[11px] sm:text-xs leading-none">{day.short}</span>
-              {isToday && (
-                <span className={`block text-[9px] mt-0.5 font-bold uppercase tracking-wider ${isSelected ? 'text-amber-200' : 'text-purple-400'}`}>
-                  Today
-                </span>
-              )}
-            </button>
-          );
-        })}
       </div>
 
       {/* Content: Empty State vs Timeline Grid */}
       {selectedDaySlots.length === 0 ? (
-        <div className="py-10 text-center bg-slate-950/40 rounded-2xl border border-purple-500/10">
+        <div className="py-8 text-center bg-slate-950/40 rounded-2xl border border-purple-500/10">
           <p className="text-xs sm:text-sm font-medium text-gray-400">
             No habits scheduled for {isViewingToday ? 'today' : selectedDayInfo.full}
           </p>
