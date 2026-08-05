@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { FirebaseError } from 'firebase/app';
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
@@ -38,7 +38,7 @@ interface CategoriesModalProps {
   onCategoriesUpdated?: () => void;
 }
 
-export function CategoriesModal({ isOpen, onClose, onCategoriesUpdated }: CategoriesModalProps) {
+export const CategoriesModal = memo(function CategoriesModal({ isOpen, onClose, onCategoriesUpdated }: CategoriesModalProps) {
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -464,4 +464,4 @@ export function CategoriesModal({ isOpen, onClose, onCategoriesUpdated }: Catego
     </div>,
     document.body
   );
-}
+});

@@ -12,6 +12,17 @@ type Page = 'tasks' | 'habits' | 'analytics';
 
 export function MainPage() {
   const [currentPage, setCurrentPage] = useState<Page>('tasks');
+  const [visitedPages, setVisitedPages] = useState<Set<Page>>(() => new Set(['tasks']));
+
+  const handlePageChange = (page: Page) => {
+    setVisitedPages((prev) => {
+      if (prev.has(page)) return prev;
+      const next = new Set(prev);
+      next.add(page);
+      return next;
+    });
+    setCurrentPage(page);
+  };
 
   const navItems: Array<{
     key: Page;
@@ -25,14 +36,6 @@ export function MainPage() {
     { key: 'analytics', label: 'Analytics', mobileLabel: 'Stats', icon: TrendingUp, iconClass: 'text-purple-500' },
   ];
 
-  const currentPageContent = (
-    <>
-      {currentPage === 'tasks' && <TasksPage />}
-      {currentPage === 'habits' && <HabitsPage />}
-      {currentPage === 'analytics' && <AnalyticsPage />}
-    </>
-  );
-
   return (
     <div>
       {/* Navigation Tabs (Floating Segmented Capsule) */}
@@ -41,7 +44,7 @@ export function MainPage() {
           {navItems.map((item) => (
             <button
               key={item.key}
-              onClick={() => setCurrentPage(item.key)}
+              onClick={() => handlePageChange(item.key)}
               className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm lg:text-base font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
                 currentPage === item.key
                   ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-white shadow-md shadow-purple-500/35 scale-[1.01] border border-white/20'
@@ -63,7 +66,7 @@ export function MainPage() {
           {navItems.map((item) => (
             <button
               key={item.key}
-              onClick={() => setCurrentPage(item.key)}
+              onClick={() => handlePageChange(item.key)}
               className={`min-h-[42px] rounded-xl px-1 py-1.5 text-[11px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
                 currentPage === item.key
                   ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-[0_8px_20px_rgba(192,132,252,0.4)] border border-white/20'
@@ -83,9 +86,23 @@ export function MainPage() {
       </nav>
 
       {/* Page Content */}
-      <div key={currentPage} className="page-enter pt-1 pb-28 md:pb-0 md:pt-0">
-        <Suspense fallback={<div className="p-4">Loading page...</div>}>
-          {currentPageContent}
+      <div className="pt-1 pb-28 md:pb-0 md:pt-0">
+        <Suspense fallback={<div className="p-6 text-center text-sm font-semibold text-purple-800">Loading page...</div>}>
+          {visitedPages.has('tasks') && (
+            <div className={currentPage === 'tasks' ? 'page-enter' : 'hidden'}>
+              <TasksPage />
+            </div>
+          )}
+          {visitedPages.has('habits') && (
+            <div className={currentPage === 'habits' ? 'page-enter' : 'hidden'}>
+              <HabitsPage />
+            </div>
+          )}
+          {visitedPages.has('analytics') && (
+            <div className={currentPage === 'analytics' ? 'page-enter' : 'hidden'}>
+              <AnalyticsPage />
+            </div>
+          )}
         </Suspense>
       </div>
     </div>

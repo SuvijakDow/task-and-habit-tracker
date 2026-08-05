@@ -11,7 +11,7 @@ interface TimePickerInputProps {
   align?: 'left' | 'right';
 }
 
-export const TimePickerInput: React.FC<TimePickerInputProps> = ({
+export const TimePickerInput: React.FC<TimePickerInputProps> = React.memo(({
   value,
   onChange,
   label,
@@ -579,4 +579,4 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = ({
       )}
     </div>
   );
-};
+});

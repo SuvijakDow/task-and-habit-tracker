@@ -10,7 +10,7 @@ interface ContributionHeatmapProps {
   dailyProgress?: Record<string, number>;
 }
 
-export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = ({
+export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.memo(({
   startDate,
   completedDates,
   scheduledDays,
@@ -220,4 +220,4 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = ({
       )}
     </div>
   );
-};
+});

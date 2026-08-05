@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
 import { Activity, Calendar, Check, Clock, Flame, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
-import { getHabitColorHex, getHabitTimeSlotsForDay } from '@/services/habitService';
+import { getHabitColorHex, getHabitTimeSlotsForDay, sortHabitsByTodaySchedule } from '@/services/habitService';
 
 const formatScheduledDays = (days: number[]): string => {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -21,7 +21,7 @@ interface Props {
   onBulkDelete?: (habitIds: string[]) => Promise<void>;
 }
 
-export default function HabitsTable({
+const HabitsTable = memo(function HabitsTable({
   habits,
   todayDate,
   onToggleCompletion,
@@ -108,11 +108,11 @@ export default function HabitsTable({
   };
   const todayDayIndex = new Date().getDay();
   const todayHabits = useMemo(
-    () => filteredHabits.filter((h) => h.scheduledDays.includes(todayDayIndex)),
+    () => sortHabitsByTodaySchedule(filteredHabits.filter((h) => h.scheduledDays.includes(todayDayIndex)), todayDayIndex),
     [filteredHabits, todayDayIndex]
   );
   const otherHabits = useMemo(
-    () => filteredHabits.filter((h) => !h.scheduledDays.includes(todayDayIndex)),
+    () => sortHabitsByTodaySchedule(filteredHabits.filter((h) => !h.scheduledDays.includes(todayDayIndex)), todayDayIndex),
     [filteredHabits, todayDayIndex]
   );
 
@@ -485,4 +485,6 @@ export default function HabitsTable({
         )}
     </div>
   );
-}
+});
+
+export default HabitsTable;

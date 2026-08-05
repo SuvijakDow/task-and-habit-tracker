@@ -283,6 +283,41 @@ export const getHabitTimeSlotsForDay = (
   return [];
 };
 
+export const sortHabitsByTodaySchedule = (
+  habits: DailyHabit[],
+  dayOfWeek: number = new Date().getDay()
+): DailyHabit[] => {
+  return [...habits].sort((a, b) => {
+    const aSlots = getHabitTimeSlotsForDay(a, dayOfWeek);
+    const bSlots = getHabitTimeSlotsForDay(b, dayOfWeek);
+
+    const aStart = aSlots.length > 0
+      ? Math.min(...aSlots.map((s) => timeToMinutes(s.startTime)))
+      : timeToMinutes(a.startTime || '09:00');
+    const bStart = bSlots.length > 0
+      ? Math.min(...bSlots.map((s) => timeToMinutes(s.startTime)))
+      : timeToMinutes(b.startTime || '09:00');
+
+    if (aStart !== bStart) {
+      return aStart - bStart;
+    }
+
+    const aEnd = aSlots.length > 0
+      ? Math.min(...aSlots.map((s) => timeToMinutes(s.endTime)))
+      : timeToMinutes(a.endTime || '10:00');
+    const bEnd = bSlots.length > 0
+      ? Math.min(...bSlots.map((s) => timeToMinutes(s.endTime)))
+      : timeToMinutes(b.endTime || '10:00');
+
+    if (aEnd !== bEnd) {
+      return aEnd - bEnd;
+    }
+
+    return a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' });
+  });
+};
+
+
 export const PASTEL_HABIT_COLORS = [
   '#F87171', // Red
   '#FB923C', // Orange

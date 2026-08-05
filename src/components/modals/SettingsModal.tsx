@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, memo } from 'react';
 import {
   AlertTriangle,
   Settings,
@@ -36,7 +36,7 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { user, userProfile, refreshUserProfile } = useAuth();
   const { refreshTasks, refreshHabits, refreshTaskPresets, refreshHabitSets, refreshCategories, refreshAnalytics } = useDataRefresh();
 
@@ -1123,6 +1123,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       )}
     </div>
   );
-}
+});
 
 export default SettingsModal;

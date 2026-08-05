@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
 import { CalendarDays, Check, CheckCircle2, ChevronDown, ListChecks, ListTodo, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
@@ -46,7 +46,7 @@ interface Props {
   togglingTaskId: string | null;
 }
 
-export default function TasksTable({
+const TasksTable = memo(function TasksTable({
   tasks,
   categories,
   onToggleCompletion,
@@ -716,4 +716,6 @@ export default function TasksTable({
         )}
     </div>
   );
-}
+});
+
+export default TasksTable;

@@ -1717,7 +1717,7 @@ interface TaskItemProps {
   togglingTaskId: string | null;
 }
 
-function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit, togglingTaskId }: TaskItemProps) {
+const TaskItem = React.memo(function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit, togglingTaskId }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const matchedCategory = findCategoryByTaskValue(categories, task.category);
   const categoryName = matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -1927,4 +1927,4 @@ function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDel
       </div>
     </div>
   );
-}
+});

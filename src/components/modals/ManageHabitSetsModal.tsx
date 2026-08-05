@@ -15,7 +15,7 @@ interface ManageHabitSetsModalProps {
   onDeleteSet: (setId: string) => Promise<void>;
 }
 
-export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
+export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = React.memo(({
   isOpen,
   onClose,
   habitSets,
@@ -328,4 +328,4 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = ({
     </div>,
     document.body
   );
-};
+});

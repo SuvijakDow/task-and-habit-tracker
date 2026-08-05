@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit2, Layers, Plus, Trash2, X } from 'lucide-react';
 import { TaskPreset } from '@/types';
@@ -14,7 +14,7 @@ interface ManageTaskPresetsModalProps {
   onDelete: (presetId: string) => Promise<void>;
 }
 
-export function ManageTaskPresetsModal({
+export const ManageTaskPresetsModal = memo(function ManageTaskPresetsModal({
   isOpen, presets, activePresetId, onClose, onActivate, onCreate, onUpdate, onDelete,
 }: ManageTaskPresetsModalProps) {
   const [name, setName] = useState('');
@@ -113,4 +113,4 @@ export function ManageTaskPresetsModal({
       </div>}
     </div>, document.body
   );
-}
+});

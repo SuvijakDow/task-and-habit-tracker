@@ -22,7 +22,7 @@ const DAYS_OF_WEEK = [
   { id: 0, short: 'SUN', full: 'Sunday', color: 'text-red-600 bg-red-50 border-red-200' },
 ];
 
-export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
+export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = React.memo(({
   isOpen,
   onClose,
   habits,
@@ -329,4 +329,4 @@ export const WeeklyScheduleModal: React.FC<WeeklyScheduleModalProps> = ({
     </div>,
     document.body
   );
-};
+});

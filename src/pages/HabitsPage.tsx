@@ -18,6 +18,7 @@ import {
   setActiveHabitSet,
   updateHabitSet,
   deleteHabitSet,
+  sortHabitsByTodaySchedule,
 } from '@/services/habitService';
 import { getTodayDateString } from '@/utils/dateUtils';
 import { updateDoc, doc } from 'firebase/firestore';
@@ -125,7 +126,7 @@ export function HabitsPage() {
         getUserDailyHabits(user.uid),
         getUserHabitSets(user.uid),
       ]);
-      setHabits(userHabits.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+      setHabits(sortHabitsByTodaySchedule(userHabits, new Date().getDay()));
       setHabitSets(sets);
 
       const active = sets.find((s) => s.isActive) || sets[0];
@@ -171,10 +172,11 @@ export function HabitsPage() {
 
   const scheduledTodayHabits = useMemo(() => {
     const todayDay = new Date().getDay();
-    return habitsToDisplay.filter((h) => {
+    const filtered = habitsToDisplay.filter((h) => {
       const days = (h as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       return days.includes(todayDay);
     });
+    return sortHabitsByTodaySchedule(filtered, todayDay);
   }, [habitsToDisplay]);
 
   const scheduledTodayCount = scheduledTodayHabits.length;
@@ -1331,13 +1333,19 @@ export function HabitsPage() {
                 onToggleCompletion={handleToggleHabit}
                 onProgressChange={handleProgressChange}
                 onEdit={handleEditHabit}
-                onDelete={(id) => setDeletingHabitId(id)}
+                onDelete={setDeletingHabitId}
                 onBulkDelete={handleBulkDeleteHabits}
               />
             ) : (() => {
               const todayDayIndex = new Date().getDay();
-              const habitsDueToday = habitsToDisplay.filter((h) => h.scheduledDays.includes(todayDayIndex));
-              const habitsOtherDays = habitsToDisplay.filter((h) => !h.scheduledDays.includes(todayDayIndex));
+              const habitsDueToday = sortHabitsByTodaySchedule(
+                habitsToDisplay.filter((h) => h.scheduledDays.includes(todayDayIndex)),
+                todayDayIndex
+              );
+              const habitsOtherDays = sortHabitsByTodaySchedule(
+                habitsToDisplay.filter((h) => !h.scheduledDays.includes(todayDayIndex)),
+                todayDayIndex
+              );
 
               const renderCard = (habit: DailyHabit) => {
                 const isCompletedToday = habit.completedDates.includes(todayDate);

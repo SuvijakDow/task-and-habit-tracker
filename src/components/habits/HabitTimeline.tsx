@@ -29,7 +29,7 @@ const DAYS = [
   { index: 6, short: 'Sat', full: 'Saturday' },
 ];
 
-export const HabitTimeline: React.FC<HabitTimelineProps> = ({
+export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
   habits,
   getHabitColor,
   onEditHabit,
@@ -364,4 +364,4 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = ({
       </div>
     </div>
   );
-};
+});
