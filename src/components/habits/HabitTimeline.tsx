@@ -181,7 +181,10 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
       {/* Sleek Single-Line Header: Icon + Custom Glassmorphic Day Dropdown + Today Reset */}
       <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-slate-800">
         <div className="flex items-center gap-2 min-w-0 max-w-full flex-1">
-          <Calendar className="w-4.5 h-4.5 text-pink-400 shrink-0" />
+          {/* Redesigned Glassmorphic Calendar Icon Badge */}
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-indigo-500/20 border border-pink-500/30 text-pink-300 shadow-md shadow-pink-950/40 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-pink-400" />
+          </div>
           
           {/* Custom Glassmorphic Day Selector Dropdown Menu */}
           <div ref={dropdownRef} className="relative inline-block ml-1 sm:ml-1.5 min-w-0 max-w-full flex-1 sm:flex-initial">
@@ -207,7 +210,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 z-[100] w-64 sm:w-72 max-w-[calc(100vw-5rem)] rounded-2xl bg-slate-950 border border-purple-500/50 p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-2 z-[100] w-[276px] sm:w-[300px] max-w-[calc(100vw-3.8rem)] rounded-2xl bg-slate-950 border border-purple-500/50 p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
                 {DAYS.map((day) => {
                   const isSelected = day.index === selectedDay;
                   const isToday = day.index === todayDayOfWeek;
