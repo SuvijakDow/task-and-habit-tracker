@@ -188,21 +188,26 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
             <button
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 w-full sm:w-auto min-w-0 max-w-full sm:min-w-[260px] rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs sm:text-sm md:text-base border border-purple-400/50 shadow-xl shadow-purple-950/60 transition-all active:scale-98"
+              className="inline-flex items-center justify-between gap-2 sm:gap-3 px-3.5 sm:px-5 py-2 sm:py-2.5 w-full sm:w-auto min-w-0 max-w-full sm:min-w-[270px] rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs sm:text-sm md:text-base border border-purple-400/50 shadow-xl shadow-purple-950/60 transition-all active:scale-98"
             >
-              <span className="flex items-center gap-2 sm:gap-2.5 min-w-0 truncate">
+              <span className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                 <span className={`text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${selectedDayInfo.badgeStyle}`}>
                   {selectedDayInfo.short}
                 </span>
-                <span className="font-bold text-white truncate">
+                <span className="font-bold text-white whitespace-nowrap">
                   {`${selectedDayInfo.full}'s Schedule`}
                 </span>
+                {isViewingToday && (
+                  <span className="text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                    Today
+                  </span>
+                )}
               </span>
               <ChevronDown className={`w-4 h-4 text-purple-300 shrink-0 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-pink-400' : ''}`} />
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 z-[100] w-72 sm:w-80 rounded-2xl bg-slate-950 border border-purple-500/50 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-2 z-[100] w-80 sm:w-96 min-w-[320px] sm:min-w-[360px] rounded-2xl bg-slate-950 border border-purple-500/50 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
                 {DAYS.map((day) => {
                   const isSelected = day.index === selectedDay;
                   const isToday = day.index === todayDayOfWeek;
@@ -221,16 +226,16 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                           : 'bg-slate-900/80 hover:bg-slate-800 text-white font-bold border border-slate-800/80'
                       }`}
                     >
-                      <span className="flex items-center gap-3 min-w-0">
+                      <span className="flex items-center gap-2.5 min-w-0">
                         <span className={`text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${isSelected ? 'bg-white/25 text-white border-white/40' : day.badgeStyle}`}>
                           {day.short}
                         </span>
-                        <span className="font-bold text-white truncate">
+                        <span className="font-bold text-white whitespace-nowrap">
                           {`${day.full}'s Schedule`}
                         </span>
                       </span>
                       {isToday && (
-                        <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 ml-1 ${
+                        <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 ml-2 ${
                           isSelected ? 'bg-amber-400/35 text-amber-100 border border-amber-300/40' : 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
                         }`}>
                           Today
