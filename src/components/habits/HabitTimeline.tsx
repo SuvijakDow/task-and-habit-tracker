@@ -207,7 +207,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 z-[100] w-[calc(100vw-3rem)] max-w-sm sm:w-80 rounded-2xl bg-slate-950 border border-purple-500/50 p-1.5 sm:p-2 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-2 z-[100] w-64 sm:w-72 max-w-[calc(100vw-5rem)] rounded-2xl bg-slate-950 border border-purple-500/50 p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
                 {DAYS.map((day) => {
                   const isSelected = day.index === selectedDay;
                   const isToday = day.index === todayDayOfWeek;
@@ -220,14 +220,14 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                         setSelectedDay(day.index);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm md:text-base transition-all flex items-center justify-between my-0.5 sm:my-1 ${
+                      className={`w-full text-left px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm transition-all flex items-center justify-between my-0.5 ${
                         isSelected
                           ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-extrabold shadow-md shadow-purple-500/35 border border-white/20'
                           : 'bg-slate-900/80 hover:bg-slate-800 text-white font-bold border border-slate-800/80'
                       }`}
                     >
-                      <span className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
-                        <span className={`text-[9px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${isSelected ? 'bg-white/25 text-white border-white/40' : day.badgeStyle}`}>
+                      <span className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <span className={`text-[9px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${isSelected ? 'bg-white/25 text-white border-white/40' : day.badgeStyle}`}>
                           {day.short}
                         </span>
                         <span className="font-bold text-white text-xs sm:text-sm whitespace-nowrap">
@@ -235,7 +235,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                         </span>
                       </span>
                       {isToday && (
-                        <span className={`text-[8px] sm:text-[10px] font-black px-1.5 sm:px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 ml-1.5 ${
+                        <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0 ml-1.5 ${
                           isSelected ? 'bg-amber-400/35 text-amber-100 border border-amber-300/40' : 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
                         }`}>
                           Today
