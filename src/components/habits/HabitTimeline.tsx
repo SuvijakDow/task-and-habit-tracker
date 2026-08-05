@@ -195,7 +195,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                   {selectedDayInfo.short}
                 </span>
                 <span className="font-bold text-white truncate">
-                  {isViewingToday ? `Today's Schedule (${selectedDayInfo.short})` : `${selectedDayInfo.full}'s Schedule`}
+                  {isViewingToday ? "Today's Schedule" : `${selectedDayInfo.full}'s Schedule`}
                 </span>
               </span>
               <ChevronDown className={`w-4 h-4 text-purple-300 shrink-0 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-pink-400' : ''}`} />
@@ -226,7 +226,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                           {day.short}
                         </span>
                         <span className="font-bold text-white truncate">
-                          {isToday ? `Today's Schedule (${day.short})` : `${day.full}'s Schedule`}
+                          {isToday ? "Today's Schedule" : `${day.full}'s Schedule`}
                         </span>
                       </span>
                       {isToday && (
