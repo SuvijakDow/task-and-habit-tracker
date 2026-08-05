@@ -180,22 +180,22 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
     <div className="mt-5 sm:mt-6 p-3 sm:p-5 rounded-3xl bg-slate-900/90 border border-purple-500/30 text-white shadow-xl">
       {/* Sleek Single-Line Header: Icon + Custom Glassmorphic Day Dropdown + Today Reset */}
       <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-slate-800">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 max-w-full flex-1">
           <Calendar className="w-4.5 h-4.5 text-pink-400 shrink-0" />
           
           {/* Custom Glassmorphic Day Selector Dropdown Menu */}
-          <div ref={dropdownRef} className="relative inline-block ml-1.5">
+          <div ref={dropdownRef} className="relative inline-block ml-1 sm:ml-1.5 min-w-0 max-w-full flex-1 sm:flex-initial">
             <button
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center justify-between gap-3 px-4 sm:px-5 py-2 sm:py-2.5 min-w-[220px] sm:min-w-[270px] rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs sm:text-sm md:text-base border border-purple-400/50 shadow-xl shadow-purple-950/60 transition-all active:scale-98"
+              className="inline-flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 py-2 sm:py-2.5 w-full sm:w-auto min-w-0 max-w-full sm:min-w-[260px] rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs sm:text-sm md:text-base border border-purple-400/50 shadow-xl shadow-purple-950/60 transition-all active:scale-98"
             >
-              <span className="flex items-center gap-2.5 min-w-0">
-                <span className={`text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${selectedDayInfo.badgeStyle}`}>
+              <span className="flex items-center gap-2 sm:gap-2.5 min-w-0 truncate">
+                <span className={`text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${selectedDayInfo.badgeStyle}`}>
                   {selectedDayInfo.short}
                 </span>
                 <span className="font-bold text-white truncate">
-                  {isViewingToday ? "Today's Schedule" : `${selectedDayInfo.full}'s Schedule`}
+                  {`${selectedDayInfo.full}'s Schedule`}
                 </span>
               </span>
               <ChevronDown className={`w-4 h-4 text-purple-300 shrink-0 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-pink-400' : ''}`} />
@@ -226,7 +226,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                           {day.short}
                         </span>
                         <span className="font-bold text-white truncate">
-                          {isToday ? "Today's Schedule" : `${day.full}'s Schedule`}
+                          {`${day.full}'s Schedule`}
                         </span>
                       </span>
                       {isToday && (
@@ -248,11 +248,11 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
             <button
               type="button"
               onClick={() => setSelectedDay(todayDayOfWeek)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/30 text-xs font-bold transition shrink-0 ml-1"
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400 text-white border border-purple-300/40 text-xs font-extrabold transition shrink-0 shadow-md shadow-purple-950/50 active:scale-95 ml-auto sm:ml-2"
               title="Jump back to Today"
             >
-              <RotateCcw className="w-3 h-3 text-pink-300" />
-              <span>Today</span>
+              <RotateCcw className="w-3.5 h-3.5 text-white shrink-0" />
+              <span className="whitespace-nowrap">Today</span>
             </button>
           )}
         </div>
