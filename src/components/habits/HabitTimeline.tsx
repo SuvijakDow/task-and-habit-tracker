@@ -20,13 +20,13 @@ interface PositionedSlot {
 }
 
 const DAYS = [
-  { index: 0, short: 'Sun', full: 'Sunday', textColor: 'text-red-400', dotColor: 'bg-red-400' },
-  { index: 1, short: 'Mon', full: 'Monday', textColor: 'text-amber-300', dotColor: 'bg-amber-300' },
-  { index: 2, short: 'Tue', full: 'Tuesday', textColor: 'text-pink-400', dotColor: 'bg-pink-400' },
-  { index: 3, short: 'Wed', full: 'Wednesday', textColor: 'text-emerald-400', dotColor: 'bg-emerald-400' },
-  { index: 4, short: 'Thu', full: 'Thursday', textColor: 'text-orange-400', dotColor: 'bg-orange-400' },
-  { index: 5, short: 'Fri', full: 'Friday', textColor: 'text-sky-400', dotColor: 'bg-sky-400' },
-  { index: 6, short: 'Sat', full: 'Saturday', textColor: 'text-purple-400', dotColor: 'bg-purple-400' },
+  { index: 0, short: 'Sun', full: 'Sunday', badgeStyle: 'bg-rose-500/25 text-rose-300 border-rose-400/50' },
+  { index: 1, short: 'Mon', full: 'Monday', badgeStyle: 'bg-amber-500/25 text-amber-300 border-amber-400/50' },
+  { index: 2, short: 'Tue', full: 'Tuesday', badgeStyle: 'bg-pink-500/25 text-pink-300 border-pink-400/50' },
+  { index: 3, short: 'Wed', full: 'Wednesday', badgeStyle: 'bg-emerald-500/25 text-emerald-300 border-emerald-400/50' },
+  { index: 4, short: 'Thu', full: 'Thursday', badgeStyle: 'bg-orange-500/25 text-orange-300 border-orange-400/50' },
+  { index: 5, short: 'Fri', full: 'Friday', badgeStyle: 'bg-sky-500/25 text-sky-300 border-sky-400/50' },
+  { index: 6, short: 'Sat', full: 'Saturday', badgeStyle: 'bg-purple-500/25 text-purple-300 border-purple-400/50' },
 ];
 
 export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
@@ -188,11 +188,13 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
             <button
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center justify-between gap-3 px-4 sm:px-5 py-2 sm:py-2.5 min-w-[210px] sm:min-w-[260px] rounded-2xl bg-gradient-to-r from-purple-950/90 via-slate-900 to-purple-950/90 hover:from-purple-900 hover:to-slate-800 text-white font-extrabold text-xs sm:text-sm md:text-base border border-purple-400/40 hover:border-pink-400/60 shadow-lg shadow-purple-950/50 transition-all active:scale-98"
+              className="inline-flex items-center justify-between gap-3 px-4 sm:px-5 py-2 sm:py-2.5 min-w-[220px] sm:min-w-[270px] rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs sm:text-sm md:text-base border border-purple-400/50 shadow-xl shadow-purple-950/60 transition-all active:scale-98"
             >
-              <span className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full ${selectedDayInfo.dotColor} shrink-0 animate-pulse`} />
-                <span className={selectedDayInfo.textColor}>
+              <span className="flex items-center gap-2.5 min-w-0">
+                <span className={`text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${selectedDayInfo.badgeStyle}`}>
+                  {selectedDayInfo.short}
+                </span>
+                <span className="font-bold text-white truncate">
                   {isViewingToday ? `Today's Schedule (${selectedDayInfo.short})` : `${selectedDayInfo.full}'s Schedule`}
                 </span>
               </span>
@@ -200,7 +202,7 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 z-[100] w-72 sm:w-80 rounded-2xl bg-slate-900/98 border border-purple-500/40 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-2 z-[100] w-72 sm:w-80 rounded-2xl bg-slate-950 border border-purple-500/50 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-150">
                 {DAYS.map((day) => {
                   const isSelected = day.index === selectedDay;
                   const isToday = day.index === todayDayOfWeek;
@@ -213,21 +215,23 @@ export const HabitTimeline: React.FC<HabitTimelineProps> = React.memo(({
                         setSelectedDay(day.index);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm md:text-base transition-all flex items-center justify-between my-0.5 ${
+                      className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs sm:text-sm md:text-base transition-all flex items-center justify-between my-1 ${
                         isSelected
-                          ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-extrabold shadow-md shadow-purple-500/30'
-                          : 'hover:bg-purple-950/80 font-semibold'
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white font-extrabold shadow-md shadow-purple-500/35 border border-white/20'
+                          : 'bg-slate-900/80 hover:bg-slate-800 text-white font-bold border border-slate-800/80'
                       }`}
                     >
-                      <span className="flex items-center gap-2.5">
-                        <span className={`w-2.5 h-2.5 rounded-full ${day.dotColor} shrink-0 ${isSelected ? 'bg-white shadow-xs' : ''}`} />
-                        <span className={isSelected ? 'text-white font-extrabold' : `${day.textColor} hover:brightness-125`}>
+                      <span className="flex items-center gap-3 min-w-0">
+                        <span className={`text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider shrink-0 ${isSelected ? 'bg-white/25 text-white border-white/40' : day.badgeStyle}`}>
+                          {day.short}
+                        </span>
+                        <span className="font-bold text-white truncate">
                           {isToday ? `Today's Schedule (${day.short})` : `${day.full}'s Schedule`}
                         </span>
                       </span>
                       {isToday && (
-                        <span className={`text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                          isSelected ? 'bg-amber-400/30 text-amber-100' : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                        <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 ml-1 ${
+                          isSelected ? 'bg-amber-400/35 text-amber-100 border border-amber-300/40' : 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
                         }`}>
                           Today
                         </span>
