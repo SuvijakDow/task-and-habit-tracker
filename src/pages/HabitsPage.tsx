@@ -894,8 +894,8 @@ export function HabitsPage() {
         {/* Add Habit Form Modal */}
         {isAddModalOpen &&
           createPortal(
-            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[85vh] max-h-dvh sm:max-h-[750px] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+            <div className="fixed inset-0 bg-slate-950/65 flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[85vh] max-h-dvh sm:max-h-[750px] flex flex-col bg-white border border-purple-100/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
                 <form onSubmit={handleAddHabit} className="flex flex-col h-full min-h-0">
                   {/* Header */}
                   <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
@@ -913,7 +913,7 @@ export function HabitsPage() {
                   </div>
 
                   {/* Scrollable Form Body */}
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-6 space-y-4">
                     {/* Error Message */}
                     {error && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
@@ -981,7 +981,7 @@ export function HabitsPage() {
                       )}
 
                       {/* Scrollable Compact Chip List */}
-                      <div className="max-h-32 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-purple-200/80 flex flex-wrap gap-1.5 custom-scrollbar">
+                      <div className="max-h-32 overflow-y-auto overscroll-contain touch-pan-y p-1.5 bg-white/80 rounded-xl border border-purple-200/80 flex flex-wrap gap-1.5 custom-scrollbar">
                         {sortedHabitSets
                           .filter((s) => s.name.toLowerCase().includes(routineSearchQuery.toLowerCase()))
                           .map((s) => {
@@ -1579,8 +1579,8 @@ export function HabitsPage() {
         {/* Edit Habit Modal */}
         {editingHabitId &&
           createPortal(
-            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
-              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[85vh] max-h-dvh sm:max-h-[750px] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+            <div className="fixed inset-0 bg-slate-950/65 flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
+              <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[85vh] max-h-dvh sm:max-h-[750px] flex flex-col bg-white border border-purple-100/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1604,7 +1604,7 @@ export function HabitsPage() {
                   </div>
 
                   {/* Scrollable Form Body */}
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-6 space-y-4">
                     {/* Error Message */}
                     {editError && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
@@ -1671,7 +1671,7 @@ export function HabitsPage() {
                       )}
 
                       {/* Scrollable Compact Chip List */}
-                      <div className="max-h-32 overflow-y-auto p-1.5 bg-white/80 rounded-xl border border-purple-200/80 flex flex-wrap gap-1.5 custom-scrollbar">
+                      <div className="max-h-32 overflow-y-auto overscroll-contain touch-pan-y p-1.5 bg-white/80 rounded-xl border border-purple-200/80 flex flex-wrap gap-1.5 custom-scrollbar">
                         {sortedHabitSets
                           .filter((s) => s.name.toLowerCase().includes(routineSearchQuery.toLowerCase()))
                           .map((s) => {
@@ -1982,8 +1982,8 @@ export function HabitsPage() {
         {/* Delete Confirmation Modal */}
         {deletingHabitId &&
           createPortal(
-            <div className="fixed inset-0 bg-gradient-to-b from-slate-950/35 via-purple-900/20 to-fuchsia-900/30 backdrop-blur-0 sm:backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
-              <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white/95 backdrop-blur-none sm:backdrop-blur-xl p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
+            <div className="fixed inset-0 bg-slate-950/60 flex items-center justify-center z-[9999] p-4">
+              <div className="modal-enter max-w-sm w-full max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-rose-100/80 bg-white p-5 sm:p-6 shadow-[0_24px_56px_rgba(244,63,94,0.22)]">
                 <div className="flex items-center justify-center w-12 h-12 mx-auto bg-rose-100 border border-rose-200 rounded-full mb-4">
                   <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path

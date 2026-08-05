@@ -71,7 +71,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = React.m
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[10000] p-3 sm:p-4">
+    <div className="fixed inset-0 bg-slate-950/60 flex items-center justify-center z-[10000] p-3 sm:p-4">
       <div className="modal-enter w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-purple-100 overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 via-pink-50/50 to-white shrink-0">

@@ -406,10 +406,10 @@ export const TimePickerInput: React.FC<TimePickerInputProps> = React.memo(({
                   ref={dialRef}
                   onMouseDown={handlePointerDown}
                   onTouchStart={handlePointerDown}
-                  className="relative w-[230px] h-[230px] sm:w-[240px] sm:h-[240px] mx-auto rounded-full bg-slate-800/90 border border-purple-500/20 shadow-inner flex items-center justify-center cursor-pointer touch-none transform-gpu"
+                  className="relative w-[240px] h-[240px] mx-auto rounded-full bg-slate-800/90 border border-purple-500/20 shadow-inner flex items-center justify-center cursor-pointer touch-none transform-gpu"
                 >
                   {/* SVG Pointer Hand: Uses gradientUnits="userSpaceOnUse" */}
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 240 240">
                     <defs>
                       <linearGradient id="purplePinkGrad" x1="0" y1="0" x2="240" y2="240" gradientUnits="userSpaceOnUse">
                         <stop offset="0%" stopColor="#A855F7" />
