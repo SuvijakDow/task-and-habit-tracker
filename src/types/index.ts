@@ -71,6 +71,7 @@ export interface DailyHabit {
   targetValue?: number; // Quantitative target goal value e.g. 5
   targetUnit?: string; // Target unit e.g. 'videos', 'pages', 'mins'
   dailyProgress?: Record<string, number>; // Date string YYYY-MM-DD -> logged progress value
+  notScheduledDates?: string[]; // ISO format: 'YYYY-MM-DD' dates explicitly marked not scheduled
   createdAt: Date;
   updatedAt: Date;
 }

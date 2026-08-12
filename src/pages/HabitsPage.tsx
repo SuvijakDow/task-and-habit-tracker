@@ -33,7 +33,7 @@ import HabitsTable from '@/components/habits/HabitsTable';
 
 export function HabitsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { registerRefreshHabits, registerRefreshHabitSets } = useDataRefresh();
+  const { registerRefreshHabits, registerRefreshHabitSets, refreshAnalytics } = useDataRefresh();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
   const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
   const [activeSetId, setActiveSetId] = useState<string>('');
@@ -432,6 +432,7 @@ export function HabitsPage() {
       setTargetUnit(undefined);
       setHabitColor(PASTEL_HABIT_COLORS[0]);
       setIsAddModalOpen(false);
+      refreshAnalytics();
     } catch (err) {
       setError('Failed to add habit. Please try again.');
       console.error('Error adding habit:', err);
@@ -478,12 +479,13 @@ export function HabitsPage() {
 
       try {
         await updateHabitProgress(habitId, todayDate, val, habit.targetValue);
+        refreshAnalytics();
       } catch (err) {
         console.error('Error updating habit progress:', err);
         showToast('Failed to update progress', 'error');
       }
     },
-    [habits, todayDate, user]
+    [habits, todayDate, user, refreshAnalytics]
   );
 
   const handleToggleHabit = useCallback(
@@ -519,15 +521,16 @@ export function HabitsPage() {
         } else {
           await markHabitCompletedToday(habitId);
         }
+        refreshAnalytics();
       } catch (err) {
         setHabits((prev) =>
           prev.map((h) => (h.id === habitId ? { ...h, completedDates: previousDates } : h))
         );
-        showToast('Failed to update habit. Please try again.', 'error');
+        showToast('Failed to update habit completion', 'error');
         console.error('Error toggling habit:', err);
       }
     },
-    [habits, handleProgressChange, todayDate, user]
+    [habits, handleProgressChange, todayDate, user, refreshAnalytics]
   );
 
   const handleEditHabit = (
@@ -625,6 +628,7 @@ export function HabitsPage() {
       setEditTargetValue(undefined);
       setEditTargetUnit(undefined);
       setEditError(null);
+      refreshAnalytics();
     } catch (err) {
       setEditError('Failed to save habit. Please try again.');
       console.error('Error saving habit:', err);
@@ -650,6 +654,7 @@ export function HabitsPage() {
       await deleteDailyHabit(deletingHabitId);
       setHabits((prev) => prev.filter((h) => h.id !== deletingHabitId));
       setDeletingHabitId(null);
+      refreshAnalytics();
     } catch (err) {
       setError('Failed to delete habit. Please try again.');
       console.error('Error deleting habit:', err);
@@ -663,6 +668,7 @@ export function HabitsPage() {
       const idSet = new Set(habitIds);
       setHabits((prev) => prev.filter((h) => !idSet.has(h.id)));
       showToast(`Deleted ${habitIds.length} habit(s).`, 'success');
+      refreshAnalytics();
     } catch (err) {
       showToast('Bulk delete failed. Please try again.', 'error');
       console.error('Error bulk deleting habits:', err);

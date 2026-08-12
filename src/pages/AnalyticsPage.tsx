@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom';
 import { Award, Calendar, CheckCircle2, ChevronDown, Clock, Flame, Layers, Minus, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useDataRefresh } from '@/context/DataRefreshContext';
-import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, calculateTotalCompletions, getPast7DaysStatus, getDayAbbreviation, resetHabitData, getHabitColorHex } from '@/services/habitService';
+import { getUserDailyHabits, getUserHabitSets, calculateStreak, calculateConsistency, calculateTotalCompletions, getPast7DaysStatus, getDayAbbreviation, resetHabitData, getHabitColorHex, updateHabitDateStatus, HabitDateStatus } from '@/services/habitService';
 import { DailyHabit, HabitSet, getHabitSetIds } from '@/types';
 import { ContributionHeatmap } from '@/components/habits/ContributionHeatmap';
+import { EditHabitHistoryModal } from '@/components/modals/EditHabitHistoryModal';
 import { showToast } from '@/components/ui/Toast';
 
 const parseDateSafely = (val: any): Date => {
@@ -27,6 +28,7 @@ export function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [resetTargetHabit, setResetTargetHabit] = useState<DailyHabit | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [editingHistory, setEditingHistory] = useState<{ habit: DailyHabit; dateString: string } | null>(null);
   // Selection/search state to avoid long scrolling — user can pick a habit to view
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -38,7 +40,7 @@ export function AnalyticsPage() {
     try {
       setIsResetting(true);
       await resetHabitData(resetTargetHabit.id);
-      await loadAnalytics(); // Reload after reset
+      await loadAnalytics(false); // Silent background reload without full page spinner
       showToast('Habit history reset successfully', 'success');
     } catch (err) {
       console.error('Error resetting habit:', err);
@@ -49,10 +51,27 @@ export function AnalyticsPage() {
     }
   };
 
-  const loadAnalytics = async () => {
+  const handleSaveHistoryStatus = async (
+    habitId: string,
+    dateString: string,
+    newStatus: HabitDateStatus,
+    progressValue?: number
+  ) => {
+    try {
+      await updateHabitDateStatus(habitId, dateString, newStatus, progressValue);
+      await loadAnalytics(false);
+      showToast('Habit history status updated', 'success');
+    } catch (err) {
+      console.error('Error updating habit date status:', err);
+      showToast('Failed to update habit status', 'error');
+      throw err;
+    }
+  };
+
+  const loadAnalytics = async (showLoadingSpinner = true) => {
     if (!user) return;
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       setError(null);
       const [fetchedHabits, sets] = await Promise.all([
         getUserDailyHabits(user.uid),
@@ -62,15 +81,18 @@ export function AnalyticsPage() {
       setHabits(sortedHabits);
       setHabitSets(sets);
 
-      const activeSet = sets.find((s) => s.isActive) || sets[0];
-      if (activeSet) {
-        setSelectedSetId(activeSet.id);
+      if (sets.length > 0) {
+        setSelectedSetId((prev) => {
+          if (prev && sets.some((s) => s.id === prev)) return prev;
+          const activeSet = sets.find((s) => s.isActive) || sets[0];
+          return activeSet ? activeSet.id : '';
+        });
       }
     } catch (loadError) {
       setError('Could not load analytics. Refresh and try again.');
       console.error('Error fetching habits:', loadError);
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
   };
 
@@ -82,7 +104,7 @@ export function AnalyticsPage() {
       return;
     }
 
-    loadAnalytics();
+    loadAnalytics(true);
   }, [user]);
 
   useEffect(() => {
@@ -100,7 +122,7 @@ export function AnalyticsPage() {
   // Register analytics refresh function with DataRefreshContext
   useEffect(() => {
     registerRefreshAnalytics(() => {
-      loadAnalytics();
+      loadAnalytics(false);
     });
   }, [registerRefreshAnalytics]);
 
@@ -171,7 +193,7 @@ export function AnalyticsPage() {
     const total = filteredHabits.reduce((acc, habit) => {
       const days = (habit as any).scheduledDays || [0, 1, 2, 3, 4, 5, 6];
       const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
-      return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress);
+      return acc + calculateConsistency(habit.completedDates || [], days, startDateObj, habit.targetValue, habit.dailyProgress, habit.notScheduledDates);
     }, 0);
     return Math.round(total / filteredHabits.length);
   }, [filteredHabits]);
@@ -211,7 +233,7 @@ export function AnalyticsPage() {
           <p className="text-gray-600 mb-5">{error}</p>
           <button
             type="button"
-            onClick={loadAnalytics}
+            onClick={() => loadAnalytics(true)}
             className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold hover:from-purple-700 hover:to-pink-600 transition"
           >
             Retry
@@ -437,6 +459,7 @@ export function AnalyticsPage() {
                 habitSets={habitSets}
                 setResetTargetHabit={setResetTargetHabit}
                 isResetting={isResetting}
+                onEditHistoryDate={(h, dateStr) => setEditingHistory({ habit: h, dateString: dateStr })}
               />
             ))
           ) : (
@@ -446,6 +469,15 @@ export function AnalyticsPage() {
             </div>
           )}
         </div>
+
+        {/* Edit History Date Modal */}
+        <EditHabitHistoryModal
+          isOpen={editingHistory !== null}
+          onClose={() => setEditingHistory(null)}
+          habit={editingHistory?.habit || null}
+          dateString={editingHistory?.dateString || null}
+          onSave={handleSaveHistoryStatus}
+        />
 
         {/* Reset Confirmation Modal */}
         {resetTargetHabit &&
@@ -489,12 +521,14 @@ function HabitAnalyticsCard({
   habitSets,
   setResetTargetHabit,
   isResetting,
+  onEditHistoryDate,
 }: {
   habit: DailyHabit;
   habits: DailyHabit[];
   habitSets: HabitSet[];
   setResetTargetHabit: (habit: DailyHabit) => void;
   isResetting: boolean;
+  onEditHistoryDate: (habit: DailyHabit, dateString: string) => void;
 }) {
   const [showFullHistory, setShowFullHistory] = useState(false);
 
@@ -512,12 +546,14 @@ function HabitAnalyticsCard({
     completedDatesList,
     rawScheduledDays,
     habit.targetValue,
-    habit.dailyProgress
+    habit.dailyProgress,
+    habit.notScheduledDates
   );
   const totalCompletions = calculateTotalCompletions(
     completedDatesList,
     habit.targetValue,
-    habit.dailyProgress
+    habit.dailyProgress,
+    habit.notScheduledDates
   );
   const startDateObj = parseDateSafely(habit.trackingStartDate || habit.createdAt);
   const consistency = calculateConsistency(
@@ -525,7 +561,8 @@ function HabitAnalyticsCard({
     rawScheduledDays,
     startDateObj,
     habit.targetValue,
-    habit.dailyProgress
+    habit.dailyProgress,
+    habit.notScheduledDates
   );
 
   const displayScheduledDays = isPresetActive ? rawScheduledDays : [];
@@ -688,6 +725,8 @@ function HabitAnalyticsCard({
             targetValue={habit.targetValue}
             targetUnit={habit.targetUnit}
             dailyProgress={habit.dailyProgress}
+            notScheduledDates={habit.notScheduledDates}
+            onCellClick={(dateStr) => onEditHistoryDate(habit, dateStr)}
           />
         ) : (
           <div className="flex justify-between items-center pt-1 px-1">
@@ -700,7 +739,8 @@ function HabitAnalyticsCard({
               trackingStartObj.setHours(0, 0, 0, 0);
               const isBeforeTrackingStart = localDate < trackingStartObj;
 
-              const isScheduled = isBeforeTrackingStart ? false : displayScheduledDays.includes(dayOfWeek);
+              const isExplicitlyNotScheduled = habit.notScheduledDates?.includes(dayStatus.date);
+              const isScheduled = isBeforeTrackingStart || isExplicitlyNotScheduled ? false : displayScheduledDays.includes(dayOfWeek);
 
               const todayObj = new Date();
               todayObj.setHours(0, 0, 0, 0);
@@ -716,6 +756,10 @@ function HabitAnalyticsCard({
                 : 0;
 
               let circleClass = 'w-7 h-7 sm:w-8 sm:h-8 lg:w-11 lg:h-11 rounded-full flex items-center justify-center transition-all ';
+              if (isPast) {
+                circleClass += 'cursor-pointer hover:scale-110 hover:ring-2 hover:ring-purple-300 ';
+              }
+
               let content = null;
               let styleObj: React.CSSProperties | undefined = undefined;
 
@@ -734,14 +778,19 @@ function HabitAnalyticsCard({
               }
 
               return (
-                <div key={dayStatus.date} className="flex flex-col items-center gap-1 lg:gap-1.5">
-                  <span className="text-[10px] lg:text-xs text-gray-600 font-bold">
+                <div
+                  key={dayStatus.date}
+                  className={`flex flex-col items-center gap-1 lg:gap-1.5 group ${isPast ? 'cursor-pointer' : ''}`}
+                  onClick={() => isPast && onEditHistoryDate(habit, dayStatus.date)}
+                  title={isPast ? `Click to edit status for ${dayStatus.date}` : undefined}
+                >
+                  <span className={`text-[10px] lg:text-xs text-gray-600 font-bold ${isPast ? 'group-hover:text-purple-600' : ''} transition-colors`}>
                     {getDayAbbreviation(dayStatus.date)}
                   </span>
                   <div className={circleClass} style={styleObj}>
                     {content}
                   </div>
-                  <span className="text-[9px] lg:text-xs text-gray-400 font-bold">{parseInt(day, 10)}</span>
+                  <span className={`text-[9px] lg:text-xs text-gray-400 font-bold ${isPast ? 'group-hover:text-purple-600' : ''} transition-colors`}>{parseInt(day, 10)}</span>
                 </div>
               );
             })}

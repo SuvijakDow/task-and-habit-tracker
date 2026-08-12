@@ -8,6 +8,8 @@ interface ContributionHeatmapProps {
   targetValue?: number;
   targetUnit?: string;
   dailyProgress?: Record<string, number>;
+  notScheduledDates?: string[];
+  onCellClick?: (dateStr: string) => void;
 }
 
 export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.memo(({
@@ -17,6 +19,8 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
   targetValue,
   targetUnit,
   dailyProgress,
+  notScheduledDates,
+  onCellClick,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -128,8 +132,9 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
                     {week.map((day, dayIndex) => {
                       const dayStr = format(day, 'yyyy-MM-dd');
                       const isCompleted = completedDates.includes(dayStr);
+                      const isExplicitlyNotScheduled = notScheduledDates?.includes(dayStr);
                       const dayOfWeek = day.getDay();
-                      const isScheduled = scheduledDays.includes(dayOfWeek);
+                      const isScheduled = !isExplicitlyNotScheduled && scheduledDays.includes(dayOfWeek);
                       const isFuture = selectedYear === currentYear && isAfter(day, today);
                       const isBeforeStart = isBefore(day, trackingStart);
                       const todayObj = startOfDay(new Date());
@@ -139,26 +144,41 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
                       const hasPartialProgress = !isCompleted && targetValue !== undefined && targetValue > 0 && loggedVal !== undefined && loggedVal > 0 && loggedVal < targetValue;
                       const partialPercent = hasPartialProgress ? Math.round((loggedVal! / targetValue!) * 100) : 0;
 
-                      let cellClass = "w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-sm transition-colors duration-200 ";
+                      let cellClass = "w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-sm transition-transform duration-150 ";
                       let title = format(day, 'MMM d, yyyy');
 
                       if (isFuture) {
                         cellClass += "opacity-0";
-                      } else if (isCompleted) {
-                        cellClass += "bg-gradient-to-tr from-purple-500 to-fuchsia-400 shadow-sm shadow-purple-500/20";
-                        title += " (Completed)";
-                      } else if (hasPartialProgress) {
-                        cellClass += "bg-gradient-to-tr from-amber-400 to-purple-400 shadow-2xs border border-purple-300/60";
-                        title += ` (Partial: ${loggedVal}/${targetValue} ${targetUnit || ''} - ${partialPercent}%)`;
-                      } else if (isBeforeStart || !isScheduled) {
-                        cellClass += "bg-transparent border border-dashed border-slate-300";
-                        title += " (Not scheduled)";
                       } else if (isPast) {
-                        cellClass += "bg-rose-50/80 border border-rose-200";
-                        title += " (Missed)";
+                        cellClass += "cursor-pointer hover:ring-2 hover:ring-purple-400 hover:scale-125 hover:z-10 ";
+                        if (isCompleted) {
+                          cellClass += "bg-gradient-to-tr from-purple-500 to-fuchsia-400 shadow-sm shadow-purple-500/20";
+                          title += " (Completed • Click to edit)";
+                        } else if (hasPartialProgress) {
+                          cellClass += "bg-gradient-to-tr from-amber-400 to-purple-400 shadow-2xs border border-purple-300/60";
+                          title += ` (Partial: ${loggedVal}/${targetValue} ${targetUnit || ''} - ${partialPercent}% • Click to edit)`;
+                        } else if (isBeforeStart || isExplicitlyNotScheduled || !isScheduled) {
+                          cellClass += "bg-transparent border border-dashed border-slate-300";
+                          title += " (Not scheduled • Click to edit)";
+                        } else {
+                          cellClass += "bg-rose-50/80 border border-rose-200";
+                          title += " (Missed • Click to edit)";
+                        }
                       } else {
-                        cellClass += "bg-slate-100 border border-slate-200";
-                        title += " (Not yet done)";
+                        // Today
+                        if (isCompleted) {
+                          cellClass += "bg-gradient-to-tr from-purple-500 to-fuchsia-400 shadow-sm shadow-purple-500/20";
+                          title += " (Completed)";
+                        } else if (hasPartialProgress) {
+                          cellClass += "bg-gradient-to-tr from-amber-400 to-purple-400 shadow-2xs border border-purple-300/60";
+                          title += ` (Partial: ${loggedVal}/${targetValue} ${targetUnit || ''} - ${partialPercent}%)`;
+                        } else if (isBeforeStart || isExplicitlyNotScheduled || !isScheduled) {
+                          cellClass += "bg-transparent border border-dashed border-slate-300";
+                          title += " (Not scheduled)";
+                        } else {
+                          cellClass += "bg-slate-100 border border-slate-200";
+                          title += " (Today)";
+                        }
                       }
 
                       return (
@@ -166,6 +186,7 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
                           key={dayIndex}
                           className={cellClass}
                           title={isFuture ? undefined : title}
+                          onClick={() => isPast && onCellClick?.(dayStr)}
                         />
                       );
                     })}

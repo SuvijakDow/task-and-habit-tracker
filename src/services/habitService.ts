@@ -374,6 +374,7 @@ export const getUserDailyHabits = async (userId: string): Promise<DailyHabit[]> 
       targetValue: doc.data().targetValue || undefined,
       targetUnit: doc.data().targetUnit || undefined,
       dailyProgress: doc.data().dailyProgress || undefined,
+      notScheduledDates: doc.data().notScheduledDates || [],
       trackingStartDate: doc.data().trackingStartDate ? doc.data().trackingStartDate.toDate() : undefined,
       createdAt: doc.data().createdAt.toDate(),
       updatedAt: doc.data().updatedAt.toDate(),
@@ -406,6 +407,7 @@ export const getDailyHabitById = async (habitId: string): Promise<DailyHabit | n
       targetValue: docSnap.data().targetValue || undefined,
       targetUnit: docSnap.data().targetUnit || undefined,
       dailyProgress: docSnap.data().dailyProgress || undefined,
+      notScheduledDates: docSnap.data().notScheduledDates || [],
       trackingStartDate: docSnap.data().trackingStartDate ? docSnap.data().trackingStartDate.toDate() : undefined,
       createdAt: docSnap.data().createdAt.toDate(),
       updatedAt: docSnap.data().updatedAt.toDate(),
@@ -490,12 +492,75 @@ export const resetHabitData = async (habitId: string): Promise<void> => {
     const docRef = doc(db, DAILY_HABITS_COLLECTION, habitId);
     await updateDoc(docRef, {
       completedDates: [],
+      notScheduledDates: [],
       dailyProgress: {},
       trackingStartDate: Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
   } catch (error) {
     console.error('Error resetting habit data:', error);
+    throw error;
+  }
+};
+
+export type HabitDateStatus = 'completed' | 'not_scheduled' | 'missed' | 'partial';
+
+/**
+ * Update habit status for a specific date (completed, not_scheduled, missed, or partial)
+ */
+export const updateHabitDateStatus = async (
+  habitId: string,
+  dateString: string,
+  newStatus: HabitDateStatus,
+  progressValue?: number
+): Promise<void> => {
+  try {
+    const docRef = doc(db, DAILY_HABITS_COLLECTION, habitId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+
+    const data = docSnap.data();
+    let completedDates: string[] = Array.isArray(data.completedDates) ? [...data.completedDates] : [];
+    let notScheduledDates: string[] = Array.isArray(data.notScheduledDates) ? [...data.notScheduledDates] : [];
+    let dailyProgress: Record<string, number> = { ...(data.dailyProgress || {}) };
+    const targetValue: number | undefined = data.targetValue;
+
+    if (newStatus === 'completed') {
+      if (!completedDates.includes(dateString)) {
+        completedDates.push(dateString);
+      }
+      notScheduledDates = notScheduledDates.filter((d) => d !== dateString);
+      if (targetValue && targetValue > 0) {
+        dailyProgress[dateString] = progressValue !== undefined ? progressValue : targetValue;
+      }
+    } else if (newStatus === 'not_scheduled') {
+      completedDates = completedDates.filter((d) => d !== dateString);
+      if (!notScheduledDates.includes(dateString)) {
+        notScheduledDates.push(dateString);
+      }
+      delete dailyProgress[dateString];
+    } else if (newStatus === 'missed') {
+      completedDates = completedDates.filter((d) => d !== dateString);
+      notScheduledDates = notScheduledDates.filter((d) => d !== dateString);
+      delete dailyProgress[dateString];
+    } else if (newStatus === 'partial') {
+      completedDates = completedDates.filter((d) => d !== dateString);
+      notScheduledDates = notScheduledDates.filter((d) => d !== dateString);
+      const val = progressValue ?? 1;
+      dailyProgress[dateString] = val;
+      if (targetValue && val >= targetValue) {
+        completedDates.push(dateString);
+      }
+    }
+
+    await updateDoc(docRef, {
+      completedDates,
+      notScheduledDates,
+      dailyProgress,
+      updatedAt: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error('Error updating habit date status:', error);
     throw error;
   }
 };
@@ -510,6 +575,7 @@ export const markHabitCompletedToday = async (habitId: string): Promise<void> =>
     
     await updateDoc(docRef, {
       completedDates: arrayUnion(today),
+      notScheduledDates: arrayRemove(today),
       updatedAt: Timestamp.now(),
     });
   } catch (error) {
@@ -572,7 +638,7 @@ export const getHabitStats = async (habitId: string) => {
       completedCount,
       daysActive,
       completionRate,
-      currentStreak: calculateStreak(habit.completedDates),
+      currentStreak: calculateStreak(habit.completedDates, habit.scheduledDays, habit.targetValue, habit.dailyProgress, habit.notScheduledDates),
     };
   } catch (error) {
     console.error('Error getting habit stats:', error);
@@ -587,16 +653,22 @@ export const getHabitStats = async (habitId: string) => {
 export const calculateTotalCompletions = (
   completedDates: string[],
   targetValue?: number,
-  dailyProgress?: Record<string, number>
+  dailyProgress?: Record<string, number>,
+  notScheduledDates?: string[]
 ): number => {
   if (!targetValue || targetValue <= 0) {
-    return Number(completedDates.length.toFixed(2));
+    const validCompleted = notScheduledDates
+      ? completedDates.filter((d) => !notScheduledDates.includes(d))
+      : completedDates;
+    return Number(validCompleted.length.toFixed(2));
   }
 
+  const notScheduledSet = new Set(notScheduledDates || []);
   const allDates = new Set([...completedDates, ...Object.keys(dailyProgress || {})]);
   let totalScore = 0;
 
   allDates.forEach((dateStr) => {
+    if (notScheduledSet.has(dateStr)) return;
     const isCompleted = completedDates.includes(dateStr);
     const logged = dailyProgress?.[dateStr] ?? (isCompleted ? targetValue : 0);
     const ratio = Math.min(1.0, Math.max(0, logged / targetValue));
@@ -613,10 +685,12 @@ export const calculateStreak = (
   completedDates: string[],
   scheduledDays?: number[],
   targetValue?: number,
-  dailyProgress?: Record<string, number>
+  dailyProgress?: Record<string, number>,
+  notScheduledDates?: string[]
 ): number => {
   const defaultSchedule = [0, 1, 2, 3, 4, 5, 6];
   const schedule = scheduledDays || defaultSchedule;
+  const notScheduledSet = new Set(notScheduledDates || []);
   
   let streak = 0;
   let currentDate = new Date();
@@ -626,8 +700,10 @@ export const calculateStreak = (
     const dayOfWeek = currentDate.getDay();
     const dateStr = formatToDateString(currentDate);
     
-    // Only count if this day is scheduled
-    if (schedule.includes(dayOfWeek)) {
+    const isNotScheduled = notScheduledSet.has(dateStr) || !schedule.includes(dayOfWeek);
+
+    // Only count if this day is scheduled and not explicitly unscheduled
+    if (!isNotScheduled) {
       const isCompleted = completedDates.includes(dateStr);
       let isStreakValid = isCompleted;
 
@@ -663,10 +739,12 @@ export const calculateConsistency = (
   scheduledDays?: number[],
   startDateInput?: Date,
   targetValue?: number,
-  dailyProgress?: Record<string, number>
+  dailyProgress?: Record<string, number>,
+  notScheduledDates?: string[]
 ): number => {
   const defaultSchedule = [0, 1, 2, 3, 4, 5, 6];
   const schedule = scheduledDays || defaultSchedule;
+  const notScheduledSet = new Set(notScheduledDates || []);
   
   // Get the date range (from creation to today)
   const today = new Date();
@@ -682,9 +760,11 @@ export const calculateConsistency = (
   let currentDate = new Date(startDate);
   while (currentDate <= today) {
     const dayOfWeek = currentDate.getDay();
-    if (schedule.includes(dayOfWeek)) {
+    const dateStr = formatToDateString(currentDate);
+    const isNotScheduled = notScheduledSet.has(dateStr) || !schedule.includes(dayOfWeek);
+
+    if (!isNotScheduled) {
       scheduledDayCount++;
-      const dateStr = formatToDateString(currentDate);
       const isCompleted = completedDates.includes(dateStr);
       
       if (targetValue && targetValue > 0) {

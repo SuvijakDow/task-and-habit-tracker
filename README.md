@@ -26,9 +26,12 @@ A modern, full-featured productivity web application for managing tasks by time 
 - **Weekly Timetable**: Visual daily schedule displaying habit time blocks across the week
 - **Drag-and-Drop Reordering**: Custom ordering for daily habit lists
 
-### Analytics
+### Analytics & History Editing
 - **Contribution Heatmap**: GitHub-style activity matrix for daily completion tracking
-- **Consistency Scoring**: Calculates adherence based on custom tracking start dates
+- **Editable Habit History**: Click past dates in Heatmap or 7-day status view to modify completion status (**Completed**, **Not Scheduled**, **Missed**, or **Partial Progress**)
+- **Excused Days (Not Scheduled)**: Explicitly mark dates as Not Scheduled so they don't break streaks or lower consistency percentages
+- **Real-Time Synchronization**: Instant state updates across Habits and Analytics pages without page reloads
+- **Consistency Scoring**: Calculates adherence based on custom tracking start dates and excused dates
 - **Stable Analytics**: Stats remain stable across routine presets while filtering
 - **Decimal Precision**: Supports partial goal progress with up to 2 decimal places
 
@@ -62,6 +65,7 @@ src/
 │   │   └── HabitsTable.tsx            # Main habits table component
 │   ├── modals/             # Modal dialogs
 │   │   ├── CategoriesModal.tsx       # Category management modal
+│   │   ├── EditHabitHistoryModal.tsx  # Edit past habit date status modal
 │   │   ├── ManageHabitSetsModal.tsx   # Habit set/routine management
 │   │   ├── ManageTaskPresetsModal.tsx # Task period management
 │   │   ├── SettingsModal.tsx         # App settings modal
@@ -197,6 +201,7 @@ npm run build
   userId: string;
   title: string;
   completedDates: string[];
+  notScheduledDates?: string[];
   dailyProgress?: Record<string, number>;
   targetValue?: number;
   targetUnit?: string;
