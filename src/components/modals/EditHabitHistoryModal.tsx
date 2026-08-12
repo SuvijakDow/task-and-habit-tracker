@@ -58,19 +58,19 @@ export const EditHabitHistoryModal: React.FC<EditHabitHistoryModalProps> = ({
   const target = habit.targetValue;
 
   return createPortal(
-    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-4">
-      <div className="modal-enter w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-purple-100 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4 overflow-y-auto">
+      <div className="modal-enter w-full max-w-md max-h-[calc(100dvh-1rem)] sm:max-h-[88dvh] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-purple-100 overflow-hidden flex flex-col my-auto">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-purple-100 bg-gradient-to-r from-purple-50 via-pink-50/40 to-white flex items-center justify-between">
+        <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-purple-100 bg-gradient-to-r from-purple-50 via-pink-50/40 to-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-md shrink-0">
-              <Calendar className="w-5 h-5" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-md shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900 truncate">
+              <h3 className="text-sm sm:text-base font-bold text-gray-900 truncate">
                 Edit Habit History
               </h3>
-              <p className="text-xs text-purple-700 font-semibold truncate">
+              <p className="text-[11px] sm:text-xs text-purple-700 font-semibold truncate">
                 {formattedDateTitle}
               </p>
             </div>
@@ -80,7 +80,7 @@ export const EditHabitHistoryModal: React.FC<EditHabitHistoryModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="w-8 h-8 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center"
+            className="w-8 h-8 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition flex items-center justify-center shrink-0"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
@@ -88,7 +88,7 @@ export const EditHabitHistoryModal: React.FC<EditHabitHistoryModalProps> = ({
         </div>
 
         {/* Body Options */}
-        <div className="p-5 space-y-3">
+        <div className="p-3.5 sm:p-5 space-y-2.5 sm:space-y-3 flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
             Select Status for this Day
           </p>
@@ -272,7 +272,7 @@ export const EditHabitHistoryModal: React.FC<EditHabitHistoryModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-5 py-4 bg-gray-50 border-t border-purple-100 flex items-center justify-end gap-3">
+        <div className="px-4 py-3 sm:px-5 sm:py-4 bg-gray-50 border-t border-purple-100 flex items-center justify-end gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
