@@ -92,6 +92,7 @@ export interface UserProfile {
   displayName: string;
   photoURL: string;
   selectedFont?: string;
+  gradientMode?: 'gradient' | 'solid';
   createdAt: Date;
   updatedAt: Date;
 }

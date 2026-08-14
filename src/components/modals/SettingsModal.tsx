@@ -13,6 +13,8 @@ import {
   Download,
   RotateCcw,
   ShieldAlert,
+  Palette,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useDataRefresh } from '@/context/DataRefreshContext';
@@ -25,6 +27,7 @@ import {
 import { deleteUserData, resetUserTasks, resetUserDailyHabits, resetUserTaskPresets, resetUserHabitSets, clearAllUserData } from '@/services/accountService';
 import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
 import { APP_FONTS, applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
+import { GradientMode, applyGradientMode, getStoredGradientMode } from '@/utils/gradientUtils';
 import { getUserTasks, createTask } from '@/services/taskService';
 import { getUserDailyHabits, getUserHabitSets, createDailyHabit, createHabitSet } from '@/services/habitService';
 import { getUserCategories, createCategory } from '@/services/categoryService';
@@ -44,6 +47,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
   const [displayName, setDisplayName] = useState(userProfile?.displayName || '');
   const [selectedAvatar, setSelectedAvatar] = useState(userProfile?.photoURL || '');
   const [selectedFont, setSelectedFont] = useState(userProfile?.selectedFont || getStoredFontId());
+  const [selectedGradientMode, setSelectedGradientMode] = useState<GradientMode>(
+    userProfile?.gradientMode || getStoredGradientMode()
+  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -90,10 +96,17 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
     applyAppFont(fontId);
   };
 
+  const handleGradientModeSelect = (mode: GradientMode) => {
+    setSelectedGradientMode(mode);
+    applyGradientMode(mode);
+  };
+
   const handleClose = () => {
     if (busy) return;
     const initialFont = userProfile?.selectedFont || getStoredFontId();
     applyAppFont(initialFont);
+    const initialGradientMode = userProfile?.gradientMode || getStoredGradientMode();
+    applyGradientMode(initialGradientMode);
     onClose();
   };
 
@@ -135,9 +148,11 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
         displayName: displayName.trim(),
         photoURL: normalizeProfilePhotoURL(selectedAvatar),
         selectedFont,
+        gradientMode: selectedGradientMode,
       });
 
       applyAppFont(selectedFont);
+      applyGradientMode(selectedGradientMode);
       await refreshUserProfile();
       setSuccess(true);
 
@@ -708,6 +723,80 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Color Style / Gradient Mode Selection Card */}
+              <div className="p-4 rounded-2xl bg-purple-100/60 border border-purple-200/90 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+                    <Palette className="w-4 h-4 text-purple-700 flex-shrink-0" />
+                    <span className="truncate">Color Style</span>
+                  </label>
+                  <span className="text-[11px] font-semibold text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200/80 flex-shrink-0 whitespace-nowrap">
+                    Theme Mode
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Option 1: Solid Color */}
+                  <button
+                    type="button"
+                    onClick={() => handleGradientModeSelect('solid')}
+                    disabled={busy}
+                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                      selectedGradientMode === 'solid'
+                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs scale-[1.01]'
+                        : 'bg-white/80 border-purple-100 hover:border-purple-300 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1.5 w-full mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-purple-600 border border-purple-400 shrink-0 shadow-2xs" />
+                        <span className="text-xs sm:text-sm font-extrabold text-gray-900">
+                          Solid Color
+                        </span>
+                      </div>
+                      {selectedGradientMode === 'solid' && (
+                        <div className="h-4 w-4 bg-purple-600 rounded-full flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-500 font-medium leading-tight">
+                      Flat & clean without gradients
+                    </p>
+                  </button>
+
+                  {/* Option 2: Gradient Theme */}
+                  <button
+                    type="button"
+                    onClick={() => handleGradientModeSelect('gradient')}
+                    disabled={busy}
+                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                      selectedGradientMode === 'gradient'
+                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs scale-[1.01]'
+                        : 'bg-white/80 border-purple-100 hover:border-purple-300 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1.5 w-full mb-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400 shrink-0 shadow-2xs" />
+                        <span className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5 text-pink-500" />
+                          Gradient Theme
+                        </span>
+                      </div>
+                      {selectedGradientMode === 'gradient' && (
+                        <div className="h-4 w-4 bg-purple-600 rounded-full flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-500 font-medium leading-tight">
+                      Vibrant & colorful gradients (Default)
+                    </p>
+                  </button>
                 </div>
               </div>
             </div>

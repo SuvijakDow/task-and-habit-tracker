@@ -3,6 +3,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { ensureUserProfile, getUserProfile } from '@/services/userService';
 import { UserProfile } from '@/types';
 import { applyAppFont } from '@/utils/fontUtils';
+import { applyGradientMode } from '@/utils/gradientUtils';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -38,6 +39,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (profile?.selectedFont) {
                 applyAppFont(profile.selectedFont);
               }
+              if (profile?.gradientMode) {
+                applyGradientMode(profile.gradientMode);
+              }
             } catch (error) {
               console.error('Error syncing user profile:', error);
               setUserProfile(null);
@@ -68,6 +72,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUserProfile(updated);
         if (updated.selectedFont) {
           applyAppFont(updated.selectedFont);
+        }
+        if (updated.gradientMode) {
+          applyGradientMode(updated.gradientMode);
         }
       }
     } catch (err) {

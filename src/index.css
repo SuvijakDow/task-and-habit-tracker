@@ -245,3 +245,68 @@ body {
     transform: none !important;
   }
 }
+
+/* ==========================================
+   Solid Color Mode Overrides (No Gradients)
+   ========================================== */
+
+/* 1. Body background: clean, soft solid pastel tint instead of radial/linear gradients */
+[data-gradient-mode="solid"] body {
+  background: #f4eff7 !important;
+}
+
+/* 2. Neutralize background gradient images across Tailwind classes & animated gradients */
+[data-gradient-mode="solid"] [class*="bg-gradient-"],
+[data-gradient-mode="solid"] .consistency-gradient-animated {
+  background-image: none !important;
+  background-color: var(--tw-gradient-from, #7c3aed);
+}
+
+/* 3. Dark Hero Banners: turn off background gradient while preserving rich solid dark purple color */
+[data-gradient-mode="solid"] [class*="bg-gradient-to-br"][class*="from-[#3b0764]"] {
+  background-image: none !important;
+  background-color: #3b0764 !important;
+}
+
+/* 4. Auth header & banner solid background */
+[data-gradient-mode="solid"] [class*="bg-gradient-to-r"][class*="from-[#14082e]"] {
+  background-image: none !important;
+  background-color: #14082e !important;
+}
+
+/* 5. Text Gradient Clips: remove background clipping and transparent text, setting solid purple color */
+[data-gradient-mode="solid"] .bg-clip-text,
+[data-gradient-mode="solid"] [class*="bg-clip-text"] {
+  background-image: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: var(--tw-gradient-from, #6b21a8) !important;
+}
+
+[data-gradient-mode="solid"] [class*="text-transparent"][class*="bg-gradient-"] {
+  color: #6b21a8 !important;
+}
+
+/* 6. Modal Overlays: render solid translucent slate background overlay instead of gradient backdrop */
+[data-gradient-mode="solid"] [class*="bg-gradient-to-b"][class*="from-slate-"] {
+  background-image: none !important;
+  background-color: rgba(15, 23, 42, 0.55) !important;
+}
+
+/* 7. Heatmap cells: solid colors instead of gradients */
+[data-gradient-mode="solid"] [class*="bg-gradient-to-tr"][class*="from-purple-"] {
+  background-image: none !important;
+  background-color: #a855f7 !important;
+}
+[data-gradient-mode="solid"] [class*="bg-gradient-to-tr"][class*="from-amber-"] {
+  background-image: none !important;
+  background-color: #f59e0b !important;
+}
+
+/* 8. Progress bars: solid purple fill */
+[data-gradient-mode="solid"] [class*="bg-gradient-to-r"][class*="from-pink-500"][class*="to-purple-600"],
+[data-gradient-mode="solid"] [class*="bg-gradient-to-r"][class*="from-purple-500"][class*="via-pink-500"] {
+  background-image: none !important;
+  background-color: #9333ea !important;
+}
+
