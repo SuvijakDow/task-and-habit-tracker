@@ -501,7 +501,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-950/25 to-slate-950/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-      <div className="modal-enter w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-2xl border border-purple-100/90 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.25)] overflow-hidden">
+      <div className="modal-enter w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col bg-white border border-purple-100 rounded-2xl shadow-[0_24px_56px_rgba(120,87,255,0.22)] overflow-hidden">
         {/* Header with Title & Tab Navigation */}
         <div className="border-b border-purple-100/80 bg-gradient-to-r from-purple-50/50 via-white to-pink-50/30 shrink-0">
           <div className="flex items-center justify-between p-4 sm:px-6 sm:py-4">
@@ -514,7 +514,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
             <button
               onClick={handleClose}
               disabled={busy}
-              className="h-9 w-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 transition-all flex items-center justify-center border border-purple-100 disabled:opacity-50"
+              className="h-9 w-9 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors flex items-center justify-center border border-purple-100 disabled:opacity-50"
               aria-label="Close settings"
             >
               <X size={18} />
@@ -526,7 +526,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
             <button
               type="button"
               onClick={() => setActiveTab('profile')}
-              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors ${
                 activeTab === 'profile'
                   ? 'bg-purple-600 text-white shadow-xs'
                   : 'bg-white/80 text-gray-600 hover:bg-purple-50 hover:text-purple-900 border border-purple-100'
@@ -539,7 +539,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
             <button
               type="button"
               onClick={() => setActiveTab('data')}
-              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+              className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors whitespace-nowrap ${
                 activeTab === 'data'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-white/80 text-gray-600 hover:bg-rose-50 hover:text-rose-900 border border-purple-100'
@@ -552,7 +552,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 [will-change:scroll-position] transform-gpu">
           {/* Status Messages */}
           {error && (
             <div className="p-3 bg-rose-50/90 border border-rose-200 rounded-xl text-rose-700 text-sm font-medium">
@@ -621,7 +621,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={busy}
-                      className="inline-flex items-center gap-2 min-h-[38px] px-3.5 py-1.5 bg-white border border-purple-200 text-purple-700 font-bold rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all disabled:opacity-50 text-xs sm:text-sm shadow-2xs"
+                      className="inline-flex items-center gap-2 min-h-[38px] px-3.5 py-1.5 bg-white border border-purple-200 text-purple-700 font-bold rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-colors disabled:opacity-50 text-xs sm:text-sm shadow-2xs"
                     >
                       <Upload size={14} />
                       {isUploading ? 'Uploading...' : 'Upload Custom Photo'}
@@ -652,10 +652,10 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                           type="button"
                           onClick={() => setSelectedAvatar(avatarURL)}
                           disabled={busy}
-                          className={`relative aspect-square rounded-xl border-2 overflow-hidden transition-all duration-200 hover:scale-110 disabled:opacity-50 cursor-pointer ${
+                          className={`relative aspect-square rounded-xl border-2 overflow-hidden transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-50 cursor-pointer ${
                             isSelected
-                              ? 'border-purple-500 ring-2 ring-purple-500/30 shadow-md scale-105 bg-purple-50'
-                              : 'border-white hover:border-purple-200 bg-white shadow-2xs'
+                              ? 'border-purple-500 ring-2 ring-purple-500/30 shadow-md bg-purple-50'
+                              : 'border-white hover:border-purple-300 bg-white shadow-2xs'
                           }`}
                           title={`Avatar option ${index + 1}`}
                         >
@@ -663,6 +663,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                             src={normalizedAvatarURL}
                             alt={`Avatar ${index + 1}`}
                             className="w-full h-full object-cover"
+                            decoding="async"
                             loading="lazy"
                             referrerPolicy="no-referrer"
                           />
@@ -701,9 +702,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                         type="button"
                         onClick={() => handleFontSelect(font.id)}
                         disabled={busy}
-                        className={`flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                        className={`flex flex-col text-left p-3 rounded-xl border transition-[border-color,box-shadow,background-color] duration-150 cursor-pointer relative overflow-hidden ${
                           isSelected
-                            ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs scale-[1.01]'
+                            ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
                             : 'bg-white/80 border-purple-100 hover:border-purple-300 hover:bg-white'
                         }`}
                       >
@@ -744,9 +745,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                     type="button"
                     onClick={() => handleGradientModeSelect('solid')}
                     disabled={busy}
-                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-[border-color,box-shadow,background-color] duration-150 cursor-pointer relative overflow-hidden ${
                       selectedGradientMode === 'solid'
-                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs scale-[1.01]'
+                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
                         : 'bg-white/80 border-purple-100 hover:border-purple-300 hover:bg-white'
                     }`}
                   >
@@ -773,9 +774,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                     type="button"
                     onClick={() => handleGradientModeSelect('gradient')}
                     disabled={busy}
-                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+                    className={`flex flex-col text-left p-3.5 rounded-xl border transition-[border-color,box-shadow,background-color] duration-150 cursor-pointer relative overflow-hidden ${
                       selectedGradientMode === 'gradient'
-                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs scale-[1.01]'
+                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
                         : 'bg-white/80 border-purple-100 hover:border-purple-300 hover:bg-white'
                     }`}
                   >

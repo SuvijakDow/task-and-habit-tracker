@@ -274,16 +274,18 @@ body {
   background-color: #14082e !important;
 }
 
-/* 5. Text Gradient Clips: remove background clipping and transparent text, setting solid purple color */
+/* 5. Text Gradient Clips: remove background clipping and transparent text, setting solid purple color without background highlight box */
 [data-gradient-mode="solid"] .bg-clip-text,
 [data-gradient-mode="solid"] [class*="bg-clip-text"] {
   background-image: none !important;
+  background-color: transparent !important;
   -webkit-background-clip: unset !important;
   background-clip: unset !important;
   color: var(--tw-gradient-from, #6b21a8) !important;
 }
 
 [data-gradient-mode="solid"] [class*="text-transparent"][class*="bg-gradient-"] {
+  background-color: transparent !important;
   color: #6b21a8 !important;
 }
 
@@ -308,5 +310,24 @@ body {
 [data-gradient-mode="solid"] [class*="bg-gradient-to-r"][class*="from-purple-500"][class*="via-pink-500"] {
   background-image: none !important;
   background-color: #9333ea !important;
+}
+
+/* 9. Habit Schedule Day Pills: clear distinction between checked and unchecked days in solid mode */
+[data-gradient-mode="solid"] .peer:not(:checked) ~ span {
+  background-image: none !important;
+  background-color: #ffffff !important;
+  color: #581c87 !important;
+  border: 1.5px solid #d8b4fe !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+[data-gradient-mode="solid"] .peer:checked ~ span {
+  background-image: none !important;
+  background-color: #7c3aed !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border: 1.5px solid transparent !important;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3) !important;
 }
 

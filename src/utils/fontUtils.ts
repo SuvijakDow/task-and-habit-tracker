@@ -24,7 +24,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'สารบรรณ',
     fontFamily: "'Sarabun', sans-serif",
     googleFontQuery: 'Sarabun:wght@300;400;500;600;700;800',
-    previewText: 'คุยกับลูกค้าด้วยภาษาเทพแต่เขารับฟังด้วยภาษาคน',
+    previewText: 'วิธีแก้ง่วงที่ดีที่สุดคือการนอน',
     category: 'Formal & Clean',
   },
   {
@@ -42,7 +42,7 @@ export const APP_FONTS: FontOption[] = [
     nameThai: 'คนิต',
     fontFamily: "'Kanit', sans-serif",
     googleFontQuery: 'Kanit:wght@300;400;500;600;700;800',
-    previewText: 'คิดแคมเปญระดับพันล้านแต่เงินในบัญชีเหลือหลักร้อย',
+    previewText: 'คิดแคมเปญพันล้านแต้เงินในบัญชีมีแค่หลักพัน',
     category: 'Bold Geometric',
   },
   {

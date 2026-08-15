@@ -1072,7 +1072,7 @@ export function HabitsPage() {
                               }}
                               className="peer sr-only"
                             />
-                            <span className="flex min-h-[32px] sm:min-h-[38px] items-center justify-center rounded-xl border border-purple-200/80 bg-white text-[10px] sm:text-xs font-semibold text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-500 peer-checked:text-white peer-checked:shadow-sm hover:border-purple-300">
+                            <span className="flex min-h-[32px] sm:min-h-[38px] items-center justify-center rounded-xl border border-purple-200/90 bg-white text-[10px] sm:text-xs font-medium text-purple-900 shadow-2xs transition-all hover:bg-purple-50/80 hover:border-purple-300 peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-500 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:font-bold peer-checked:shadow-md">
                               {day}
                             </span>
                           </label>
@@ -1762,7 +1762,7 @@ export function HabitsPage() {
                               }}
                               className="peer sr-only"
                             />
-                            <span className="flex min-h-[32px] sm:min-h-[38px] items-center justify-center rounded-xl border border-purple-200/80 bg-white text-[10px] sm:text-xs font-semibold text-gray-700 transition-all peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-500 peer-checked:text-white peer-checked:shadow-sm hover:border-purple-300">
+                            <span className="flex min-h-[32px] sm:min-h-[38px] items-center justify-center rounded-xl border border-purple-200/90 bg-white text-[10px] sm:text-xs font-medium text-purple-900 shadow-2xs transition-all hover:bg-purple-50/80 hover:border-purple-300 peer-checked:border-transparent peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-pink-500 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:font-bold peer-checked:shadow-md">
                               {day}
                             </span>
                           </label>
