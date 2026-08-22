@@ -59,8 +59,8 @@ const TasksTable = memo(function TasksTable({
 }: Props) {
   const [pendingPage, setPendingPage] = useState(1);
   const [completedPage, setCompletedPage] = useState(1);
-  const [pendingPageSize, setPendingPageSize] = useState(10);
-  const [completedPageSize, setCompletedPageSize] = useState(10);
+  const [pendingPageSize, setPendingPageSize] = useState(20);
+  const [completedPageSize, setCompletedPageSize] = useState(20);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
@@ -521,6 +521,7 @@ const TasksTable = memo(function TasksTable({
               <option value={5}>5</option>
               <option value={10}>10</option>
               <option value={20}>20</option>
+              <option value={50}>50</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
