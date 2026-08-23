@@ -302,18 +302,18 @@ const TasksTable = memo(function TasksTable({
 
                   return (
                     <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass} relative ${togglingTaskId === t.id ? 'pointer-events-none' : ''}`}>
-                      {togglingTaskId === t.id && (
-                        <td colSpan={6} className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg flex items-center justify-center z-10">
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="relative">
-                              <div className="w-6 h-6 border-4 border-purple-200 rounded-full" />
-                              <div className="absolute top-0 left-0 w-6 h-6 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin" />
+                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center border-r-2 border-purple-200`}>
+                        {togglingTaskId === t.id && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg flex items-center justify-center z-10 pointer-events-auto">
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="relative">
+                                <div className="w-6 h-6 border-4 border-purple-200 rounded-full" />
+                                <div className="absolute top-0 left-0 w-6 h-6 border-4 border-transparent border-t-purple-500 border-r-pink-500 rounded-full animate-spin" />
+                              </div>
+                              <span className="text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Updating...</span>
                             </div>
-                            <span className="text-xs font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Updating...</span>
                           </div>
-                        </td>
-                      )}
-                      <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center relative border-r-2 border-purple-200`}>
+                        )}
                         {deadlineType === 'overdue' && (
                           <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-rose-500 shadow-2xs" />
                         )}
