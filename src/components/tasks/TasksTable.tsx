@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays, Check, CheckCircle2, ChevronDown, ListChecks, ListTodo, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import { DEFAULT_TASK_CATEGORY_NAME, DEFAULT_TASK_CATEGORY_COLOR, COLOR_HEX_REGEX } from '@/constants/taskConstants';
@@ -40,8 +40,10 @@ interface Props {
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   onEdit: (task: Task) => void;
+  onDuplicate: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onBulkSetCompletion: (taskIds: string[], isCompleted: boolean) => Promise<void>;
+  onBulkDuplicate: (taskIds: string[]) => Promise<void>;
   onBulkDelete: (taskIds: string[]) => Promise<void>;
   togglingTaskId: string | null;
 }
@@ -52,8 +54,10 @@ const TasksTable = memo(function TasksTable({
   onToggleCompletion,
   onToggleSubtask,
   onEdit,
+  onDuplicate,
   onDelete,
   onBulkSetCompletion,
+  onBulkDuplicate,
   onBulkDelete,
   togglingTaskId,
 }: Props) {
@@ -492,6 +496,16 @@ const TasksTable = memo(function TasksTable({
 
                           <button
                             type="button"
+                            onClick={() => onDuplicate(t)}
+                            className="h-7 w-7 rounded-lg bg-white hover:bg-purple-50 text-gray-500 hover:text-purple-600 border border-gray-200/80 hover:border-purple-200 transition-all flex items-center justify-center shadow-2xs"
+                            title="Duplicate task"
+                            aria-label={`Duplicate ${t.title}`}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => onDelete(t.id)}
                             className="h-7 w-7 rounded-lg bg-white hover:bg-rose-50 text-gray-400 hover:text-rose-600 border border-gray-200/80 hover:border-rose-200 transition-all flex items-center justify-center shadow-2xs"
                             title="Delete task"
@@ -621,6 +635,14 @@ const TasksTable = memo(function TasksTable({
                 className="px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition"
               >
                 Pending selected ({selectedCompletedIds.length})
+              </button>
+              <button
+                type="button"
+                disabled={selectedIds.size === 0 || isBulkRunning}
+                onClick={() => runBulk(() => onBulkDuplicate(Array.from(selectedIds)))}
+                className="px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm rounded-lg bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 disabled:opacity-50 transition"
+              >
+                Duplicate selected ({selectedIds.size})
               </button>
               <button
                 type="button"

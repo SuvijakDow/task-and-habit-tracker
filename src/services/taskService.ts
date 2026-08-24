@@ -237,3 +237,38 @@ export const deleteTask = async (taskId: string): Promise<void> => {
     throw error;
   }
 };
+
+/**
+ * Duplicate an existing task
+ */
+export const duplicateTask = async (
+  userId: string,
+  task: Task
+): Promise<string> => {
+  try {
+    const rawSubtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+    const newSubtasks = rawSubtasks.map((st, index) => ({
+      id: `st-${Date.now()}-${index}`,
+      title: st.title || '',
+      isCompleted: false,
+    }));
+
+    const duplicateTitle = task.title.endsWith('(Copy)')
+      ? task.title
+      : `${task.title} (Copy)`;
+
+    return await createTask(userId, {
+      title: duplicateTitle,
+      description: task.description || '',
+      category: task.category,
+      dueDate: task.dueDate ? new Date(task.dueDate) : null,
+      isCompleted: false,
+      setId: task.setId,
+      subtasks: newSubtasks,
+    });
+  } catch (error) {
+    console.error('Error duplicating task:', error);
+    throw error;
+  }
+};
+

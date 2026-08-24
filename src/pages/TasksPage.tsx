@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X, Sparkles, ClipboardList } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, Copy, FolderTree, Layers, ListTodo, Settings2, ListChecks, Plus, X, Sparkles, ClipboardList } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ import {
   getUserTasks,
   updateTask,
   deleteTask,
+  duplicateTask,
 } from '@/services/taskService';
 import { ensureDefaultCategories } from '@/services/categoryService';
 import TasksTable from '@/components/tasks/TasksTable';
@@ -602,6 +603,35 @@ export function TasksPage() {
     } catch (err) {
       showToast('Bulk delete failed. Please try again.', 'error');
       console.error('Error bulk deleting tasks:', err);
+      await loadTasks();
+    }
+  };
+
+  const handleDuplicateTask = async (task: Task) => {
+    if (!user) return;
+    try {
+      setTogglingTaskId(task.id);
+      await duplicateTask(user.uid, task);
+      await loadTasks();
+      showToast(`Duplicated "${task.title}" successfully.`, 'success');
+    } catch (err) {
+      showToast('Could not duplicate task. Please try again.', 'error');
+      console.error('Error duplicating task:', err);
+    } finally {
+      setTogglingTaskId(null);
+    }
+  };
+
+  const handleBulkDuplicate = async (taskIds: string[]) => {
+    if (!user || taskIds.length === 0) return;
+    try {
+      const tasksToDuplicate = tasks.filter((t) => taskIds.includes(t.id));
+      await Promise.all(tasksToDuplicate.map((task) => duplicateTask(user.uid, task)));
+      await loadTasks();
+      showToast(`Duplicated ${tasksToDuplicate.length} task(s).`, 'success');
+    } catch (err) {
+      showToast('Bulk duplicate failed. Please try again.', 'error');
+      console.error('Error bulk duplicating tasks:', err);
       await loadTasks();
     }
   };
@@ -1313,8 +1343,10 @@ export function TasksPage() {
                   onToggleCompletion={handleToggleCompletion}
                   onToggleSubtask={handleToggleTaskSubtask}
                   onEdit={handleEditTask}
+                  onDuplicate={handleDuplicateTask}
                   onDelete={handleDeleteTask}
                   onBulkSetCompletion={handleBulkSetCompletion}
+                  onBulkDuplicate={handleBulkDuplicate}
                   onBulkDelete={handleBulkDelete}
                   togglingTaskId={togglingTaskId}
                 />
@@ -1350,6 +1382,7 @@ export function TasksPage() {
                           onToggleCompletion={handleToggleCompletion}
                           onToggleSubtask={handleToggleTaskSubtask}
                           onEdit={handleEditTask}
+                          onDuplicate={handleDuplicateTask}
                           onDelete={handleDeleteTask}
                           togglingTaskId={togglingTaskId}
                         />
@@ -1379,6 +1412,7 @@ export function TasksPage() {
                           onToggleCompletion={handleToggleCompletion}
                           onToggleSubtask={handleToggleTaskSubtask}
                           onEdit={handleEditTask}
+                          onDuplicate={handleDuplicateTask}
                           onDelete={handleDeleteTask}
                           togglingTaskId={togglingTaskId}
                         />
@@ -1714,10 +1748,11 @@ interface TaskItemProps {
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
+  onDuplicate: (task: Task) => void;
   togglingTaskId: string | null;
 }
 
-const TaskItem = React.memo(function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit, togglingTaskId }: TaskItemProps) {
+const TaskItem = React.memo(function TaskItem({ task, categories, onToggleCompletion, onToggleSubtask, onDelete, onEdit, onDuplicate, togglingTaskId }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const matchedCategory = findCategoryByTaskValue(categories, task.category);
   const categoryName = matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
@@ -1804,6 +1839,14 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                 </svg>
+              </button>
+              <button
+                onClick={() => onDuplicate(task)}
+                className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-transparent hover:bg-white/80 text-gray-500 hover:text-purple-600 transition-all flex items-center justify-center"
+                title="Duplicate task"
+                aria-label={`Duplicate ${task.title}`}
+              >
+                <Copy className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => onDelete(task.id)}
