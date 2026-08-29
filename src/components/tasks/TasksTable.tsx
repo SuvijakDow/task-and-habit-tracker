@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Search, Star, Trash2, X } from 'lucide-react';
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import { DEFAULT_TASK_CATEGORY_NAME, DEFAULT_TASK_CATEGORY_COLOR, COLOR_HEX_REGEX } from '@/constants/taskConstants';
@@ -38,6 +38,7 @@ interface Props {
   tasks: Task[];
   categories: Category[];
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
+  onToggleStar?: (taskId: string, currentStarred: boolean) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
   onEdit: (task: Task) => void;
   onDuplicate: (task: Task) => void;
@@ -52,6 +53,7 @@ const TasksTable = memo(function TasksTable({
   tasks,
   categories,
   onToggleCompletion,
+  onToggleStar,
   onToggleSubtask,
   onEdit,
   onDuplicate,
@@ -331,9 +333,9 @@ const TasksTable = memo(function TasksTable({
                           aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
                           onClick={() => onToggleCompletion(t.id, t.isCompleted)}
                           disabled={togglingTaskId === t.id}
-                          className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${t.isCompleted
+                          className={`mx-auto h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center shadow-2xs ${t.isCompleted
                             ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                            : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                            : 'bg-purple-50/90 border-purple-400/90 text-transparent hover:border-purple-600 hover:bg-purple-100/90'
                           } ${togglingTaskId === t.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {togglingTaskId === t.id ? (
@@ -346,7 +348,30 @@ const TasksTable = memo(function TasksTable({
                         </button>
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-purple-100/70`}>
-                        <div className="font-medium text-gray-900 break-words">{t.title}</div>
+                        <div className="flex items-center gap-2">
+                          {onToggleStar && (
+                            <button
+                              type="button"
+                              onClick={() => onToggleStar(t.id, Boolean(t.isStarred))}
+                              className={`p-1 -ml-1 rounded-lg transition-all shrink-0 shadow-2xs ${
+                                t.isStarred
+                                  ? 'bg-amber-100/90 border border-amber-300'
+                                  : 'bg-amber-50/80 hover:bg-amber-100 border border-amber-200/90'
+                              }`}
+                              title={t.isStarred ? 'Unstar task' : 'Star task'}
+                              aria-label={t.isStarred ? `Unstar ${t.title}` : `Star ${t.title}`}
+                            >
+                              <Star
+                                className={`w-4 h-4 transition-transform duration-150 ${
+                                  t.isStarred
+                                    ? 'fill-amber-400 text-amber-500 drop-shadow-[0_2px_6px_rgba(245,158,11,0.45)] scale-105'
+                                    : 'text-amber-500/80 hover:text-amber-600'
+                                }`}
+                              />
+                            </button>
+                          )}
+                          <div className="font-medium text-gray-900 break-words flex-1 min-w-0">{t.title}</div>
+                        </div>
                         {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
                         {t.subtasks && t.subtasks.length > 0 && (() => {
                           const total = t.subtasks.length;

@@ -40,6 +40,11 @@ export const getDaysFromToday = (dueDate: Date | string | null | undefined): num
  * - Tertiary sort by createdAt descending.
  */
 export const sortIncompleteTasks = (a: Task, b: Task): number => {
+  const aStarred = Boolean(a.isStarred);
+  const bStarred = Boolean(b.isStarred);
+  if (aStarred && !bStarred) return -1;
+  if (!aStarred && bStarred) return 1;
+
   const aDue = getStartOfDayTimestamp(a.dueDate);
   const bDue = getStartOfDayTimestamp(b.dueDate);
 
@@ -63,6 +68,7 @@ export const sortIncompleteTasks = (a: Task, b: Task): number => {
 
 /**
  * Sort completed tasks:
+ * - Starred tasks on top.
  * - Tasks due today / future (non-overdue, diffDays >= 0) sorted by due date ascending.
  * - Tasks that are overdue (diffDays < 0) sorted by FEWER overdue days first (smaller Math.abs(diffDays) first, e.g. 2 days overdue before 4 days overdue).
  * - Non-overdue completed tasks come before overdue completed tasks.
@@ -71,6 +77,11 @@ export const sortIncompleteTasks = (a: Task, b: Task): number => {
  * - Tertiary sort by createdAt descending.
  */
 export const sortCompletedTasks = (a: Task, b: Task): number => {
+  const aStarred = Boolean(a.isStarred);
+  const bStarred = Boolean(b.isStarred);
+  if (aStarred && !bStarred) return -1;
+  if (!aStarred && bStarred) return 1;
+
   const aDiffDays = getDaysFromToday(a.dueDate);
   const bDiffDays = getDaysFromToday(b.dueDate);
 

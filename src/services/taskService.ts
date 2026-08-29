@@ -43,6 +43,7 @@ export const createTask = async (
     const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
       userId,
       ...taskData,
+      isStarred: Boolean(taskData.isStarred),
       subtasks: normalizeSubtasks(taskData.subtasks),
       category: normalizeTaskCategory(taskData.category),
       dueDate: taskData.dueDate ? Timestamp.fromDate(taskData.dueDate) : null,
@@ -72,6 +73,7 @@ export const getUserTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
+        isStarred: Boolean(task.isStarred),
         subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
@@ -102,6 +104,7 @@ export const getCompletedTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
+        isStarred: Boolean(task.isStarred),
         subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
@@ -132,6 +135,7 @@ export const getPendingTasks = async (userId: string): Promise<Task[]> => {
       return {
         id: doc.id,
         ...task,
+        isStarred: Boolean(task.isStarred),
         subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
         dueDate: task.dueDate?.toDate() || null,
@@ -161,6 +165,7 @@ export const getTaskById = async (taskId: string): Promise<Task | null> => {
     return {
       id: docSnap.id,
       ...task,
+      isStarred: Boolean(task.isStarred),
       subtasks: normalizeSubtasks(task.subtasks),
       category: normalizeTaskCategory(task.category),
       dueDate: task.dueDate?.toDate() || null,
@@ -226,6 +231,21 @@ export const toggleTaskCompletion = async (
 };
 
 /**
+ * Toggle task star status
+ */
+export const toggleTaskStar = async (
+  taskId: string,
+  isStarred: boolean
+): Promise<void> => {
+  try {
+    await updateTask(taskId, { isStarred });
+  } catch (error) {
+    console.error('Error toggling task star:', error);
+    throw error;
+  }
+};
+
+/**
  * Delete a task
  */
 export const deleteTask = async (taskId: string): Promise<void> => {
@@ -263,6 +283,7 @@ export const duplicateTask = async (
       category: task.category,
       dueDate: task.dueDate ? new Date(task.dueDate) : null,
       isCompleted: false,
+      isStarred: Boolean(task.isStarred),
       setId: task.setId,
       subtasks: newSubtasks,
     });

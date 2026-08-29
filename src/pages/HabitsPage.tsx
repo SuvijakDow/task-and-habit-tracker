@@ -1376,9 +1376,9 @@ export function HabitsPage() {
                           aria-checked={isCompletedToday}
                           aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
                           onClick={() => handleToggleHabit(habit.id, isCompletedToday)}
-                          className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border transition-all duration-200 flex items-center justify-center flex-shrink-0 ${isCompletedToday
+                          className={`h-4 w-4 sm:h-5 sm:w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center flex-shrink-0 shadow-2xs ${isCompletedToday
                               ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
-                              : 'bg-white/70 border-purple-200 text-transparent hover:border-purple-300'
+                              : 'bg-purple-50/90 border-purple-400/90 text-transparent hover:border-purple-600 hover:bg-purple-100/90'
                             }`}
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

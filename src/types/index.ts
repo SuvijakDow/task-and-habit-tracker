@@ -13,6 +13,7 @@ export interface Task {
   setId?: string; // Id of the TaskPreset it belongs to
   dueDate: Date | null;
   isCompleted: boolean;
+  isStarred?: boolean;
   subtasks?: Subtask[];
   createdAt: Date;
   updatedAt: Date;

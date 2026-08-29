@@ -191,10 +191,10 @@ const HabitsTable = memo(function HabitsTable({
                             aria-checked={isCompletedToday}
                             aria-label={`Mark ${habit.title} as ${isCompletedToday ? 'incomplete' : 'completed'}`}
                             onClick={() => onToggleCompletion(habit.id, isCompletedToday)}
-                            className={`mx-auto h-5 w-5 rounded border transition-all duration-200 flex items-center justify-center ${
+                            className={`mx-auto h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center shadow-2xs ${
                               isCompletedToday
                                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                                : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
+                                : 'bg-purple-50/90 border-purple-400/90 text-transparent hover:border-purple-600 hover:bg-purple-100/90'
                             }`}
                           >
                             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
