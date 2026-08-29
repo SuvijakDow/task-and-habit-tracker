@@ -372,9 +372,11 @@ const TasksTable = memo(function TasksTable({
                               />
                             </button>
                           )}
-                          <div className="font-medium text-gray-900 break-words flex-1 min-w-0">{t.title}</div>
+                          <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+                            <div className="font-medium text-gray-900 break-words leading-tight">{t.title}</div>
+                            {t.description && <div className="text-xs text-gray-500 break-words leading-snug">{t.description}</div>}
+                          </div>
                         </div>
-                        {t.description && <div className="text-xs text-gray-500 break-words mt-0.5">{t.description}</div>}
                         {t.subtasks && t.subtasks.length > 0 && (() => {
                           const total = t.subtasks.length;
                           const completed = t.subtasks.filter((s) => s.isCompleted).length;
