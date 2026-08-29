@@ -258,8 +258,29 @@ body {
 
 [data-gradient-mode="solid"] .glass-card {
   background-color: #ffffff !important;
-  border-color: rgba(216, 180, 254, 0.5) !important;
   box-shadow: 0 4px 16px rgba(124, 58, 237, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Status Cards & Highlight Borders in Solid Color Mode */
+[data-gradient-mode="solid"] .border-rose-500\/90,
+[data-gradient-mode="solid"] [class*="border-rose-500"] {
+  border-color: #f43f5e !important;
+  border-width: 2px !important;
+  box-shadow: 0 4px 20px rgba(244, 63, 94, 0.16) !important;
+}
+
+[data-gradient-mode="solid"] .border-amber-400\/95,
+[data-gradient-mode="solid"] [class*="border-amber-400"] {
+  border-color: #f59e0b !important;
+  border-width: 2px !important;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.16) !important;
+}
+
+[data-gradient-mode="solid"] .border-l-purple-600,
+[data-gradient-mode="solid"] [class*="border-l-purple-600"] {
+  border-left-color: #7e22ce !important;
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
 }
 
 [data-gradient-mode="solid"] .glass-header {

@@ -307,7 +307,7 @@ const TasksTable = memo(function TasksTable({
                   const rowBgClass = isSelected ? selectedBg : statusRowClass;
 
                   return (
-                    <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass} relative ${togglingTaskId === t.id ? 'pointer-events-none' : ''}`}>
+                    <tr key={t.id} className={`border-t last:border-b transition-colors ${rowBgClass} ${togglingTaskId === t.id ? 'pointer-events-none' : ''}`}>
                       <td className={`px-3.5 ${tdPaddingClass} whitespace-nowrap text-center border-r-2 border-purple-200`}>
                         {togglingTaskId === t.id && (
                           <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg flex items-center justify-center z-10 pointer-events-auto">
@@ -320,32 +320,34 @@ const TasksTable = memo(function TasksTable({
                             </div>
                           </div>
                         )}
-                        {deadlineType === 'overdue' && (
-                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-rose-500 shadow-2xs" />
-                        )}
-                        {deadlineType === 'today' && (
-                          <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-amber-500 shadow-2xs" />
-                        )}
-                        <button
-                          type="button"
-                          role="checkbox"
-                          aria-checked={t.isCompleted}
-                          aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
-                          onClick={() => onToggleCompletion(t.id, t.isCompleted)}
-                          disabled={togglingTaskId === t.id}
-                          className={`mx-auto h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center shadow-2xs ${t.isCompleted
-                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
-                            : 'bg-purple-50/90 border-purple-400/90 text-transparent hover:border-purple-600 hover:bg-purple-100/90'
-                          } ${togglingTaskId === t.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          {togglingTaskId === t.id ? (
-                            <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
+                        <div className="relative inline-flex items-center justify-center">
+                          {deadlineType === 'overdue' && (
+                            <span className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-5 rounded-r-full bg-rose-500 shadow-2xs" />
                           )}
-                        </button>
+                          {deadlineType === 'today' && (
+                            <span className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-1.5 h-5 rounded-r-full bg-amber-500 shadow-2xs" />
+                          )}
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={t.isCompleted}
+                            aria-label={`Mark ${t.title} as ${t.isCompleted ? 'incomplete' : 'completed'}`}
+                            onClick={() => onToggleCompletion(t.id, t.isCompleted)}
+                            disabled={togglingTaskId === t.id}
+                            className={`mx-auto h-5 w-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center shadow-2xs ${t.isCompleted
+                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_4px_12px_rgba(184,109,214,0.35)]'
+                              : 'bg-purple-50/90 border-purple-400/90 text-transparent hover:border-purple-600 hover:bg-purple-100/90'
+                            } ${togglingTaskId === t.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {togglingTaskId === t.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </td>
                       <td className={`px-3.5 ${tdPaddingClass} min-w-[calc(100vw-78px)] sm:min-w-[220px] border-r border-purple-100/70`}>
                         <div className="flex items-center gap-2">
