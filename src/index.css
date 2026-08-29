@@ -250,9 +250,20 @@ body {
    Solid Color Mode Overrides (No Gradients)
    ========================================== */
 
-/* 1. Body background: clean, soft solid pastel tint instead of radial/linear gradients */
+/* 1. Body background & cards: elegant solid pastel purple tint with distinct contrast against white cards */
 [data-gradient-mode="solid"] body {
-  background: #f4eff7 !important;
+  background-color: #e4d7f0 !important;
+}
+
+[data-gradient-mode="solid"] .glass-card {
+  background-color: #ffffff !important;
+  border-color: rgba(216, 180, 254, 0.5) !important;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-gradient-mode="solid"] .glass-header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: rgba(216, 180, 254, 0.4) !important;
 }
 
 /* 2. Neutralize background gradient images across Tailwind classes & animated gradients */
