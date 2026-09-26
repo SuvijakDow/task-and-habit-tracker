@@ -13,7 +13,8 @@ A modern, full-featured productivity web application for managing tasks by time 
 ## ✨ Key Features
 
 ### 📋 Task Management
-- **Star & Pin Tasks**: ⭐ Star any task to pin it to the top of your list instantly.
+- **Link Smart Chips**: 🔗 Google Docs-style Smart Chips for URLs with auto-detect icons (GitHub, Drive, Figma, YouTube, Notion), custom display labels, and organized 3x3 icon grid.
+- **Star & Pin Tasks**: ⭐ Star any task to pin it to the top of your list instantly in both List and Table views.
 - **Task Presets (Periods)**: Group tasks by terms, semesters, or custom project periods (e.g., `2569/1`).
 - **Subtask Checklists**: Actionable subtasks with live progress bar and auto-sync completion.
 - **Dual View Modes**: Switch seamlessly between **Card/List View** and **Table View**.
@@ -30,10 +31,11 @@ A modern, full-featured productivity web application for managing tasks by time 
 - **Editable History**: Click past dates to toggle status between **Completed**, **Not Scheduled**, **Missed**, or **Partial**.
 - **Excused Days**: Mark non-scheduled days so streaks and consistency scores stay accurate.
 
-### 🎨 Themes & Customization
-- **Color Style Modes**: Toggle between **Soft Gradients** and **High-Contrast Solid Color Mode**.
+### 🎨 Themes & Performance
+- **Color Style Modes**: Toggle between **Soft Gradients** and **High-Contrast Solid Color Mode** (with pixel-perfect border alignments).
+- **60 FPS Modal Performance**: Optimized React state memoization (`React.memo` & `useCallback`) and zero-lag overlay compositing for smooth typing.
 - **Typography**: Choose from curated Thai & English fonts (Bai Jamjuree, Prompt, Sarabun, Inter, Kanit, etc.).
-- **Mobile Optimized**: Compact 3-dots action menus and row-aligned controls built for mobile screens.
+- **Mobile & Tablet Optimized**: Compact 3-dots action menus, full-height scrollable modal bounds, and responsive row alignments.
 - **Data Backup & Restore**: Export/import data via JSON with Replace or Merge modes.
 
 ---
@@ -105,7 +107,7 @@ src/
 ├── components/          # Reusable UI, Habit, Task, and Modal components
 │   ├── habits/         # Heatmap, Timeline, Habits Table
 │   ├── modals/         # Category, Settings, History, Period modals
-│   └── tasks/          # Tasks Table component
+│   └── tasks/          # Tasks Table & TaskSmartChip components
 ├── config/             # Firebase configuration
 ├── context/            # Auth and Refresh Context providers
 ├── pages/              # TasksPage, HabitsPage, AnalyticsPage, AuthPage

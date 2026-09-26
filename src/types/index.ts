@@ -4,6 +4,12 @@ export interface Subtask {
   isCompleted: boolean;
 }
 
+export interface TaskLinkChip {
+  url: string;
+  label?: string;
+  icon?: string;
+}
+
 export interface Task {
   id: string;
   userId: string;
@@ -15,6 +21,7 @@ export interface Task {
   isCompleted: boolean;
   isStarred?: boolean;
   subtasks?: Subtask[];
+  linkChip?: TaskLinkChip;
   createdAt: Date;
   updatedAt: Date;
 }

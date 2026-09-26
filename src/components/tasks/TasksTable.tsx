@@ -5,6 +5,7 @@ import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListT
 import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import { DEFAULT_TASK_CATEGORY_NAME, DEFAULT_TASK_CATEGORY_COLOR, COLOR_HEX_REGEX } from '@/constants/taskConstants';
+import { TaskSmartChip } from './TaskSmartChip';
 
 type QuickFilter = 'all' | 'today' | 'overdue' | 'week';
 
@@ -375,6 +376,11 @@ const TasksTable = memo(function TasksTable({
                           <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
                             <div className="font-medium text-gray-900 break-words leading-tight">{t.title}</div>
                             {t.description && <div className="text-xs text-gray-500 break-words leading-snug">{t.description}</div>}
+                            {t.linkChip && t.linkChip.url && (
+                              <div className="mt-0.5">
+                                <TaskSmartChip chip={t.linkChip} />
+                              </div>
+                            )}
                           </div>
                         </div>
                         {t.subtasks && t.subtasks.length > 0 && (() => {

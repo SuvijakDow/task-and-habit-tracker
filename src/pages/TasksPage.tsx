@@ -31,6 +31,7 @@ import {
   updateTaskPreset,
 } from '@/services/taskPresetService';
 import { ManageTaskPresetsModal } from '@/components/modals/ManageTaskPresetsModal';
+import { TaskSmartChip, CHIP_ICON_OPTIONS, autoDetectLinkChip } from '@/components/tasks/TaskSmartChip';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -112,6 +113,9 @@ export function TasksPage() {
     dueDate: string;
     setId: string;
     subtasks: Subtask[];
+    linkUrl: string;
+    linkLabel: string;
+    linkIcon: string;
   }>({
     title: '',
     description: '',
@@ -119,6 +123,9 @@ export function TasksPage() {
     dueDate: '',
     setId: '',
     subtasks: [],
+    linkUrl: '',
+    linkLabel: '',
+    linkIcon: 'link',
   });
   const [subtaskInputText, setSubtaskInputText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -133,6 +140,9 @@ export function TasksPage() {
     dueDate: string;
     setId: string;
     subtasks: Subtask[];
+    linkUrl: string;
+    linkLabel: string;
+    linkIcon: string;
   }>({
     title: '',
     description: '',
@@ -140,8 +150,38 @@ export function TasksPage() {
     dueDate: '',
     setId: '',
     subtasks: [],
+    linkUrl: '',
+    linkLabel: '',
+    linkIcon: 'link',
   });
   const [editSubtaskInputText, setEditSubtaskInputText] = useState('');
+
+  const handleLinkUrlChange = (newUrl: string, isEdit = false) => {
+    const auto = autoDetectLinkChip(newUrl);
+    if (isEdit) {
+      setEditFormData((prev) => {
+        const shouldAutoIcon = !prev.linkIcon || prev.linkIcon === 'link' || !prev.linkUrl;
+        const shouldAutoLabel = !prev.linkLabel;
+        return {
+          ...prev,
+          linkUrl: newUrl,
+          linkIcon: shouldAutoIcon ? auto.icon : prev.linkIcon,
+          linkLabel: shouldAutoLabel ? auto.suggestedLabel : prev.linkLabel,
+        };
+      });
+    } else {
+      setFormData((prev) => {
+        const shouldAutoIcon = !prev.linkIcon || prev.linkIcon === 'link' || !prev.linkUrl;
+        const shouldAutoLabel = !prev.linkLabel;
+        return {
+          ...prev,
+          linkUrl: newUrl,
+          linkIcon: shouldAutoIcon ? auto.icon : prev.linkIcon,
+          linkLabel: shouldAutoLabel ? auto.suggestedLabel : prev.linkLabel,
+        };
+      });
+    }
+  };
 
   // Delete confirmation state
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
@@ -215,7 +255,7 @@ export function TasksPage() {
     return defaultCategory?.id || DEFAULT_TASK_CATEGORY_NAME;
   };
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     if (!user) return;
     try {
       setLoadError(null);
@@ -228,7 +268,7 @@ export function TasksPage() {
       setError(message);
       console.error('Error loading tasks:', err);
     }
-  };
+  }, [user]);
 
   const loadCategories = async () => {
     if (!user) return;
@@ -410,6 +450,13 @@ export function TasksPage() {
       setError(null);
 
       const selectedCategory = findCategoryByTaskValue(categories, formData.category);
+      const linkChipToSave = formData.linkUrl.trim()
+        ? {
+            url: formData.linkUrl.trim(),
+            label: formData.linkLabel.trim() || undefined,
+            icon: formData.linkIcon || 'link',
+          }
+        : undefined;
 
       await createTask(user.uid, {
         title: formData.title,
@@ -419,10 +466,11 @@ export function TasksPage() {
         isCompleted: false,
         setId: formData.setId || activePresetId || undefined,
         subtasks: formData.subtasks || [],
+        linkChip: linkChipToSave,
       });
 
       // Reset form and close modal
-      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [] });
+      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [], linkUrl: '', linkLabel: '', linkIcon: 'link' });
       setSubtaskInputText('');
       setIsModalOpen(false);
 
@@ -625,7 +673,7 @@ export function TasksPage() {
     }
   };
 
-  const handleDuplicateTask = async (task: Task) => {
+  const handleDuplicateTask = useCallback(async (task: Task) => {
     if (!user) return;
     try {
       setTogglingTaskId(task.id);
@@ -638,7 +686,7 @@ export function TasksPage() {
     } finally {
       setTogglingTaskId(null);
     }
-  };
+  }, [user, loadTasks]);
 
   const handleBulkDuplicate = async (taskIds: string[]) => {
     if (!user || taskIds.length === 0) return;
@@ -654,7 +702,7 @@ export function TasksPage() {
     }
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = useCallback((task: Task) => {
     const matchedCategory = findCategoryByTaskValue(categories, task.category);
     setEditingTaskId(task.id);
     setEditFormData({
@@ -666,9 +714,12 @@ export function TasksPage() {
         : '',
       setId: task.setId || presets[0]?.id || activePresetId,
       subtasks: task.subtasks ?? [],
+      linkUrl: task.linkChip?.url || '',
+      linkLabel: task.linkChip?.label || '',
+      linkIcon: task.linkChip?.icon || 'link',
     });
     setEditSubtaskInputText('');
-  };
+  }, [categories, presets, activePresetId]);
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -690,6 +741,14 @@ export function TasksPage() {
       // Preserve current isCompleted status - don't recalculate
       const isCompleted = currentTask?.isCompleted ?? false;
 
+      const linkChipToSave = editFormData.linkUrl.trim()
+        ? {
+            url: editFormData.linkUrl.trim(),
+            label: editFormData.linkLabel.trim() || undefined,
+            icon: editFormData.linkIcon || 'link',
+          }
+        : undefined;
+
       // Prepare updates
       const updates: any = {
         title: editFormData.title,
@@ -698,6 +757,7 @@ export function TasksPage() {
         dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
         setId: editFormData.setId || activePresetId || undefined,
         isCompleted: isCompleted,
+        linkChip: linkChipToSave || null,
       };
 
       // Update subtasks if they exist
@@ -721,6 +781,7 @@ export function TasksPage() {
               setId: editFormData.setId || activePresetId || undefined,
               subtasks: updates.subtasks !== undefined ? subtasks : t.subtasks,
               isCompleted: isCompleted,
+              linkChip: linkChipToSave,
             }
             : t
         )
@@ -737,13 +798,13 @@ export function TasksPage() {
 
   const handleCancelEdit = () => {
     setEditingTaskId(null);
-    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [] });
+    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [], linkUrl: '', linkLabel: '', linkIcon: 'link' });
     setEditSubtaskInputText('');
   };
 
-  const handleDeleteTask = async (taskId: string) => {
+  const handleDeleteTask = useCallback((taskId: string) => {
     setDeletingTaskId(taskId);
-  };
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (!deletingTaskId) return;
@@ -918,6 +979,9 @@ export function TasksPage() {
                       dueDate: '',
                       setId: activePresetId,
                       subtasks: [],
+                      linkUrl: '',
+                      linkLabel: '',
+                      linkIcon: 'link',
                     });
                     setSubtaskInputText('');
                     setIsModalOpen(true);
@@ -968,6 +1032,9 @@ export function TasksPage() {
                     dueDate: '',
                     setId: activePresetId,
                     subtasks: [],
+                    linkUrl: '',
+                    linkLabel: '',
+                    linkIcon: 'link',
                   });
                   setSubtaskInputText('');
                   setIsModalOpen(true);
@@ -1047,11 +1114,11 @@ export function TasksPage() {
 
         {/* Add Task Form Modal */}
         {isModalOpen && createPortal(
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
-              <form onSubmit={handleSubmit} className="flex flex-col h-full max-h-full">
+          <div className="fixed inset-0 bg-slate-950/40 sm:backdrop-blur-xs flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4 overflow-hidden">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[88dvh] max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                     <Plus className="w-5 h-5 text-purple-600" />
                     Add New Task
@@ -1066,7 +1133,7 @@ export function TasksPage() {
                 </div>
 
                 {/* Scrollable Form Body */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
                   {/* Error Message */}
                   {error && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
@@ -1109,6 +1176,87 @@ export function TasksPage() {
                       className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition resize-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
                       disabled={isSubmitting}
                     />
+                  </div>
+
+                  {/* Link Smart Chip Section */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/50 border border-purple-100/90 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        Link Smart Chip (Optional)
+                      </label>
+                      {formData.linkUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, linkUrl: '', linkLabel: '', linkIcon: 'link' }))}
+                          className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <input
+                        type="url"
+                        value={formData.linkUrl}
+                        onChange={(e) => handleLinkUrlChange(e.target.value, false)}
+                        placeholder="Paste URL (e.g. https://github.com/user/repo, Drive link...)"
+                        className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    {formData.linkUrl.trim() !== '' && (
+                      <div className="space-y-2 pt-1 border-t border-purple-100/70">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Display Text (Label)
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.linkLabel}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, linkLabel: e.target.value }))}
+                            placeholder="Display text for link (e.g. GitHub Repo)"
+                            className="w-full min-h-[36px] rounded-xl border border-purple-200 bg-white px-3 py-1 text-xs text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1.5">
+                            Chip Icon
+                          </label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {CHIP_ICON_OPTIONS.map((opt) => {
+                              const IconComp = opt.icon;
+                              const isSelected = (formData.linkIcon || 'link') === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setFormData((prev) => ({ ...prev, linkIcon: opt.id }))}
+                                  className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs transition-all ${
+                                    isSelected
+                                      ? 'bg-purple-600 text-white shadow-xs font-semibold'
+                                      : 'bg-white text-gray-700 hover:bg-purple-100/80 border border-purple-200/90 font-medium'
+                                  }`}
+                                >
+                                  <IconComp className="w-3.5 h-3.5 shrink-0" />
+                                  <span className="truncate text-center">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Live Chip Preview */}
+                        <div className="pt-1.5 flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-gray-500">Preview:</span>
+                          <TaskSmartChip chip={{ url: formData.linkUrl, label: formData.linkLabel, icon: formData.linkIcon }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Grouped Grid Controls */}
@@ -1281,7 +1429,7 @@ export function TasksPage() {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
@@ -1341,6 +1489,9 @@ export function TasksPage() {
                   dueDate: '',
                   setId: activePresetId,
                   subtasks: [],
+                  linkUrl: '',
+                  linkLabel: '',
+                  linkIcon: 'link',
                 });
                 setSubtaskInputText('');
                 setIsModalOpen(true);
@@ -1447,11 +1598,11 @@ export function TasksPage() {
         )}
         {/* Edit Task Modal */}
         {editingTaskId && createPortal(
-          <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-purple-900/25 to-fuchsia-900/35 backdrop-blur-xs sm:backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-auto max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white sm:bg-white/95 backdrop-blur-xl border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
-              <form onSubmit={handleSaveEdit} className="flex flex-col h-full max-h-full">
+          <div className="fixed inset-0 bg-slate-950/40 sm:backdrop-blur-xs flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4 overflow-hidden">
+            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[88dvh] max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
+              <form onSubmit={handleSaveEdit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50">
+                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                     <Settings2 className="w-5 h-5 text-purple-600" />
                     Edit Task
@@ -1466,7 +1617,7 @@ export function TasksPage() {
                 </div>
 
                 {/* Scrollable Form Body */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
                   {/* Error Message */}
                   {error && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
@@ -1508,6 +1659,87 @@ export function TasksPage() {
                       className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition resize-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
                       disabled={isSubmitting}
                     />
+                  </div>
+
+                  {/* Link Smart Chip Section */}
+                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/50 border border-purple-100/90 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        Link Smart Chip (Optional)
+                      </label>
+                      {editFormData.linkUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setEditFormData((prev) => ({ ...prev, linkUrl: '', linkLabel: '', linkIcon: 'link' }))}
+                          className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <input
+                        type="url"
+                        value={editFormData.linkUrl}
+                        onChange={(e) => handleLinkUrlChange(e.target.value, true)}
+                        placeholder="Paste URL (e.g. https://github.com/user/repo, Drive link...)"
+                        className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    {editFormData.linkUrl.trim() !== '' && (
+                      <div className="space-y-2 pt-1 border-t border-purple-100/70">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">
+                            Display Text (Label)
+                          </label>
+                          <input
+                            type="text"
+                            value={editFormData.linkLabel}
+                            onChange={(e) => setEditFormData((prev) => ({ ...prev, linkLabel: e.target.value }))}
+                            placeholder="Display text for link (e.g. GitHub Repo)"
+                            className="w-full min-h-[36px] rounded-xl border border-purple-200 bg-white px-3 py-1 text-xs text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1.5">
+                            Chip Icon
+                          </label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {CHIP_ICON_OPTIONS.map((opt) => {
+                              const IconComp = opt.icon;
+                              const isSelected = (editFormData.linkIcon || 'link') === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setEditFormData((prev) => ({ ...prev, linkIcon: opt.id }))}
+                                  className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs transition-all ${
+                                    isSelected
+                                      ? 'bg-purple-600 text-white shadow-xs font-semibold'
+                                      : 'bg-white text-gray-700 hover:bg-purple-100/80 border border-purple-200/90 font-medium'
+                                  }`}
+                                >
+                                  <IconComp className="w-3.5 h-3.5 shrink-0" />
+                                  <span className="truncate text-center">{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Live Chip Preview */}
+                        <div className="pt-1.5 flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-gray-500">Preview:</span>
+                          <TaskSmartChip chip={{ url: editFormData.linkUrl, label: editFormData.linkLabel, icon: editFormData.linkIcon }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Grouped Grid Controls */}
@@ -1683,7 +1915,7 @@ export function TasksPage() {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80">
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80 shrink-0">
                   <button
                     type="button"
                     onClick={handleCancelEdit}
@@ -2022,6 +2254,11 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
               </span>
             ) : null;
           })()}
+
+          {/* Link Smart Chip (if exists) */}
+          {task.linkChip && task.linkChip.url && (
+            <TaskSmartChip chip={task.linkChip} />
+          )}
 
           {totalSubtasks > 0 && (
             <button

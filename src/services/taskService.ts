@@ -286,6 +286,7 @@ export const duplicateTask = async (
       isStarred: Boolean(task.isStarred),
       setId: task.setId,
       subtasks: newSubtasks,
+      linkChip: task.linkChip ? { ...task.linkChip } : undefined,
     });
   } catch (error) {
     console.error('Error duplicating task:', error);
