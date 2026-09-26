@@ -190,10 +190,13 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       const backupObj = {
         exportDate: new Date().toISOString(),
         appName: 'Task & Habit Tracker',
+        version: '2.0',
         user: {
           uid: user.uid,
           email: user.email,
           displayName: userProfile?.displayName || user.displayName,
+          selectedFont: userProfile?.selectedFont || getStoredFontId(),
+          gradientMode: userProfile?.gradientMode || getStoredGradientMode(),
         },
         data: {
           tasks: userTasks,
@@ -201,6 +204,10 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
           categories: userCategories,
           habitSets: userSets,
           taskPresets: userTaskPresets,
+          settings: {
+            selectedFont: userProfile?.selectedFont || getStoredFontId(),
+            gradientMode: userProfile?.gradientMode || getStoredGradientMode(),
+          },
         },
       };
 
@@ -324,7 +331,12 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       if (Array.isArray(taskPresets) && taskPresets.length > 0) {
         for (const preset of taskPresets) {
           try {
-            const newPreset = await createTaskPreset(user.uid, preset.name, preset.color);
+            const newPreset = await createTaskPreset(
+              user.uid,
+              preset.name,
+              preset.color,
+              importMode === 'replace' ? preset.isActive : false
+            );
             taskPresetMapping.set(preset.id, newPreset.id);
           } catch (err) {
             console.warn('Failed to import task preset:', preset.name, err);
@@ -341,15 +353,26 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
             // Map preset ID if it exists in mapping
             const mappedPresetId = taskPresetMapping.get(task.setId) || task.setId;
 
-            await createTask(user.uid, {
-              title: task.title,
-              description: task.description,
+            const taskDataToCreate: any = {
+              title: task.title || '',
+              description: task.description || '',
               category: mappedCategoryId,
               dueDate: task.dueDate ? new Date(task.dueDate) : null,
-              isCompleted: task.isCompleted,
-              subtasks: task.subtasks,
-              setId: mappedPresetId,
-            });
+              isCompleted: Boolean(task.isCompleted),
+              isStarred: Boolean(task.isStarred),
+              subtasks: task.subtasks || [],
+              setId: mappedPresetId || undefined,
+            };
+
+            if (task.linkChip && task.linkChip.url) {
+              taskDataToCreate.linkChip = {
+                url: task.linkChip.url,
+                label: task.linkChip.label || undefined,
+                icon: task.linkChip.icon || 'link',
+              };
+            }
+
+            await createTask(user.uid, taskDataToCreate);
           } catch (err) {
             console.warn('Failed to import task:', task.title, err);
           }
@@ -379,10 +402,35 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               targetValue: habit.targetValue,
               targetUnit: habit.targetUnit,
               dailyProgress: habit.dailyProgress,
+              notScheduledDates: Array.isArray(habit.notScheduledDates) ? habit.notScheduledDates : [],
               trackingStartDate: habit.trackingStartDate ? new Date(habit.trackingStartDate) : undefined,
             });
           } catch (err) {
             console.warn('Failed to import habit:', habit.title, err);
+          }
+        }
+      }
+
+      // Restore theme & display settings if present in backup (in replace mode or if user has no custom theme yet)
+      if (backupObj.data?.settings || backupObj.user) {
+        const importedFont = backupObj.data?.settings?.selectedFont || backupObj.user?.selectedFont;
+        const importedGradient = backupObj.data?.settings?.gradientMode || backupObj.user?.gradientMode;
+
+        if (importMode === 'replace') {
+          if (importedFont) {
+            setSelectedFont(importedFont);
+            applyAppFont(importedFont);
+          }
+          if (importedGradient) {
+            setSelectedGradientMode(importedGradient);
+            applyGradientMode(importedGradient);
+          }
+          if (importedFont || importedGradient) {
+            await updateUserProfile(user.uid, {
+              selectedFont: importedFont || selectedFont,
+              gradientMode: importedGradient || selectedGradientMode,
+            });
+            await refreshUserProfile();
           }
         }
       }

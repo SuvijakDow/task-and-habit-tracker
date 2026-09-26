@@ -40,21 +40,51 @@ export const createTask = async (
   taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>
 ): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, TASKS_COLLECTION), {
+    const payload: Record<string, any> = {
       userId,
-      ...taskData,
+      title: taskData.title || '',
+      description: taskData.description || '',
+      isCompleted: Boolean(taskData.isCompleted),
       isStarred: Boolean(taskData.isStarred),
       subtasks: normalizeSubtasks(taskData.subtasks),
       category: normalizeTaskCategory(taskData.category),
       dueDate: taskData.dueDate ? Timestamp.fromDate(taskData.dueDate) : null,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
-    });
+    };
+
+    if (taskData.setId) {
+      payload.setId = taskData.setId;
+    }
+
+    if (taskData.linkChip && taskData.linkChip.url) {
+      payload.linkChip = {
+        url: taskData.linkChip.url,
+        ...(taskData.linkChip.label ? { label: taskData.linkChip.label } : {}),
+        ...(taskData.linkChip.icon ? { icon: taskData.linkChip.icon } : {}),
+      };
+    }
+
+    const docRef = await addDoc(collection(db, TASKS_COLLECTION), payload);
     return docRef.id;
   } catch (error) {
     console.error('Error creating task:', error);
     throw error;
   }
+};
+
+const toSafeDate = (value: any): Date => {
+  if (!value) return new Date();
+  if (typeof value?.toDate === 'function') return value.toDate();
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? new Date() : d;
+};
+
+const toSafeNullableDate = (value: any): Date | null => {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') return value.toDate();
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
 };
 
 /**
@@ -76,9 +106,9 @@ export const getUserTasks = async (userId: string): Promise<Task[]> => {
         isStarred: Boolean(task.isStarred),
         subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
-        dueDate: task.dueDate?.toDate() || null,
-        createdAt: task.createdAt.toDate(),
-        updatedAt: task.updatedAt.toDate(),
+        dueDate: toSafeNullableDate(task.dueDate),
+        createdAt: toSafeDate(task.createdAt),
+        updatedAt: toSafeDate(task.updatedAt),
       };
     }) as Task[];
   } catch (error) {
@@ -107,9 +137,9 @@ export const getCompletedTasks = async (userId: string): Promise<Task[]> => {
         isStarred: Boolean(task.isStarred),
         subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
-        dueDate: task.dueDate?.toDate() || null,
-        createdAt: task.createdAt.toDate(),
-        updatedAt: task.updatedAt.toDate(),
+        dueDate: toSafeNullableDate(task.dueDate),
+        createdAt: toSafeDate(task.createdAt),
+        updatedAt: toSafeDate(task.updatedAt),
       };
     }) as Task[];
   } catch (error) {
@@ -138,9 +168,9 @@ export const getPendingTasks = async (userId: string): Promise<Task[]> => {
         isStarred: Boolean(task.isStarred),
         subtasks: normalizeSubtasks(task.subtasks),
         category: normalizeTaskCategory(task.category),
-        dueDate: task.dueDate?.toDate() || null,
-        createdAt: task.createdAt.toDate(),
-        updatedAt: task.updatedAt.toDate(),
+        dueDate: toSafeNullableDate(task.dueDate),
+        createdAt: toSafeDate(task.createdAt),
+        updatedAt: toSafeDate(task.updatedAt),
       };
     }) as Task[];
   } catch (error) {
@@ -168,9 +198,9 @@ export const getTaskById = async (taskId: string): Promise<Task | null> => {
       isStarred: Boolean(task.isStarred),
       subtasks: normalizeSubtasks(task.subtasks),
       category: normalizeTaskCategory(task.category),
-      dueDate: task.dueDate?.toDate() || null,
-      createdAt: task.createdAt.toDate(),
-      updatedAt: task.updatedAt.toDate(),
+      dueDate: toSafeNullableDate(task.dueDate),
+      createdAt: toSafeDate(task.createdAt),
+      updatedAt: toSafeDate(task.updatedAt),
     } as Task;
   } catch (error) {
     console.error('Error getting task:', error);

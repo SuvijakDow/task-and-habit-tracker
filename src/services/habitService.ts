@@ -261,6 +261,9 @@ export const createDailyHabit = async (
     if (habitData.trackingStartDate) {
       payload.trackingStartDate = Timestamp.fromDate(habitData.trackingStartDate);
     }
+    if (Array.isArray(habitData.notScheduledDates)) {
+      payload.notScheduledDates = habitData.notScheduledDates;
+    }
 
     const docRef = await addDoc(collection(db, DAILY_HABITS_COLLECTION), payload);
     return docRef.id;

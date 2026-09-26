@@ -1532,8 +1532,8 @@ export function HabitsPage() {
                     </div>
                     {habitsDueToday.length === 0 ? (
                       <div className="glass-card p-6 sm:p-8 text-center bg-gradient-to-b from-purple-50/50 via-pink-50/30 to-white rounded-2xl border border-dashed border-purple-200/90 shadow-2xs">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-purple-500/20 to-pink-500/20 border border-amber-300/40 text-amber-500 flex items-center justify-center mx-auto mb-3 shadow-2xs">
-                          <Sun className="w-6 h-6 animate-pulse" />
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-pink-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-amber-500/20">
+                          <Sun className="w-6 h-6 animate-pulse text-white drop-shadow-xs" />
                         </div>
                         <h4 className="text-sm sm:text-base font-extrabold text-gray-900 mb-1">Free Day Ahead! ☀️</h4>
                         <p className="text-xs text-gray-600 max-w-sm mx-auto font-medium">

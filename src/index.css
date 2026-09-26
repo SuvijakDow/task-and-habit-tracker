@@ -328,14 +328,18 @@ body {
   background-color: rgba(15, 23, 42, 0.55) !important;
 }
 
-/* 7. Heatmap cells: solid colors instead of gradients */
+/* 7. Heatmap cells & badges: solid colors instead of gradients */
 [data-gradient-mode="solid"] [class*="bg-gradient-to-tr"][class*="from-purple-"] {
   background-image: none !important;
-  background-color: #a855f7 !important;
+  background-color: #8b5cf6 !important;
 }
 [data-gradient-mode="solid"] [class*="bg-gradient-to-tr"][class*="from-amber-"] {
   background-image: none !important;
   background-color: #f59e0b !important;
+}
+[data-gradient-mode="solid"] [class*="bg-gradient-to-tr"][class*="from-emerald-"] {
+  background-image: none !important;
+  background-color: #10b981 !important;
 }
 
 /* 8. Progress bars: solid purple fill */

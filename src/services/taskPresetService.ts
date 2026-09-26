@@ -119,12 +119,12 @@ export const getUserTaskPresets = async (userId: string): Promise<TaskPreset[]> 
   return presets;
 };
 
-export const createTaskPreset = async (userId: string, name: string, color = '#C084FC'): Promise<TaskPreset> => {
+export const createTaskPreset = async (userId: string, name: string, color = '#C084FC', isActive = false): Promise<TaskPreset> => {
   const presetDoc = await addDoc(collection(db, TASK_PRESETS_COLLECTION), {
     userId,
     name,
     color,
-    isActive: false,
+    isActive: Boolean(isActive),
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   });
@@ -134,7 +134,7 @@ export const createTaskPreset = async (userId: string, name: string, color = '#C
     userId,
     name,
     color,
-    isActive: false,
+    isActive: Boolean(isActive),
     createdAt: new Date(),
     updatedAt: new Date(),
   };
