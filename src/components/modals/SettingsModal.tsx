@@ -28,10 +28,11 @@ import { deleteUserData, resetUserTasks, resetUserDailyHabits, resetUserTaskPres
 import { deleteAuthenticatedUser, reauthenticateCurrentUser } from '@/services/authService';
 import { APP_FONTS, applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
 import { GradientMode, applyGradientMode, getStoredGradientMode } from '@/utils/gradientUtils';
-import { getUserTasks, createTask } from '@/services/taskService';
-import { getUserDailyHabits, getUserHabitSets, createDailyHabit, createHabitSet } from '@/services/habitService';
+import { getUserTasks, createTask, updateTask } from '@/services/taskService';
+import { getUserDailyHabits, getUserHabitSets, createDailyHabit, createHabitSet, updateDailyHabit } from '@/services/habitService';
 import { getUserCategories, createCategory } from '@/services/categoryService';
 import { createTaskPreset, getUserTaskPresets } from '@/services/taskPresetService';
+import { Category, HabitSet, TaskPreset, Task, DailyHabit, getHabitSetIds } from '@/types';
 import { showToast } from '@/components/ui/Toast';
 
 interface SettingsModalProps {
@@ -291,67 +292,197 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
 
       const { tasks, habits, categories, habitSets, taskPresets } = backupObj.data;
 
+      // In Merge mode, load existing data to match presets/categories and deduplicate items
+      let existingCategories: Category[] = [];
+      let existingHabitSets: HabitSet[] = [];
+      let existingTaskPresets: TaskPreset[] = [];
+      let existingTasks: Task[] = [];
+      let existingHabits: DailyHabit[] = [];
+
+      if (importMode === 'merge') {
+        [existingCategories, existingHabitSets, existingTaskPresets, existingTasks, existingHabits] = await Promise.all([
+          getUserCategories(user.uid),
+          getUserHabitSets(user.uid),
+          getUserTaskPresets(user.uid),
+          getUserTasks(user.uid),
+          getUserDailyHabits(user.uid),
+        ]);
+      }
+
       // Create ID mappings to preserve relationships
       const categoryMapping = new Map<string, string>();
       const habitSetMapping = new Map<string, string>();
       const taskPresetMapping = new Map<string, string>();
 
-      // Import categories first and create mapping
+      // 1. Categories: reuse matching existing category by name, or create new
       if (Array.isArray(categories) && categories.length > 0) {
         for (const category of categories) {
           try {
+            if (importMode === 'merge') {
+              const matchedCategory = existingCategories.find(
+                (c) => c.name.trim().toLowerCase() === (category.name || '').trim().toLowerCase()
+              );
+              if (matchedCategory) {
+                categoryMapping.set(category.id, matchedCategory.id);
+                continue;
+              }
+            }
+
             const newCategory = await createCategory(user.uid, {
               name: category.name,
               color: category.color,
             });
             categoryMapping.set(category.id, newCategory.id);
+            if (importMode === 'merge') {
+              existingCategories.push(newCategory);
+            }
           } catch (err) {
             console.warn('Failed to import category:', category.name, err);
           }
         }
       }
 
-      // Import habit sets and create mapping
+      // 2. Habit sets: reuse matching existing habit set by name, or create new
       if (Array.isArray(habitSets) && habitSets.length > 0) {
         for (const set of habitSets) {
           try {
+            if (importMode === 'merge') {
+              const matchedSet = existingHabitSets.find(
+                (s) => s.name.trim().toLowerCase() === (set.name || '').trim().toLowerCase()
+              );
+              if (matchedSet) {
+                habitSetMapping.set(set.id, matchedSet.id);
+                continue;
+              }
+            }
+
+            const shouldBeActive = importMode === 'replace'
+              ? Boolean(set.isActive)
+              : existingHabitSets.length === 0;
+
             const newSet = await createHabitSet(user.uid, {
               name: set.name,
               color: set.color,
-              isActive: importMode === 'replace' ? set.isActive : false, // In merge mode, default to inactive
+              isActive: shouldBeActive,
             });
             habitSetMapping.set(set.id, newSet.id);
+            if (importMode === 'merge') {
+              existingHabitSets.push(newSet);
+            }
           } catch (err) {
             console.warn('Failed to import habit set:', set.name, err);
           }
         }
       }
 
-      // Import task presets and create mapping
+      // 3. Task presets: reuse matching existing preset by name, or create new
       if (Array.isArray(taskPresets) && taskPresets.length > 0) {
         for (const preset of taskPresets) {
           try {
+            if (importMode === 'merge') {
+              const matchedPreset = existingTaskPresets.find(
+                (p) => p.name.trim().toLowerCase() === (preset.name || '').trim().toLowerCase()
+              );
+              if (matchedPreset) {
+                taskPresetMapping.set(preset.id, matchedPreset.id);
+                continue;
+              }
+            }
+
+            const shouldBeActive = importMode === 'replace'
+              ? Boolean(preset.isActive)
+              : existingTaskPresets.length === 0;
+
             const newPreset = await createTaskPreset(
               user.uid,
               preset.name,
               preset.color,
-              importMode === 'replace' ? preset.isActive : false
+              shouldBeActive
             );
             taskPresetMapping.set(preset.id, newPreset.id);
+            if (importMode === 'merge') {
+              existingTaskPresets.push(newPreset);
+            }
           } catch (err) {
             console.warn('Failed to import task preset:', preset.name, err);
           }
         }
       }
 
-      // Import tasks with mapped IDs
+      let tasksAddedCount = 0;
+      let tasksUpdatedCount = 0;
+
+      // 4. Tasks: merge into matched presets, update existing tasks without creating duplicates
       if (Array.isArray(tasks) && tasks.length > 0) {
         for (const task of tasks) {
           try {
-            // Map category ID if it exists in mapping
             const mappedCategoryId = categoryMapping.get(task.category) || task.category;
-            // Map preset ID if it exists in mapping
             const mappedPresetId = taskPresetMapping.get(task.setId) || task.setId;
+            const normalizedTitle = (task.title || '').trim().toLowerCase();
+
+            if (importMode === 'merge') {
+              const existingTask = existingTasks.find((t) => {
+                const sameTitle = t.title.trim().toLowerCase() === normalizedTitle;
+                const samePreset = (t.setId || '') === (mappedPresetId || '');
+                return sameTitle && samePreset;
+              });
+
+              if (existingTask) {
+                const updatesToApply: Record<string, any> = {};
+
+                if (task.isCompleted && !existingTask.isCompleted) {
+                  updatesToApply.isCompleted = true;
+                }
+                if (task.isStarred && !existingTask.isStarred) {
+                  updatesToApply.isStarred = true;
+                }
+                if (task.description && !existingTask.description) {
+                  updatesToApply.description = task.description;
+                }
+                if (task.dueDate && !existingTask.dueDate) {
+                  updatesToApply.dueDate = new Date(task.dueDate);
+                }
+                if (task.linkChip && task.linkChip.url && !existingTask.linkChip) {
+                  updatesToApply.linkChip = {
+                    url: task.linkChip.url,
+                    label: task.linkChip.label || undefined,
+                    icon: task.linkChip.icon || 'link',
+                  };
+                }
+                if (Array.isArray(task.subtasks) && task.subtasks.length > 0) {
+                  const currentSubtasks = [...(existingTask.subtasks || [])];
+                  let subtaskModified = false;
+                  for (const st of task.subtasks) {
+                    if (!st || !st.title) continue;
+                    const stMatch = currentSubtasks.find(
+                      (cst) => cst.title.trim().toLowerCase() === st.title.trim().toLowerCase()
+                    );
+                    if (stMatch) {
+                      if (st.isCompleted && !stMatch.isCompleted) {
+                        stMatch.isCompleted = true;
+                        subtaskModified = true;
+                      }
+                    } else {
+                      currentSubtasks.push({
+                        id: st.id || ('subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+                        title: st.title,
+                        isCompleted: Boolean(st.isCompleted),
+                      });
+                      subtaskModified = true;
+                    }
+                  }
+                  if (subtaskModified) {
+                    updatesToApply.subtasks = currentSubtasks;
+                  }
+                }
+
+                if (Object.keys(updatesToApply).length > 0) {
+                  await updateTask(existingTask.id, updatesToApply);
+                  tasksUpdatedCount++;
+                }
+                continue;
+              }
+            }
 
             const taskDataToCreate: any = {
               title: task.title || '',
@@ -372,22 +503,76 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               };
             }
 
-            await createTask(user.uid, taskDataToCreate);
+            const createdTaskId = await createTask(user.uid, taskDataToCreate);
+            tasksAddedCount++;
+            if (importMode === 'merge') {
+              existingTasks.push({
+                ...taskDataToCreate,
+                id: createdTaskId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            }
           } catch (err) {
             console.warn('Failed to import task:', task.title, err);
           }
         }
       }
 
-      // Import habits with mapped IDs
+      let habitsAddedCount = 0;
+      let habitsMergedCount = 0;
+
+      // 5. Habits: merge completed dates, daily progress, and routine sets without duplicates
       if (Array.isArray(habits) && habits.length > 0) {
         for (const habit of habits) {
           try {
-            // Map habit set IDs
             const mappedSetId = habit.setId ? (habitSetMapping.get(habit.setId) || habit.setId) : undefined;
             const mappedSetIds = Array.isArray(habit.setIds)
               ? habit.setIds.map((id: string) => habitSetMapping.get(id) || id)
               : (mappedSetId ? [mappedSetId] : []);
+
+            const normalizedHabitTitle = (habit.title || '').trim().toLowerCase();
+
+            if (importMode === 'merge') {
+              const existingHabit = existingHabits.find((h) => {
+                const sameTitle = h.title.trim().toLowerCase() === normalizedHabitTitle;
+                const hSets = getHabitSetIds(h);
+                const hasSetOverlap = mappedSetIds.length === 0 || hSets.length === 0 || mappedSetIds.some((sId: string) => hSets.includes(sId));
+                return sameTitle && hasSetOverlap;
+              });
+
+              if (existingHabit) {
+                const mergedCompletedDates = Array.from(
+                  new Set([...(existingHabit.completedDates || []), ...(habit.completedDates || [])])
+                );
+
+                const mergedDailyProgress: Record<string, number> = { ...(existingHabit.dailyProgress || {}) };
+                if (habit.dailyProgress && typeof habit.dailyProgress === 'object') {
+                  Object.entries(habit.dailyProgress).forEach(([date, val]) => {
+                    const existingVal = mergedDailyProgress[date] || 0;
+                    mergedDailyProgress[date] = Math.max(existingVal, Number(val) || 0);
+                  });
+                }
+
+                const mergedNotScheduledDates = Array.from(
+                  new Set([...(existingHabit.notScheduledDates || []), ...(habit.notScheduledDates || [])])
+                );
+
+                const existingSetIds = getHabitSetIds(existingHabit);
+                const mergedSetIds = Array.from(new Set([...existingSetIds, ...mappedSetIds]));
+
+                await updateDailyHabit(existingHabit.id, {
+                  completedDates: mergedCompletedDates,
+                  dailyProgress: mergedDailyProgress,
+                  notScheduledDates: mergedNotScheduledDates,
+                  setIds: mergedSetIds,
+                  setId: mergedSetIds[0] || existingHabit.setId,
+                });
+
+                habitsMergedCount++;
+                continue;
+              }
+            }
 
             await createDailyHabit(user.uid, {
               title: habit.title,
@@ -405,6 +590,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               notScheduledDates: Array.isArray(habit.notScheduledDates) ? habit.notScheduledDates : [],
               trackingStartDate: habit.trackingStartDate ? new Date(habit.trackingStartDate) : undefined,
             });
+            habitsAddedCount++;
           } catch (err) {
             console.warn('Failed to import habit:', habit.title, err);
           }
@@ -443,7 +629,17 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       await refreshCategories();
       await refreshAnalytics();
 
-      showToast('Backup imported successfully!', 'success');
+      if (importMode === 'merge') {
+        const details: string[] = [];
+        if (tasksAddedCount > 0) details.push(`+${tasksAddedCount} tasks`);
+        if (tasksUpdatedCount > 0) details.push(`${tasksUpdatedCount} tasks updated`);
+        if (habitsAddedCount > 0) details.push(`+${habitsAddedCount} habits`);
+        if (habitsMergedCount > 0) details.push(`${habitsMergedCount} habits merged`);
+        const summary = details.length > 0 ? ` (${details.join(', ')})` : '';
+        showToast(`Backup merged successfully!${summary}`, 'success');
+      } else {
+        showToast('Backup imported successfully!', 'success');
+      }
     } catch (err: any) {
       const msg = err.message || 'Failed to import backup file';
       setError(msg);
@@ -1126,14 +1322,16 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
             </div>
 
             {/* Warning Message */}
-            <div className={`${importMode === 'replace' ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200'} border rounded-xl p-3`}>
-              <p className={`text-xs font-semibold flex items-start gap-2 ${importMode === 'replace' ? 'text-rose-800' : 'text-amber-800'}`}>
+            <div className={`${importMode === 'replace' ? 'bg-rose-50 border-rose-200' : 'bg-blue-50 border-blue-200'} border rounded-xl p-3`}>
+              <p className={`text-xs font-semibold flex items-start gap-2 ${importMode === 'replace' ? 'text-rose-800' : 'text-blue-800'}`}>
                 <ShieldAlert size={14} className="mt-0.5 flex-shrink-0" />
                 <span>
-                  <span className={`font-bold ${importMode === 'replace' ? 'text-rose-900' : 'text-amber-900'}`}>Warning:</span>{' '}
+                  <span className={`font-bold ${importMode === 'replace' ? 'text-rose-900' : 'text-blue-900'}`}>
+                    {importMode === 'replace' ? 'Warning:' : 'Merge Info:'}
+                  </span>{' '}
                   {importMode === 'replace'
                     ? 'This will delete all your existing data and replace it with the backup file. This action cannot be undone.'
-                    : 'This will add the backup data to your existing data. Routines from the backup will be imported as inactive (your existing routines will remain unchanged).'}
+                    : 'This will merge backup data into your existing data. Matching routines and periods will be merged directly, existing items will be updated without duplicates, and any new items will be added.'}
                 </span>
               </p>
             </div>
