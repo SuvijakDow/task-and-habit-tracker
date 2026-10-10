@@ -1,4 +1,4 @@
-import { Task } from '@/types';
+import { Task, Category } from '@/types';
 
 /** Helper to get valid timestamp from Date or string */
 export const getTimestamp = (date: Date | string | null | undefined): number | null => {
@@ -119,3 +119,58 @@ export const sortCompletedTasks = (a: Task, b: Task): number => {
   const bCreated = getTimestamp(b.createdAt) || 0;
   return bCreated - aCreated;
 };
+
+export type QuickFilter = 'all' | 'today' | 'overdue' | 'week';
+
+export const matchesQuickFilter = (task: Task, quickFilter: QuickFilter): boolean => {
+  if (quickFilter === 'all') return true;
+  if (!task.dueDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(task.dueDate);
+  dueDate.setHours(0, 0, 0, 0);
+
+  if (quickFilter === 'today') {
+    return dueDate.getTime() === today.getTime();
+  }
+
+  if (quickFilter === 'overdue') {
+    return dueDate.getTime() < today.getTime();
+  }
+
+  const weekEnd = new Date(today);
+  weekEnd.setDate(today.getDate() + 7);
+  return dueDate.getTime() >= today.getTime() && dueDate.getTime() <= weekEnd.getTime();
+};
+
+export const filterTask = (
+  task: Task,
+  searchQuery: string,
+  categoryFilter: string,
+  quickFilter: QuickFilter,
+  categories: Category[]
+): boolean => {
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const matchedCategory = categories.find((c) => c.id === task.category || c.name === task.category);
+  const categoryName = (matchedCategory?.name || task.category || '').toLowerCase();
+  const title = task.title.toLowerCase();
+  const description = (task.description || '').toLowerCase();
+
+  const matchesSearch =
+    normalizedSearch.length === 0 ||
+    title.includes(normalizedSearch) ||
+    description.includes(normalizedSearch) ||
+    categoryName.includes(normalizedSearch);
+
+  const categoryId = matchedCategory?.id || task.category;
+  const categoryNameRaw = matchedCategory?.name || task.category;
+  const matchesCategory =
+    categoryFilter === 'all' ||
+    categoryFilter === categoryId ||
+    categoryFilter === categoryNameRaw;
+
+  return matchesSearch && matchesCategory && matchesQuickFilter(task, quickFilter);
+};
+

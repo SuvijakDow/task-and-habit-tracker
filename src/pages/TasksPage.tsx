@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, Copy, FolderTree, Layers, ListTodo, Settings2, ListChecks, MoreVertical, Pencil, Plus, Star, Trash2, X, Sparkles, ClipboardList } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, Copy, FolderTree, Layers, ListTodo, Settings2, ListChecks, MoreVertical, Pencil, Plus, RotateCcw, Search, Star, Trash2, X, Sparkles, ClipboardList } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
 import { Category, Task, TaskPreset, Subtask } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -15,13 +15,14 @@ import {
 } from '@/services/taskService';
 import { ensureDefaultCategories } from '@/services/categoryService';
 import TasksTable from '@/components/tasks/TasksTable';
+import { TasksFilterBar } from '@/components/tasks/TasksFilterBar';
 import { CategoriesModal } from '@/components/modals/CategoriesModal';
 import {
   getUserCategories,
 } from '@/services/categoryService';
 import { showToast } from '@/components/ui/Toast';
 import { playSuccessSound } from '@/utils/audio';
-import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
+import { sortIncompleteTasks, sortCompletedTasks, QuickFilter, filterTask } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import {
   createTaskPreset,
@@ -104,6 +105,11 @@ export function TasksPage() {
   // View mode: 'list' or 'table'
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
+
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
 
   // Form state
   const [formData, setFormData] = useState<{
@@ -874,6 +880,7 @@ export function TasksPage() {
 
     // Optimistic Update: Instantly update active state & close dropdown
     setActivePresetId(presetId);
+    handleClearFilters();
     setPresets((previous) =>
       previous.map((preset) => ({ ...preset, isActive: preset.id === presetId }))
     );
@@ -924,12 +931,44 @@ export function TasksPage() {
     }
   };
 
-  const incompleteTasks = visibleTasks
-    .filter((t) => !t.isCompleted)
-    .sort(sortIncompleteTasks);
-  const completedTasks = visibleTasks
-    .filter((t) => t.isCompleted)
-    .sort(sortCompletedTasks);
+  const filteredVisibleTasks = useMemo(() => {
+    return visibleTasks.filter((task) =>
+      filterTask(task, searchQuery, categoryFilter, quickFilter, categories)
+    );
+  }, [visibleTasks, searchQuery, categoryFilter, quickFilter, categories]);
+
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || categoryFilter !== 'all' || quickFilter !== 'all';
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery('');
+    setCategoryFilter('all');
+    setQuickFilter('all');
+  }, []);
+
+  const periodIncompleteCount = useMemo(
+    () => visibleTasks.filter((t) => !t.isCompleted).length,
+    [visibleTasks]
+  );
+  const periodCompletedCount = useMemo(
+    () => visibleTasks.filter((t) => t.isCompleted).length,
+    [visibleTasks]
+  );
+
+  const incompleteTasks = useMemo(
+    () =>
+      filteredVisibleTasks
+        .filter((t) => !t.isCompleted)
+        .sort(sortIncompleteTasks),
+    [filteredVisibleTasks]
+  );
+  const completedTasks = useMemo(
+    () =>
+      filteredVisibleTasks
+        .filter((t) => t.isCompleted)
+        .sort(sortCompletedTasks),
+    [filteredVisibleTasks]
+  );
   const isEditCategoryMissing =
     !!editFormData.category &&
     !categories.some(
@@ -998,16 +1037,16 @@ export function TasksPage() {
             <div className="hero-banner-stats grid grid-cols-3 gap-1.5 sm:gap-2 xl:gap-4 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 xl:p-3 rounded-2xl border border-white/15 text-center w-full xl:flex-1 xl:max-w-xl xl:mx-4 shrink-0">
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Pending</div>
-                <div className="hero-banner-stats-val text-base sm:text-lg font-black text-amber-300">{incompleteTasks.length}</div>
+                <div className="hero-banner-stats-val text-base sm:text-lg font-black text-amber-300">{periodIncompleteCount}</div>
               </div>
               <div className="px-1 sm:px-2 py-0.5 border-x border-white/15 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Completed</div>
-                <div className="text-base sm:text-lg font-black text-emerald-300">{completedTasks.length}</div>
+                <div className="text-base sm:text-lg font-black text-emerald-300">{periodCompletedCount}</div>
               </div>
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Progress</div>
                 <div className="text-base sm:text-lg font-black text-pink-300">
-                  {visibleTasks.length > 0 ? Math.round((completedTasks.length / visibleTasks.length) * 100) : 0}%
+                  {visibleTasks.length > 0 ? Math.round((periodCompletedCount / visibleTasks.length) * 100) : 0}%
                 </div>
               </div>
             </div>
@@ -1509,6 +1548,12 @@ export function TasksPage() {
                 <TasksTable
                   tasks={visibleTasks}
                   categories={categories}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  categoryFilter={categoryFilter}
+                  onCategoryFilterChange={setCategoryFilter}
+                  quickFilter={quickFilter}
+                  onQuickFilterChange={setQuickFilter}
                   onToggleCompletion={handleToggleCompletion}
                   onToggleStar={handleToggleStar}
                   onToggleSubtask={handleToggleTaskSubtask}
@@ -1523,74 +1568,130 @@ export function TasksPage() {
               </div>
             ) : (
               <>
-                {/* Incomplete Tasks Section */}
-                <div className="mb-8 sm:mb-10">
-                  <div className="flex items-center justify-between mb-3.5 px-1">
-                    <h2 className="text-base sm:text-lg md:text-xl font-bold text-pink-950 flex items-center gap-2">
-                      <ListTodo className="w-5 h-5 text-pink-600 animate-pulse" />
-                      <span>Pending Tasks</span>
-                      <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-pink-100/90 text-pink-800 border border-pink-200/90 shadow-2xs">
-                        {incompleteTasks.length}
-                      </span>
-                    </h2>
-                  </div>
-                  {incompleteTasks.length === 0 ? (
-                    <div className="glass-card p-6 sm:p-8 text-center rounded-2xl border border-emerald-200/80 bg-emerald-50/20 shadow-2xs">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-emerald-500/20">
-                        <Sparkles className="w-6 h-6 animate-bounce text-white drop-shadow-xs" />
-                      </div>
-                      <h3 className="text-base sm:text-lg font-extrabold text-emerald-950 mb-1">All caught up! 🎉</h3>
-                      <p className="text-xs sm:text-sm text-emerald-700/90 font-medium">No pending tasks. Great job, everything is complete.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 sm:space-y-4 list-stagger">
-                      {incompleteTasks.map((task) => (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          categories={categories}
-                          onToggleCompletion={handleToggleCompletion}
-                          onToggleStar={handleToggleStar}
-                          onToggleSubtask={handleToggleTaskSubtask}
-                          onEdit={handleEditTask}
-                          onDuplicate={handleDuplicateTask}
-                          onDelete={handleDeleteTask}
-                          togglingTaskId={togglingTaskId}
-                        />
-                      ))}
-                    </div>
-                  )}
+                {/* Search & Filter Bar */}
+                <div className="mb-4 sm:mb-6">
+                  <TasksFilterBar
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    categoryFilter={categoryFilter}
+                    onCategoryFilterChange={setCategoryFilter}
+                    quickFilter={quickFilter}
+                    onQuickFilterChange={setQuickFilter}
+                    categories={categories}
+                    totalCount={visibleTasks.length}
+                    filteredCount={filteredVisibleTasks.length}
+                    onClearFilters={handleClearFilters}
+                  />
                 </div>
 
-                {/* Completed Tasks Section */}
-                {completedTasks.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-3.5 px-1">
-                      <h2 className="text-base sm:text-lg md:text-xl font-bold text-purple-950 flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-purple-600" />
-                        <span>Completed Tasks</span>
-                        <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100/90 text-purple-800 border border-purple-200/90 shadow-2xs">
-                          {completedTasks.length}
-                        </span>
-                      </h2>
+                {filteredVisibleTasks.length === 0 && hasActiveFilters ? (
+                  <div className="glass-card p-6 sm:p-10 text-center rounded-2xl border border-purple-100 bg-white/80 shadow-2xs mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-3">
+                      <Search className="w-6 h-6" />
                     </div>
-                    <div className="space-y-3 sm:space-y-4 list-stagger">
-                      {completedTasks.map((task) => (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          categories={categories}
-                          onToggleCompletion={handleToggleCompletion}
-                          onToggleStar={handleToggleStar}
-                          onToggleSubtask={handleToggleTaskSubtask}
-                          onEdit={handleEditTask}
-                          onDuplicate={handleDuplicateTask}
-                          onDelete={handleDeleteTask}
-                          togglingTaskId={togglingTaskId}
-                        />
-                      ))}
-                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">No tasks match your filters</h3>
+                    <p className="text-xs sm:text-sm text-gray-500 mb-4">
+                      Try adjusting your search terms or clearing the selected filters.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleClearFilters}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm shadow-xs transition"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset filters</span>
+                    </button>
                   </div>
+                ) : (
+                  <>
+                    {/* Incomplete Tasks Section */}
+                    <div className="mb-8 sm:mb-10">
+                      <div className="flex items-center justify-between mb-3.5 px-1">
+                        <h2 className="text-base sm:text-lg md:text-xl font-bold text-pink-950 flex items-center gap-2">
+                          <ListTodo className="w-5 h-5 text-pink-600 animate-pulse" />
+                          <span>Pending Tasks</span>
+                          <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-pink-100/90 text-pink-800 border border-pink-200/90 shadow-2xs">
+                            {incompleteTasks.length}
+                          </span>
+                        </h2>
+                      </div>
+                      {incompleteTasks.length === 0 ? (
+                        hasActiveFilters ? (
+                          <div className="glass-card p-6 sm:p-8 text-center rounded-2xl border border-purple-200/80 bg-purple-50/20 shadow-2xs">
+                            <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
+                              <Search className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">No pending tasks match your filters</h3>
+                            <p className="text-xs sm:text-sm text-gray-600 font-medium mb-3">There are no incomplete tasks matching the current filters.</p>
+                            <button
+                              type="button"
+                              onClick={handleClearFilters}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 text-xs font-semibold shadow-2xs transition"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              <span>Clear filters</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="glass-card p-6 sm:p-8 text-center rounded-2xl border border-emerald-200/80 bg-emerald-50/20 shadow-2xs">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-green-500 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-emerald-500/20">
+                              <Sparkles className="w-6 h-6 animate-bounce text-white drop-shadow-xs" />
+                            </div>
+                            <h3 className="text-base sm:text-lg font-extrabold text-emerald-950 mb-1">All caught up! 🎉</h3>
+                            <p className="text-xs sm:text-sm text-emerald-700/90 font-medium">No pending tasks. Great job, everything is complete.</p>
+                          </div>
+                        )
+                      ) : (
+                        <div className="space-y-3 sm:space-y-4 list-stagger">
+                          {incompleteTasks.map((task) => (
+                            <TaskItem
+                              key={task.id}
+                              task={task}
+                              categories={categories}
+                              onToggleCompletion={handleToggleCompletion}
+                              onToggleStar={handleToggleStar}
+                              onToggleSubtask={handleToggleTaskSubtask}
+                              onEdit={handleEditTask}
+                              onDuplicate={handleDuplicateTask}
+                              onDelete={handleDeleteTask}
+                              togglingTaskId={togglingTaskId}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Completed Tasks Section */}
+                    {completedTasks.length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-3.5 px-1">
+                          <h2 className="text-base sm:text-lg md:text-xl font-bold text-purple-950 flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                            <span>Completed Tasks</span>
+                            <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100/90 text-purple-800 border border-purple-200/90 shadow-2xs">
+                              {completedTasks.length}
+                            </span>
+                          </h2>
+                        </div>
+                        <div className="space-y-3 sm:space-y-4 list-stagger">
+                          {completedTasks.map((task) => (
+                            <TaskItem
+                              key={task.id}
+                              task={task}
+                              categories={categories}
+                              onToggleCompletion={handleToggleCompletion}
+                              onToggleStar={handleToggleStar}
+                              onToggleSubtask={handleToggleTaskSubtask}
+                              onEdit={handleEditTask}
+                              onDuplicate={handleDuplicateTask}
+                              onDelete={handleDeleteTask}
+                              togglingTaskId={togglingTaskId}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

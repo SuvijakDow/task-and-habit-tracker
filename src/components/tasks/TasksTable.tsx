@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
-import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Search, Star, Trash2, X } from 'lucide-react';
-import { sortIncompleteTasks, sortCompletedTasks } from '@/utils/taskUtils';
+import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Star, Trash2 } from 'lucide-react';
+import { sortIncompleteTasks, sortCompletedTasks, QuickFilter, filterTask } from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import { DEFAULT_TASK_CATEGORY_NAME, DEFAULT_TASK_CATEGORY_COLOR, COLOR_HEX_REGEX } from '@/constants/taskConstants';
 import { TaskSmartChip } from './TaskSmartChip';
-
-type QuickFilter = 'all' | 'today' | 'overdue' | 'week';
+import { TasksFilterBar } from './TasksFilterBar';
 
 const isValidHexColor = (value: string): boolean => COLOR_HEX_REGEX.test(value);
 
@@ -38,6 +37,12 @@ const getReadableCategoryTextColor = (hex: string): string => {
 interface Props {
   tasks: Task[];
   categories: Category[];
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  categoryFilter: string;
+  onCategoryFilterChange: (value: string) => void;
+  quickFilter: QuickFilter;
+  onQuickFilterChange: (value: QuickFilter) => void;
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onToggleStar?: (taskId: string, currentStarred: boolean) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
@@ -53,6 +58,12 @@ interface Props {
 const TasksTable = memo(function TasksTable({
   tasks,
   categories,
+  searchQuery,
+  onSearchChange,
+  categoryFilter,
+  onCategoryFilterChange,
+  quickFilter,
+  onQuickFilterChange,
   onToggleCompletion,
   onToggleStar,
   onToggleSubtask,
@@ -68,9 +79,6 @@ const TasksTable = memo(function TasksTable({
   const [completedPage, setCompletedPage] = useState(1);
   const [pendingPageSize, setPendingPageSize] = useState(20);
   const [completedPageSize, setCompletedPageSize] = useState(20);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set());
   const [isBulkRunning, setIsBulkRunning] = useState(false);
@@ -88,54 +96,8 @@ const TasksTable = memo(function TasksTable({
   const getCategory = (taskCategory: string) =>
     categories.find((c) => c.id === taskCategory || c.name === taskCategory);
 
-  const getCategoryName = (task: Task) => {
-    const matchedCategory = getCategory(task.category);
-    return matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
-  };
-
-  const matchesQuickFilter = (task: Task): boolean => {
-    if (quickFilter === 'all') return true;
-    if (!task.dueDate) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const dueDate = new Date(task.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-
-    if (quickFilter === 'today') {
-      return dueDate.getTime() === today.getTime();
-    }
-
-    if (quickFilter === 'overdue') {
-      return dueDate.getTime() < today.getTime();
-    }
-
-    const weekEnd = new Date(today);
-    weekEnd.setDate(today.getDate() + 7);
-    return dueDate.getTime() >= today.getTime() && dueDate.getTime() <= weekEnd.getTime();
-  };
-
   const matchesFilters = (task: Task): boolean => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-    const categoryName = getCategoryName(task).toLowerCase();
-    const title = task.title.toLowerCase();
-    const description = task.description.toLowerCase();
-    const matchesSearch =
-      normalizedSearch.length === 0 ||
-      title.includes(normalizedSearch) ||
-      description.includes(normalizedSearch) ||
-      categoryName.includes(normalizedSearch);
-
-    const matchedCategory = getCategory(task.category);
-    const categoryId = matchedCategory?.id || task.category;
-    const categoryNameRaw = matchedCategory?.name || task.category;
-    const matchesCategory =
-      categoryFilter === 'all' ||
-      categoryFilter === categoryId ||
-      categoryFilter === categoryNameRaw;
-
-    return matchesSearch && matchesCategory && matchesQuickFilter(task);
+    return filterTask(task, searchQuery, categoryFilter, quickFilter, categories);
   };
 
   const pendingTasks = useMemo(
@@ -596,53 +558,15 @@ const TasksTable = memo(function TasksTable({
 
   return (
     <div className="space-y-6">
-      <div className="glass-card p-2.5 sm:p-4">
-        <div className="flex flex-col lg:flex-row gap-2 sm:gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tasks, description, or category..."
-              className="w-full min-h-[36px] sm:min-h-[40px] rounded-lg border border-gray-200 bg-white pl-9 pr-8 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors p-1"
-                title="Clear search"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 lg:flex lg:flex-row gap-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="min-h-[36px] sm:min-h-[40px] rounded-lg border border-gray-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none truncate"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={quickFilter}
-              onChange={(e) => setQuickFilter(e.target.value as QuickFilter)}
-              className="min-h-[36px] sm:min-h-[40px] rounded-lg border border-gray-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:border-purple-400 focus:ring-2 focus:ring-purple-300/50 focus:outline-none truncate"
-            >
-              <option value="all">All Due States</option>
-              <option value="today">Due Today</option>
-              <option value="overdue">Overdue</option>
-              <option value="week">Due in 7 Days</option>
-            </select>
-          </div>
-        </div>
-
+      <TasksFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={onSearchChange}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={onCategoryFilterChange}
+        quickFilter={quickFilter}
+        onQuickFilterChange={onQuickFilterChange}
+        categories={categories}
+      >
         <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
           <button
             type="button"
@@ -690,7 +614,7 @@ const TasksTable = memo(function TasksTable({
             </>
           )}
         </div>
-      </div>
+      </TasksFilterBar>
 
       <div>
         <div className="flex items-center justify-between mb-2.5 px-1">
