@@ -13,11 +13,13 @@ A modern, full-featured productivity web application for managing tasks by time 
 ## ✨ Key Features
 
 ### 📋 Task Management
+- **Subtask Checklists & Individual Deadlines**: 📅 Actionable subtasks with live progress bars, auto-sync completion, per-subtask due dates (editable both inline and in modals), chronological subtask ordering, and a compact **"Next Up" subtask indicator** on task cards.
+- **Smart Effective Deadline Prioritization**: 🚀 Parent tasks automatically bubble up in the task list based on the earliest deadline among the main task and its incomplete subtasks, so urgent milestones inside large projects never get buried at the bottom.
+- **Unified Search & Quick Filters**: 🔍 Real-time search across task titles, descriptions, categories, and subtask titles, paired with category and due-state filters (`Due Today`, `Overdue`, `Due in 7 Days`) synchronized across **List** and **Table** views.
 - **Link Smart Chips**: 🔗 Google Docs-style Smart Chips for URLs with auto-detect icons (GitHub, Drive, Figma, YouTube, Notion), custom display labels, and organized 3x3 icon grid.
 - **Star & Pin Tasks**: ⭐ Star any task to pin it to the top of your list instantly in both List and Table views.
 - **Task Presets (Periods)**: Group tasks by terms, semesters, or custom project periods (e.g., `2569/1`).
-- **Subtask Checklists**: Actionable subtasks with live progress bar and auto-sync completion.
-- **Dual View Modes**: Switch seamlessly between **Card/List View** and **Table View**.
+- **Dual View Modes**: Switch seamlessly between **Card/List View** and **Table View** with batch multi-select actions.
 - **Color Categories**: Custom color-coded categories with automatic fallback handling.
 
 ### 🔄 Habit Tracking & Routines
@@ -36,7 +38,7 @@ A modern, full-featured productivity web application for managing tasks by time 
 - **60 FPS Modal Performance**: Optimized React state memoization (`React.memo` & `useCallback`) and zero-lag overlay compositing for smooth typing.
 - **Typography**: Choose from curated Thai & English fonts (Bai Jamjuree, Prompt, Sarabun, Inter, Kanit, etc.).
 - **Mobile & Tablet Optimized**: Compact 3-dots action menus, full-height scrollable modal bounds, and responsive row alignments.
-- **Data Backup & Restore**: Export/import data via JSON with Replace or Merge modes.
+- **Data Backup & Restore**: Export/import full JSON backups with **Replace** mode or intelligent non-destructive **Merge** mode (deduplicates categories, presets, tasks, subtasks, and habits).
 
 ---
 
@@ -107,7 +109,7 @@ src/
 ├── components/          # Reusable UI, Habit, Task, and Modal components
 │   ├── habits/         # Heatmap, Timeline, Habits Table
 │   ├── modals/         # Category, Settings, History, Period modals
-│   └── tasks/          # Tasks Table & TaskSmartChip components
+│   └── tasks/          # TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
 ├── config/             # Firebase configuration
 ├── context/            # Auth and Refresh Context providers
 ├── pages/              # TasksPage, HabitsPage, AnalyticsPage, AuthPage

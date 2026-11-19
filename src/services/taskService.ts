@@ -20,15 +20,38 @@ const normalizeTaskCategory = (value: unknown): string => {
   return typeof value === 'string' && value.trim() ? value : DEFAULT_TASK_CATEGORY;
 };
 
+const normalizeSubtaskDueDate = (rawDueDate: any): string | null => {
+  if (!rawDueDate) return null;
+  if (typeof rawDueDate === 'string') {
+    const trimmed = rawDueDate.trim();
+    if (!trimmed) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    const d = new Date(trimmed);
+    return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : null;
+  }
+  if (typeof rawDueDate?.toDate === 'function') {
+    const d = rawDueDate.toDate();
+    return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : null;
+  }
+  if (rawDueDate instanceof Date && !isNaN(rawDueDate.getTime())) {
+    return rawDueDate.toISOString().split('T')[0];
+  }
+  return null;
+};
+
 export const normalizeSubtasks = (rawSubtasks: any): Subtask[] => {
   if (!Array.isArray(rawSubtasks)) {
     return [];
   }
-  const normalized = rawSubtasks.map((st, index) => ({
-    id: typeof st?.id === 'string' && st.id ? st.id : `st-${Date.now()}-${index}`,
-    title: typeof st?.title === 'string' ? st.title : (st?.name || st?.text || ''),
-    isCompleted: Boolean(st?.isCompleted ?? st?.completed ?? false),
-  }));
+  const normalized = rawSubtasks.map((st, index) => {
+    const dueDate = normalizeSubtaskDueDate(st?.dueDate);
+    return {
+      id: typeof st?.id === 'string' && st.id ? st.id : `st-${Date.now()}-${index}`,
+      title: typeof st?.title === 'string' ? st.title : (st?.name || st?.text || ''),
+      isCompleted: Boolean(st?.isCompleted ?? st?.completed ?? false),
+      ...(dueDate ? { dueDate } : {}),
+    };
+  });
   return normalized;
 };
 
@@ -301,6 +324,7 @@ export const duplicateTask = async (
       id: `st-${Date.now()}-${index}`,
       title: st.title || '',
       isCompleted: false,
+      ...(st.dueDate ? { dueDate: st.dueDate } : {}),
     }));
 
     const duplicateTitle = task.title.endsWith('(Copy)')

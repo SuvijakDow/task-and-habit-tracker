@@ -2,11 +2,20 @@ import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
 import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Star, Trash2 } from 'lucide-react';
-import { sortIncompleteTasks, sortCompletedTasks, QuickFilter, filterTask } from '@/utils/taskUtils';
+import {
+  sortIncompleteTasks,
+  sortCompletedTasks,
+  QuickFilter,
+  filterTask,
+  getEarliestIncompleteSubtask,
+  getEffectiveTaskDueDate,
+  sortSubtasksByDueDate,
+} from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import { DEFAULT_TASK_CATEGORY_NAME, DEFAULT_TASK_CATEGORY_COLOR, COLOR_HEX_REGEX } from '@/constants/taskConstants';
 import { TaskSmartChip } from './TaskSmartChip';
 import { TasksFilterBar } from './TasksFilterBar';
+import { SubtaskDateControl, NextSubtaskBadge } from './SubtaskDateControl';
 
 const isValidHexColor = (value: string): boolean => COLOR_HEX_REGEX.test(value);
 
@@ -46,6 +55,7 @@ interface Props {
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onToggleStar?: (taskId: string, currentStarred: boolean) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
+  onUpdateSubtaskDueDate?: (taskId: string, subtaskId: string, dueDate: string | null) => void;
   onEdit: (task: Task) => void;
   onDuplicate: (task: Task) => void;
   onDelete: (taskId: string) => void;
@@ -67,6 +77,7 @@ const TasksTable = memo(function TasksTable({
   onToggleCompletion,
   onToggleStar,
   onToggleSubtask,
+  onUpdateSubtaskDueDate,
   onEdit,
   onDuplicate,
   onDelete,
@@ -257,7 +268,8 @@ const TasksTable = memo(function TasksTable({
                       ? 'bg-pink-100/90 hover:bg-pink-100'
                       : 'bg-purple-100/90 hover:bg-purple-100';
 
-                  const deadlineStatus = getDeadlineStatus(t.dueDate);
+                  const effectiveDueDate = getEffectiveTaskDueDate(t);
+                  const deadlineStatus = getDeadlineStatus(effectiveDueDate);
                   const deadlineType = !t.isCompleted && deadlineStatus ? deadlineStatus.type : 'normal';
 
                   let statusRowClass = 'hover:bg-gray-50';
@@ -350,26 +362,37 @@ const TasksTable = memo(function TasksTable({
                           const completed = t.subtasks.filter((s) => s.isCompleted).length;
                           const percent = Math.round((completed / total) * 100);
                           const isExpanded = expandedTaskIds.has(t.id);
+                          const sortedSubtasks = sortSubtasksByDueDate(t.subtasks);
+                          const earliestIncompleteSubtask = getEarliestIncompleteSubtask(t);
 
                           return (
                             <div className="mt-1.5">
-                              <button
-                                type="button"
-                                onClick={() => toggleExpandTask(t.id)}
-                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-purple-100/90 text-purple-800 border border-purple-200/90 hover:bg-purple-200/90 transition cursor-pointer shadow-2xs"
-                              >
-                                <ListChecks className="w-3.5 h-3.5 text-purple-700" />
-                                <span>
-                                  Subtasks {completed}/{total}
-                                </span>
-                                <div className="w-10 h-1.5 bg-purple-200/80 rounded-full overflow-hidden ml-0.5">
-                                  <div
-                                    className="h-full bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300"
-                                    style={{ width: `${percent}%` }}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpandTask(t.id)}
+                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-purple-100/90 text-purple-800 border border-purple-200/90 hover:bg-purple-200/90 transition cursor-pointer shadow-2xs"
+                                >
+                                  <ListChecks className="w-3.5 h-3.5 text-purple-700" />
+                                  <span>
+                                    Subtasks {completed}/{total}
+                                  </span>
+                                  <div className="w-10 h-1.5 bg-purple-200/80 rounded-full overflow-hidden ml-0.5">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300"
+                                      style={{ width: `${percent}%` }}
+                                    />
+                                  </div>
+                                  <ChevronDown className={`w-3 h-3 text-purple-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {!t.isCompleted && earliestIncompleteSubtask && earliestIncompleteSubtask.dueDate && (
+                                  <NextSubtaskBadge
+                                    subtask={earliestIncompleteSubtask}
+                                    onClick={() => toggleExpandTask(t.id)}
                                   />
-                                </div>
-                                <ChevronDown className={`w-3 h-3 text-purple-600 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-                              </button>
+                                )}
+                              </div>
 
                               {isExpanded && (
                                 <div className="mt-2 p-2.5 rounded-xl bg-purple-100/70 border border-purple-200/90 space-y-1.5 shadow-2xs">
@@ -378,31 +401,45 @@ const TasksTable = memo(function TasksTable({
                                     <span>{percent}%</span>
                                   </div>
                                   <div className="space-y-1 pt-0.5">
-                                    {t.subtasks.map((st) => (
-                                      <div
-                                        key={st.id}
-                                        onClick={() => onToggleSubtask?.(t.id, st.id)}
-                                        className="flex items-center gap-2 p-1.5 rounded-lg bg-white/90 hover:bg-white border border-purple-100/80 transition cursor-pointer shadow-2xs group/st"
-                                      >
-                                        <button
-                                          type="button"
-                                          role="checkbox"
-                                          aria-checked={st.isCompleted}
-                                          className={`h-3.5 w-3.5 rounded border transition duration-150 flex items-center justify-center shrink-0 ${
-                                            st.isCompleted
-                                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
-                                              : 'bg-white border-purple-300 text-transparent group-hover/st:border-purple-400'
+                                    {sortedSubtasks.map((st) => {
+                                      const isNextUp = !t.isCompleted && !st.isCompleted && earliestIncompleteSubtask?.id === st.id && Boolean(st.dueDate);
+                                      return (
+                                        <div
+                                          key={st.id}
+                                          onClick={() => onToggleSubtask?.(t.id, st.id)}
+                                          className={`flex items-center justify-between gap-2 p-1.5 rounded-lg bg-white/90 hover:bg-white border transition cursor-pointer shadow-2xs group/st ${
+                                            isNextUp ? 'border-purple-300/90 ring-1 ring-purple-200/60' : 'border-purple-100/80'
                                           }`}
                                         >
-                                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                          </svg>
-                                        </button>
-                                        <span className={`text-xs break-words flex-1 min-w-0 ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
-                                          {st.title}
-                                        </span>
-                                      </div>
-                                    ))}
+                                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <button
+                                              type="button"
+                                              role="checkbox"
+                                              aria-checked={st.isCompleted}
+                                              className={`h-3.5 w-3.5 rounded border transition duration-150 flex items-center justify-center shrink-0 ${
+                                                st.isCompleted
+                                                  ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
+                                                  : 'bg-white border-purple-300 text-transparent group-hover/st:border-purple-400'
+                                              }`}
+                                            >
+                                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                              </svg>
+                                            </button>
+                                            <span className={`text-xs break-words flex-1 min-w-0 ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
+                                              {st.title}
+                                            </span>
+                                          </div>
+
+                                          <SubtaskDateControl
+                                            variant="checklist"
+                                            dueDate={st.dueDate}
+                                            isCompleted={st.isCompleted}
+                                            onChange={(newDate) => onUpdateSubtaskDueDate?.(t.id, st.id, newDate)}
+                                          />
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}

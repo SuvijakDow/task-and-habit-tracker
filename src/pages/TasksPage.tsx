@@ -22,7 +22,15 @@ import {
 } from '@/services/categoryService';
 import { showToast } from '@/components/ui/Toast';
 import { playSuccessSound } from '@/utils/audio';
-import { sortIncompleteTasks, sortCompletedTasks, QuickFilter, filterTask } from '@/utils/taskUtils';
+import {
+  sortIncompleteTasks,
+  sortCompletedTasks,
+  QuickFilter,
+  filterTask,
+  getEarliestIncompleteSubtask,
+  getEffectiveTaskDueDate,
+  sortSubtasksByDueDate,
+} from '@/utils/taskUtils';
 import { formatDueDateDisplay, getDeadlineStatus } from '@/utils/dateUtils';
 import {
   createTaskPreset,
@@ -33,6 +41,7 @@ import {
 } from '@/services/taskPresetService';
 import { ManageTaskPresetsModal } from '@/components/modals/ManageTaskPresetsModal';
 import { TaskSmartChip, CHIP_ICON_OPTIONS, autoDetectLinkChip } from '@/components/tasks/TaskSmartChip';
+import { SubtaskDateControl, NextSubtaskBadge } from '@/components/tasks/SubtaskDateControl';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
@@ -134,6 +143,7 @@ export function TasksPage() {
     linkIcon: 'link',
   });
   const [subtaskInputText, setSubtaskInputText] = useState('');
+  const [subtaskInputDueDate, setSubtaskInputDueDate] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -161,6 +171,7 @@ export function TasksPage() {
     linkIcon: 'link',
   });
   const [editSubtaskInputText, setEditSubtaskInputText] = useState('');
+  const [editSubtaskInputDueDate, setEditSubtaskInputDueDate] = useState<string | null>(null);
 
   const handleLinkUrlChange = (newUrl: string, isEdit = false) => {
     const auto = autoDetectLinkChip(newUrl);
@@ -329,12 +340,14 @@ export function TasksPage() {
       id: 'subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       title: subtaskInputText.trim(),
       isCompleted: false,
+      ...(subtaskInputDueDate ? { dueDate: subtaskInputDueDate } : {}),
     };
     setFormData((prev) => ({
       ...prev,
       subtasks: [...prev.subtasks, newSt],
     }));
     setSubtaskInputText('');
+    setSubtaskInputDueDate(null);
   };
 
   const handleRemoveModalSubtask = (id: string) => {
@@ -355,6 +368,13 @@ export function TasksPage() {
     setFormData((prev) => ({
       ...prev,
       subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, title: newTitle } : st)),
+    }));
+  };
+
+  const handleUpdateModalSubtaskDueDate = (id: string, newDueDate: string | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, dueDate: newDueDate } : st)),
     }));
   };
 
@@ -387,12 +407,14 @@ export function TasksPage() {
       id: 'subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       title: editSubtaskInputText.trim(),
       isCompleted: false,
+      ...(editSubtaskInputDueDate ? { dueDate: editSubtaskInputDueDate } : {}),
     };
     setEditFormData((prev) => ({
       ...prev,
       subtasks: [...prev.subtasks, newSt],
     }));
     setEditSubtaskInputText('');
+    setEditSubtaskInputDueDate(null);
   };
 
   const handleRemoveEditSubtask = (id: string) => {
@@ -413,6 +435,13 @@ export function TasksPage() {
     setEditFormData((prev) => ({
       ...prev,
       subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, title: newTitle } : st)),
+    }));
+  };
+
+  const handleUpdateEditSubtaskDueDate = (id: string, newDueDate: string | null) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, dueDate: newDueDate } : st)),
     }));
   };
 
@@ -603,6 +632,31 @@ export function TasksPage() {
       console.error('Error toggling subtask:', err);
       showToast('Subtask update failed. Please try again.', 'error');
       // Reload tasks to revert optimistic update
+      await loadTasks();
+    }
+  }, []);
+
+  const handleUpdateTaskSubtaskDueDate = useCallback(async (taskId: string, subtaskId: string, dueDate: string | null) => {
+    const currentTask = tasksRef.current.find((t) => t.id === taskId);
+    if (!currentTask) return;
+
+    const currentSubtasks = currentTask.subtasks || [];
+    const updatedSubtasks = currentSubtasks.map((st) =>
+      st.id === subtaskId ? { ...st, dueDate: dueDate || null } : st
+    );
+
+    // Optimistic update
+    setTasks((prevTasks) =>
+      prevTasks.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t))
+    );
+
+    try {
+      await updateTask(taskId, {
+        subtasks: updatedSubtasks,
+      });
+    } catch (err) {
+      console.error('Error updating subtask due date:', err);
+      showToast('Failed to update subtask due date.', 'error');
       await loadTasks();
     }
   }, []);
@@ -1374,7 +1428,7 @@ export function TasksPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <input
                         type="text"
                         value={subtaskInputText}
@@ -1386,14 +1440,20 @@ export function TasksPage() {
                           }
                         }}
                         placeholder="Type subtask title and press Enter..."
-                        className="flex-1 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        className="flex-1 min-w-0 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                      <SubtaskDateControl
+                        variant="input"
+                        dueDate={subtaskInputDueDate}
+                        onChange={setSubtaskInputDueDate}
                         disabled={isSubmitting}
                       />
                       <button
                         type="button"
                         onClick={handleAddModalSubtask}
                         disabled={isSubmitting || !subtaskInputText.trim()}
-                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs"
+                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs shrink-0"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add
@@ -1432,33 +1492,42 @@ export function TasksPage() {
                               />
                             </div>
 
-                            <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
-                              <button
-                                type="button"
-                                onClick={() => handleMoveModalSubtaskUp(index)}
-                                disabled={index === 0}
-                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                title="Move up"
-                              >
-                                <ArrowUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleMoveModalSubtaskDown(index)}
-                                disabled={index === formData.subtasks.length - 1}
-                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                title="Move down"
-                              >
-                                <ArrowDown className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveModalSubtask(st.id)}
-                                className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
-                                title="Remove subtask"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <SubtaskDateControl
+                                variant="modal"
+                                dueDate={st.dueDate}
+                                isCompleted={st.isCompleted}
+                                onChange={(newDate) => handleUpdateModalSubtaskDueDate(st.id, newDate)}
+                                disabled={isSubmitting}
+                              />
+                              <div className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveModalSubtaskUp(index)}
+                                  disabled={index === 0}
+                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                  title="Move up"
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveModalSubtaskDown(index)}
+                                  disabled={index === formData.subtasks.length - 1}
+                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                  title="Move down"
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveModalSubtask(st.id)}
+                                  className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
+                                  title="Remove subtask"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1557,6 +1626,7 @@ export function TasksPage() {
                   onToggleCompletion={handleToggleCompletion}
                   onToggleStar={handleToggleStar}
                   onToggleSubtask={handleToggleTaskSubtask}
+                  onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
                   onEdit={handleEditTask}
                   onDuplicate={handleDuplicateTask}
                   onDelete={handleDeleteTask}
@@ -1651,6 +1721,7 @@ export function TasksPage() {
                               onToggleCompletion={handleToggleCompletion}
                               onToggleStar={handleToggleStar}
                               onToggleSubtask={handleToggleTaskSubtask}
+                              onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
                               onEdit={handleEditTask}
                               onDuplicate={handleDuplicateTask}
                               onDelete={handleDeleteTask}
@@ -1682,6 +1753,7 @@ export function TasksPage() {
                               onToggleCompletion={handleToggleCompletion}
                               onToggleStar={handleToggleStar}
                               onToggleSubtask={handleToggleTaskSubtask}
+                              onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
                               onEdit={handleEditTask}
                               onDuplicate={handleDuplicateTask}
                               onDelete={handleDeleteTask}
@@ -1922,7 +1994,7 @@ export function TasksPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <input
                         type="text"
                         value={editSubtaskInputText}
@@ -1934,14 +2006,20 @@ export function TasksPage() {
                           }
                         }}
                         placeholder="Type subtask title and press Enter..."
-                        className="flex-1 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        className="flex-1 min-w-0 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
+                        disabled={isSubmitting}
+                      />
+                      <SubtaskDateControl
+                        variant="input"
+                        dueDate={editSubtaskInputDueDate}
+                        onChange={setEditSubtaskInputDueDate}
                         disabled={isSubmitting}
                       />
                       <button
                         type="button"
                         onClick={handleAddEditSubtask}
                         disabled={isSubmitting || !editSubtaskInputText.trim()}
-                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs"
+                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs shrink-0"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add
@@ -1980,33 +2058,42 @@ export function TasksPage() {
                               />
                             </div>
 
-                            <div className="flex items-center gap-0.5 shrink-0 opacity-70 group-hover:opacity-100 transition">
-                              <button
-                                type="button"
-                                onClick={() => handleMoveEditSubtaskUp(index)}
-                                disabled={index === 0}
-                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                title="Move up"
-                              >
-                                <ArrowUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleMoveEditSubtaskDown(index)}
-                                disabled={index === editFormData.subtasks.length - 1}
-                                className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                title="Move down"
-                              >
-                                <ArrowDown className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveEditSubtask(st.id)}
-                                className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
-                                title="Remove subtask"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <SubtaskDateControl
+                                variant="modal"
+                                dueDate={st.dueDate}
+                                isCompleted={st.isCompleted}
+                                onChange={(newDate) => handleUpdateEditSubtaskDueDate(st.id, newDate)}
+                                disabled={isSubmitting}
+                              />
+                              <div className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveEditSubtaskUp(index)}
+                                  disabled={index === 0}
+                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                  title="Move up"
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveEditSubtaskDown(index)}
+                                  disabled={index === editFormData.subtasks.length - 1}
+                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
+                                  title="Move down"
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveEditSubtask(st.id)}
+                                  className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
+                                  title="Remove subtask"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -2101,13 +2188,14 @@ interface TaskItemProps {
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onToggleStar?: (taskId: string, currentStarred: boolean) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
+  onUpdateSubtaskDueDate?: (taskId: string, subtaskId: string, dueDate: string | null) => void;
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
   onDuplicate: (task: Task) => void;
   togglingTaskId: string | null;
 }
 
-const TaskItem = React.memo(function TaskItem({ task, categories, onToggleCompletion, onToggleStar, onToggleSubtask, onDelete, onEdit, onDuplicate, togglingTaskId }: TaskItemProps) {
+const TaskItem = React.memo(function TaskItem({ task, categories, onToggleCompletion, onToggleStar, onToggleSubtask, onUpdateSubtaskDueDate, onDelete, onEdit, onDuplicate, togglingTaskId }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -2131,12 +2219,15 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
   const categoryTextColor = getReadableCategoryTextColor(categoryColor);
 
   const subtasks = task.subtasks || [];
+  const sortedSubtasks = useMemo(() => sortSubtasksByDueDate(subtasks), [subtasks]);
+  const earliestIncompleteSubtask = useMemo(() => getEarliestIncompleteSubtask(task), [task]);
   const totalSubtasks = subtasks.length;
   const completedSubtasks = subtasks.filter((s) => s.isCompleted).length;
   const progressPercent = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
 
-  const deadlineStatus = getDeadlineStatus(task.dueDate);
-  const deadlineType = !task.isCompleted && deadlineStatus ? deadlineStatus.type : 'normal';
+  const effectiveDueDate = getEffectiveTaskDueDate(task);
+  const effectiveDeadlineStatus = getDeadlineStatus(effectiveDueDate);
+  const deadlineType = !task.isCompleted && effectiveDeadlineStatus ? effectiveDeadlineStatus.type : 'normal';
 
   let borderStyleClass = 'border border-white/70 bg-white/90 hover:border-purple-200';
   if (deadlineType === 'overdue') {
@@ -2365,13 +2456,13 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-50/90 text-purple-700 border border-purple-200/70 hover:bg-purple-100/80 transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-semibold bg-purple-50/90 text-purple-700 border border-purple-200/70 hover:bg-purple-100/80 transition cursor-pointer shadow-2xs"
             >
               <ListChecks className="w-3.5 h-3.5 text-purple-600" />
               <span>
                 Subtasks {completedSubtasks}/{totalSubtasks}
               </span>
-              <div className="w-12 sm:w-16 h-1.5 bg-purple-200/80 rounded-full overflow-hidden ml-1">
+              <div className="w-10 sm:w-16 h-1.5 bg-purple-200/80 rounded-full overflow-hidden ml-0.5">
                 <div
                   className="h-full bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
@@ -2380,6 +2471,13 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
               <span className="text-[10px] font-bold text-purple-600 ml-0.5">{progressPercent}%</span>
               <ChevronDown className={`w-3.5 h-3.5 text-purple-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
             </button>
+          )}
+
+          {!task.isCompleted && earliestIncompleteSubtask && earliestIncompleteSubtask.dueDate && (
+            <NextSubtaskBadge
+              subtask={earliestIncompleteSubtask}
+              onClick={() => setIsExpanded(!isExpanded)}
+            />
           )}
         </div>
       </div>
@@ -2397,32 +2495,44 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
                 </span>
               </div>
               <div className="space-y-1.5 pt-0.5">
-                {subtasks.map((st) => (
-                  <div
-                    key={st.id}
-                    onClick={() => onToggleSubtask?.(task.id, st.id)}
-                    className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-white/90 hover:bg-white border border-purple-100/70 transition cursor-pointer shadow-2xs group/st"
-                  >
-                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                      <button
-                        type="button"
-                        role="checkbox"
-                        aria-checked={st.isCompleted}
-                        className={`h-4 w-4 rounded-md border-2 transition duration-150 flex items-center justify-center shrink-0 shadow-2xs ${st.isCompleted
-                            ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-xs'
-                            : 'bg-purple-50/90 border-purple-400/90 text-transparent group-hover/st:border-purple-600'
-                          }`}
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
-                      <span className={`text-xs sm:text-sm break-words flex-1 min-w-0 ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
-                        {st.title}
-                      </span>
+                {sortedSubtasks.map((st) => {
+                  const isNextUp = !task.isCompleted && !st.isCompleted && earliestIncompleteSubtask?.id === st.id && Boolean(st.dueDate);
+                  return (
+                    <div
+                      key={st.id}
+                      onClick={() => onToggleSubtask?.(task.id, st.id)}
+                      className={`flex items-center justify-between gap-2 p-2.5 rounded-xl bg-white/90 hover:bg-white border transition cursor-pointer shadow-2xs group/st ${
+                        isNextUp ? 'border-purple-300/90 ring-1 ring-purple-200/60' : 'border-purple-100/70'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={st.isCompleted}
+                          className={`h-4 w-4 rounded-md border-2 transition duration-150 flex items-center justify-center shrink-0 shadow-2xs ${st.isCompleted
+                              ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-xs'
+                              : 'bg-purple-50/90 border-purple-400/90 text-transparent group-hover/st:border-purple-600'
+                            }`}
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                        <span className={`text-xs sm:text-sm break-words flex-1 min-w-0 ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}>
+                          {st.title}
+                        </span>
+                      </div>
+
+                      <SubtaskDateControl
+                        variant="checklist"
+                        dueDate={st.dueDate}
+                        isCompleted={st.isCompleted}
+                        onChange={(newDate) => onUpdateSubtaskDueDate?.(task.id, st.id, newDate)}
+                      />
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

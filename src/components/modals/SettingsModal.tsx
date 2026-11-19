@@ -462,11 +462,16 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                         stMatch.isCompleted = true;
                         subtaskModified = true;
                       }
+                      if (st.dueDate && !stMatch.dueDate) {
+                        stMatch.dueDate = st.dueDate;
+                        subtaskModified = true;
+                      }
                     } else {
                       currentSubtasks.push({
                         id: st.id || ('subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
                         title: st.title,
                         isCompleted: Boolean(st.isCompleted),
+                        ...(st.dueDate ? { dueDate: st.dueDate } : {}),
                       });
                       subtaskModified = true;
                     }

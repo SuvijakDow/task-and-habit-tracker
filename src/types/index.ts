@@ -2,6 +2,7 @@ export interface Subtask {
   id: string;
   title: string;
   isCompleted: boolean;
+  dueDate?: string | null; // Optional ISO date string 'YYYY-MM-DD'
 }
 
 export interface TaskLinkChip {
