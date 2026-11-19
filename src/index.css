@@ -30,7 +30,6 @@
 
 html {
   @apply scroll-smooth;
-  scrollbar-gutter: stable;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -55,23 +54,16 @@ body::before {
     linear-gradient(142deg, #f8dfea 0%, #efddf5 45%, #dfebff 100%);
 }
 
-/* Sleek thin custom scrollbar */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+/* Hide visual scrollbars cleanly across all containers while preserving smooth mouse/touch scrolling */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(147, 51, 234, 0.24);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(147, 51, 234, 0.45);
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 @layer components {
