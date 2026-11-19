@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, Copy, FolderTree, Layers, ListTodo, Settings2, ListChecks, MoreVertical, Pencil, Plus, RotateCcw, Search, Star, Trash2, X, Sparkles, ClipboardList } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
@@ -40,6 +40,7 @@ import {
   updateTaskPreset,
 } from '@/services/taskPresetService';
 import { ManageTaskPresetsModal } from '@/components/modals/ManageTaskPresetsModal';
+import { TaskCalendarModal } from '@/components/modals/TaskCalendarModal';
 import { TaskSmartChip, CHIP_ICON_OPTIONS, autoDetectLinkChip } from '@/components/tasks/TaskSmartChip';
 import { SubtaskDateControl, NextSubtaskBadge } from '@/components/tasks/SubtaskDateControl';
 
@@ -114,6 +115,7 @@ export function TasksPage() {
   // View mode: 'list' or 'table'
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -493,24 +495,47 @@ export function TasksPage() {
           }
         : undefined;
 
-      await createTask(user.uid, {
+      const resolvedCategory = selectedCategory?.id || formData.category || getDefaultCategoryValue();
+      const resolvedDueDate = formData.dueDate ? new Date(formData.dueDate) : null;
+      const resolvedSetId = formData.setId || activePresetId || undefined;
+      const resolvedSubtasks = formData.subtasks || [];
+
+      const createdTaskId = await createTask(user.uid, {
         title: formData.title,
         description: formData.description,
-        category: selectedCategory?.id || formData.category || getDefaultCategoryValue(),
-        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+        category: resolvedCategory,
+        dueDate: resolvedDueDate,
         isCompleted: false,
-        setId: formData.setId || activePresetId || undefined,
-        subtasks: formData.subtasks || [],
+        setId: resolvedSetId,
+        subtasks: resolvedSubtasks,
         linkChip: linkChipToSave,
       });
+
+      const now = new Date();
+      const newTask: Task = {
+        id: createdTaskId,
+        userId: user.uid,
+        title: formData.title,
+        description: formData.description,
+        category: resolvedCategory,
+        dueDate: resolvedDueDate,
+        isCompleted: false,
+        isStarred: false,
+        setId: resolvedSetId,
+        subtasks: resolvedSubtasks,
+        linkChip: linkChipToSave,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      // Update local state immediately without triggering a full collection re-fetch
+      setTasks((prev) => [newTask, ...prev]);
 
       // Reset form and close modal
       setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [], linkUrl: '', linkLabel: '', linkIcon: 'link' });
       setSubtaskInputText('');
+      setSubtaskInputDueDate(null);
       setIsModalOpen(false);
-
-      // Reload tasks
-      await loadTasks();
     } catch (err) {
       setError('Could not create the task. Check your connection and try again.');
       console.error('Error creating task:', err);
@@ -520,56 +545,57 @@ export function TasksPage() {
   };
 
   const handleToggleCompletion = useCallback(async (taskId: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
+    const task = tasksRef.current.find((t) => t.id === taskId);
+    if (!task) return;
 
+    const newStatus = !currentStatus;
     if (newStatus) {
       playSuccessSound();
     }
 
-    setTogglingTaskId(taskId);
+    const previousSubtasks = task.subtasks;
+    const updatedSubtasks =
+      task.subtasks && task.subtasks.length > 0
+        ? task.subtasks.map((st) => ({ ...st, isCompleted: newStatus }))
+        : task.subtasks;
 
-    try {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task) return;
+    const updatesToSave: Partial<Task> = { isCompleted: newStatus };
+    if (updatedSubtasks && updatedSubtasks.length > 0) {
+      updatesToSave.subtasks = updatedSubtasks;
+    }
 
-      // When task is checked: check all subtasks
-      // When task is unchecked: uncheck all subtasks
-      const updatesToSave: Partial<Task> = { isCompleted: newStatus };
-
-      // If task has subtasks, update them to match the task completion status
-      if (task.subtasks && task.subtasks.length > 0) {
-        const updatedSubtasks = task.subtasks.map((st) => ({ ...st, isCompleted: newStatus }));
-        updatesToSave.subtasks = updatedSubtasks;
-      }
-
-      // Save to database first
-      await updateTask(taskId, updatesToSave);
-
-      // Then update state
-      setTasks((prev) =>
-        prev.map((t) => {
-          if (t.id === taskId) {
-            const updatedSubtasks = t.subtasks && t.subtasks.length > 0
-              ? t.subtasks.map((st) => ({ ...st, isCompleted: newStatus }))
-              : t.subtasks;
-
-            return {
+    // Instant optimistic UI update (zero blocking spinner, zero memo invalidation)
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? {
               ...t,
               isCompleted: newStatus,
               subtasks: updatedSubtasks,
-            };
-          }
-          return t;
-        })
-      );
+            }
+          : t
+      )
+    );
+
+    try {
+      await updateTask(taskId, updatesToSave);
     } catch (err) {
+      // Revert smoothly on error
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId
+            ? {
+                ...t,
+                isCompleted: currentStatus,
+                subtasks: previousSubtasks,
+              }
+            : t
+        )
+      );
       showToast('Task update failed. Please try again.', 'error');
       console.error('Error updating task:', err);
-      await loadTasks();
-    } finally {
-      setTogglingTaskId(null);
     }
-  }, [tasks]);
+  }, []);
 
   const handleToggleStar = useCallback(async (taskId: string, currentStarred: boolean) => {
     const newStarred = !currentStarred;
@@ -985,11 +1011,13 @@ export function TasksPage() {
     }
   };
 
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   const filteredVisibleTasks = useMemo(() => {
     return visibleTasks.filter((task) =>
-      filterTask(task, searchQuery, categoryFilter, quickFilter, categories)
+      filterTask(task, deferredSearchQuery, categoryFilter, quickFilter, categories)
     );
-  }, [visibleTasks, searchQuery, categoryFilter, quickFilter, categories]);
+  }, [visibleTasks, deferredSearchQuery, categoryFilter, quickFilter, categories]);
 
   const hasActiveFilters =
     Boolean(searchQuery.trim()) || categoryFilter !== 'all' || quickFilter !== 'all';
@@ -1030,6 +1058,26 @@ export function TasksPage() {
         category.id === editFormData.category || category.name === editFormData.category
     );
 
+  const handleAddTaskForDate = useCallback(
+    (dateStr: string) => {
+      setFormData({
+        title: '',
+        description: '',
+        category: getDefaultCategoryValue(),
+        dueDate: dateStr,
+        setId: activePresetId,
+        subtasks: [],
+        linkUrl: '',
+        linkLabel: '',
+        linkIcon: 'link',
+      });
+      setSubtaskInputText('');
+      setSubtaskInputDueDate(null);
+      setIsModalOpen(true);
+    },
+    [activePresetId, categories]
+  );
+
   return (
     <div className="min-h-screen">
       <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3.5 sm:pt-4 md:pt-2 pb-6 md:pb-12">
@@ -1052,15 +1100,24 @@ export function TasksPage() {
                 </div>
               </div>
 
-              {/* Tablet Top-Right Action Buttons (Hidden on full desktop xl, shown inside flex-row on mobile/tablet) */}
-              <div className="grid grid-cols-2 sm:flex sm:items-center xl:hidden gap-2 sm:gap-2.5 w-full sm:w-auto">
+              {/* Mobile & iPad/Tablet Action Buttons (Hidden on full desktop xl) */}
+              <div className="grid grid-cols-3 sm:flex sm:items-center xl:hidden gap-1.5 sm:gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => setIsCalendarModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-[11px] sm:text-sm font-semibold whitespace-nowrap shadow-2xs min-w-0"
+                  title="Deadline Calendar"
+                >
+                  <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-200 shrink-0" />
+                  <span className="truncate">Calendar</span>
+                </button>
+
                 <button
                   onClick={() => setIsCategoriesModalOpen(true)}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-xs sm:text-sm font-semibold whitespace-nowrap shadow-2xs"
+                  className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-2 sm:py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-[11px] sm:text-sm font-semibold whitespace-nowrap shadow-2xs min-w-0"
                   title="Manage Categories"
                 >
-                  <FolderTree className="w-4 h-4 text-purple-200" />
-                  <span>Categories</span>
+                  <FolderTree className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-200 shrink-0" />
+                  <span className="truncate">Categories</span>
                 </button>
 
                 <button
@@ -1077,18 +1134,19 @@ export function TasksPage() {
                       linkIcon: 'link',
                     });
                     setSubtaskInputText('');
+                    setSubtaskInputDueDate(null);
                     setIsModalOpen(true);
                   }}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-xs sm:text-sm font-bold whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-[11px] sm:text-sm font-bold whitespace-nowrap min-w-0"
                 >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
-                  <span>Add Task</span>
+                  <Plus className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.5] shrink-0" />
+                  <span className="truncate">Add Task</span>
                 </button>
               </div>
             </div>
 
             {/* Desktop Center: Stats Badges (Full width on mobile/tablet, expanded box on desktop) */}
-            <div className="hero-banner-stats grid grid-cols-3 gap-1.5 sm:gap-2 xl:gap-4 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 xl:p-3 rounded-2xl border border-white/15 text-center w-full xl:flex-1 xl:max-w-xl xl:mx-4 shrink-0">
+            <div className="hero-banner-stats grid grid-cols-3 gap-1.5 sm:gap-2 xl:gap-4 bg-white/10 backdrop-blur-md p-2 sm:p-2.5 xl:p-3 rounded-2xl border border-white/15 text-center w-full xl:flex-1 xl:max-w-lg xl:mx-3 shrink-0">
               <div className="px-1 sm:px-2 py-0.5 min-w-0">
                 <div className="text-[10px] xl:text-xs text-purple-200 uppercase font-bold tracking-wider whitespace-nowrap">Pending</div>
                 <div className="hero-banner-stats-val text-base sm:text-lg font-black text-amber-300">{periodIncompleteCount}</div>
@@ -1106,10 +1164,19 @@ export function TasksPage() {
             </div>
 
             {/* Desktop Right: Action Buttons (Only visible on full desktop xl) */}
-            <div className="hidden xl:flex xl:items-center gap-2.5 shrink-0">
+            <div className="hidden xl:flex xl:items-center gap-2 shrink-0">
+              <button
+                onClick={() => setIsCalendarModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-sm font-semibold whitespace-nowrap shadow-2xs"
+                title="View Deadline Calendar"
+              >
+                <CalendarDays className="w-4 h-4 text-pink-200" />
+                <span>Calendar</span>
+              </button>
+
               <button
                 onClick={() => setIsCategoriesModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-sm font-semibold whitespace-nowrap shadow-2xs"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl backdrop-blur-md transition-all text-sm font-semibold whitespace-nowrap shadow-2xs"
                 title="Manage Categories"
               >
                 <FolderTree className="w-4 h-4 text-purple-200" />
@@ -1130,9 +1197,10 @@ export function TasksPage() {
                     linkIcon: 'link',
                   });
                   setSubtaskInputText('');
+                  setSubtaskInputDueDate(null);
                   setIsModalOpen(true);
                 }}
-                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-sm font-bold whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-sm font-bold whitespace-nowrap"
               >
                 <Plus className="w-5 h-5 stroke-[2.5]" />
                 <span>Add Task</span>
@@ -1562,11 +1630,23 @@ export function TasksPage() {
 
         {/* Tasks Sections */}
         {loading ? (
-          <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
-            <div className="flex justify-center mb-3">
-              <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+          <div className="space-y-4">
+            <div className="h-14 rounded-2xl skeleton-shimmer border border-purple-100/80" />
+            <div className="space-y-3">
+              {[0, 1, 2, 3].map((idx) => (
+                <div key={idx} className="glass-card p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 rounded-lg skeleton-shimmer shrink-0" />
+                    <div className="h-5 w-2/3 sm:w-1/2 rounded-lg skeleton-shimmer" />
+                  </div>
+                  <div className="flex items-center gap-2 pl-9">
+                    <div className="h-5 w-16 rounded-md skeleton-shimmer" />
+                    <div className="h-5 w-24 rounded-md skeleton-shimmer" />
+                    <div className="h-5 w-20 rounded-md skeleton-shimmer" />
+                  </div>
+                </div>
+              ))}
             </div>
-            <p className="text-gray-600">Loading your tasks...</p>
           </div>
         ) : loadError && tasks.length === 0 ? (
           <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
@@ -2166,6 +2246,20 @@ export function TasksPage() {
           onClose={() => setIsCategoriesModalOpen(false)}
           onCategoriesUpdated={loadCategories}
         />
+        <TaskCalendarModal
+          isOpen={isCalendarModalOpen}
+          onClose={() => setIsCalendarModalOpen(false)}
+          visibleTasks={visibleTasks}
+          allTasks={tasks}
+          categories={categories}
+          activePresetName={activePreset?.name}
+          hasMultiplePresets={presets.length > 1}
+          onToggleTaskCompletion={handleToggleCompletion}
+          onToggleSubtask={handleToggleTaskSubtask}
+          onEditTask={handleEditTask}
+          onAddTaskForDate={handleAddTaskForDate}
+          togglingTaskId={togglingTaskId}
+        />
         <ManageTaskPresetsModal
           isOpen={isManagePresetsOpen}
           presets={presets}
@@ -2238,8 +2332,8 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
 
   return (
     <div
-      className={`group glass-card ${borderStyleClass} ${task.isCompleted ? 'opacity-80' : ''
-        } transition-[box-shadow,transform,opacity,border-color] duration-200 sm:hover:shadow-2xl relative py-3 sm:py-4 px-3 sm:px-6 flex flex-col gap-2`}
+      className={`group glass-card ${!isMobileMenuOpen ? 'perf-list-item' : ''} ${borderStyleClass} ${task.isCompleted ? 'opacity-80' : ''
+        } transition-[box-shadow,transform,opacity,border-color] duration-150 sm:hover:shadow-xl relative py-3 sm:py-4 px-3 sm:px-6 flex flex-col gap-2`}
     >
       {togglingTaskId === task.id && (
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg sm:rounded-xl flex items-center justify-center z-10">

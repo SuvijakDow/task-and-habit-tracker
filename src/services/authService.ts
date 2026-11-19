@@ -10,6 +10,7 @@ import {
   deleteUser,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  reauthenticateWithPopup,
 } from 'firebase/auth';
 import { auth } from '@/config/firebase';
 import { UserProfile } from '@/types';
@@ -101,6 +102,9 @@ export const reauthenticateCurrentUser = async (password?: string): Promise<void
     if (!password) throw new Error('Enter your password to delete this account.');
     const credential = EmailAuthProvider.credential(user.email || '', password);
     await reauthenticateWithCredential(user, credential);
+  } else if (providerIds.includes('google.com')) {
+    const provider = new GoogleAuthProvider();
+    await reauthenticateWithPopup(user, provider);
   }
 };
 

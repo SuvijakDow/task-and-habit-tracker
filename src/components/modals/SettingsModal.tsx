@@ -74,6 +74,8 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const initialFontRef = useRef<string>(userProfile?.selectedFont || getStoredFontId());
+  const initialGradientModeRef = useRef<GradientMode>(userProfile?.gradientMode || getStoredGradientMode());
 
   // Build the avatar options: 12 cute defaults + Google photo if available
   const googlePhotoURL = user?.photoURL || null;
@@ -94,20 +96,18 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
 
   const handleFontSelect = (fontId: string) => {
     setSelectedFont(fontId);
-    applyAppFont(fontId);
+    applyAppFont(fontId, false);
   };
 
   const handleGradientModeSelect = (mode: GradientMode) => {
     setSelectedGradientMode(mode);
-    applyGradientMode(mode);
+    applyGradientMode(mode, false);
   };
 
   const handleClose = () => {
     if (busy) return;
-    const initialFont = userProfile?.selectedFont || getStoredFontId();
-    applyAppFont(initialFont);
-    const initialGradientMode = userProfile?.gradientMode || getStoredGradientMode();
-    applyGradientMode(initialGradientMode);
+    applyAppFont(initialFontRef.current, false);
+    applyGradientMode(initialGradientModeRef.current, false);
     onClose();
   };
 
@@ -152,8 +152,10 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
         gradientMode: selectedGradientMode,
       });
 
-      applyAppFont(selectedFont);
-      applyGradientMode(selectedGradientMode);
+      initialFontRef.current = selectedFont;
+      initialGradientModeRef.current = selectedGradientMode;
+      applyAppFont(selectedFont, true);
+      applyGradientMode(selectedGradientMode, true);
       await refreshUserProfile();
       setSuccess(true);
 
@@ -589,6 +591,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               color: habit.color,
               setId: mappedSetId,
               setIds: mappedSetIds,
+              order: typeof habit.order === 'number' ? habit.order : undefined,
               targetValue: habit.targetValue,
               targetUnit: habit.targetUnit,
               dailyProgress: habit.dailyProgress,
@@ -610,11 +613,13 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
         if (importMode === 'replace') {
           if (importedFont) {
             setSelectedFont(importedFont);
-            applyAppFont(importedFont);
+            initialFontRef.current = importedFont;
+            applyAppFont(importedFont, true);
           }
           if (importedGradient) {
             setSelectedGradientMode(importedGradient);
-            applyGradientMode(importedGradient);
+            initialGradientModeRef.current = importedGradient;
+            applyGradientMode(importedGradient, true);
           }
           if (importedFont || importedGradient) {
             await updateUserProfile(user.uid, {
@@ -690,7 +695,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
     setIsDraggingOver(false);
 
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type === 'application/json') {
+    if (file && (file.type === 'application/json' || file.name.toLowerCase().endsWith('.json'))) {
       await processImportFile(file);
       setIsImportDialogOpen(false);
     } else {
@@ -699,8 +704,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
   };
 
   const usesPasswordProvider = user?.providerData.some((provider) => provider.providerId === 'password') ?? false;
+  const deleteConfirmName = (userProfile?.displayName || displayName || '').trim();
   const handleDeleteAccount = async () => {
-    if (!user || deleteConfirmation !== displayName) return;
+    if (!user || deleteConfirmation.trim() !== deleteConfirmName) return;
     try {
       setIsDeletingAccount(true);
       setError(null);
@@ -710,11 +716,12 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       setIsDeleteDialogOpen(false);
       onClose();
     } catch (err: any) {
-      const message = err?.code === 'auth/wrong-password'
-        ? 'Incorrect password. Your account was not deleted.'
-        : err?.code === 'auth/popup-closed-by-user'
-          ? 'Google verification was cancelled. Your account was not deleted.'
-          : err?.message || 'Could not delete the account. Please try again.';
+      const message =
+        err?.code === 'auth/wrong-password' || err?.code === 'auth/invalid-credential'
+          ? 'Incorrect password. Your account was not deleted.'
+          : err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request'
+            ? 'Google verification was cancelled. Your account was not deleted.'
+            : err?.message || 'Could not delete the account. Please try again.';
       setError(message);
     } finally {
       setIsDeletingAccount(false);
@@ -726,11 +733,17 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       const name = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || '';
       const avatar = userProfile?.photoURL || user?.photoURL || DEFAULT_AVATARS[0];
       const font = userProfile?.selectedFont || getStoredFontId();
+      const gradientMode = userProfile?.gradientMode || getStoredGradientMode();
+
+      initialFontRef.current = font;
+      initialGradientModeRef.current = gradientMode;
 
       setDisplayName(name);
       setSelectedAvatar(avatar);
       setSelectedFont(font);
-      applyAppFont(font);
+      setSelectedGradientMode(gradientMode);
+      applyAppFont(font, false);
+      applyGradientMode(gradientMode, false);
       preloadAllAppFonts();
 
       setActiveTab('profile'); // Always default to Profile & Theme tab
@@ -1031,7 +1044,10 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                   >
                     <div className="flex items-center justify-between gap-1.5 w-full mb-1">
                       <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400 shrink-0 shadow-2xs" />
+                        <div
+                          className="w-4 h-4 rounded-full shrink-0 shadow-2xs"
+                          style={{ backgroundImage: 'linear-gradient(to right, #9333ea, #ec4899, #fbbf24)' }}
+                        />
                         <span className="text-xs sm:text-sm font-extrabold text-gray-900 flex items-center gap-1">
                           <Sparkles className="w-3.5 h-3.5 text-pink-500" />
                           Gradient Theme
@@ -1262,7 +1278,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               <span>Export Data Backup?</span>
             </div>
             <p className="text-xs text-gray-600 font-medium leading-relaxed">
-              This will download a JSON file containing all your tasks, habits, categories, and routine presets.
+              This will download a JSON file containing all your tasks (including subtasks, deadlines &amp; link chips), habits, categories, periods/routines, and theme preferences.
             </p>
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -1411,6 +1427,11 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
                 <p className="mt-1 text-sm text-gray-600">This cannot be undone. All of your stored data will be permanently removed.</p>
               </div>
             </div>
+            {error && (
+              <div className="mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-semibold">
+                {error}
+              </div>
+            )}
             <div className="mt-5 space-y-4">
               {usesPasswordProvider && (
                 <div>
@@ -1428,14 +1449,14 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               )}
               <div>
                 <label htmlFor="delete-confirmation" className="mb-1 block text-sm font-semibold text-gray-700">
-                  Type <span className="font-bold text-rose-600">{displayName}</span> to confirm
+                  Type <span className="font-bold text-rose-600">{deleteConfirmName}</span> to confirm
                 </label>
                 <input
                   id="delete-confirmation"
                   value={deleteConfirmation}
                   onChange={(event) => setDeleteConfirmation(event.target.value)}
                   disabled={isDeletingAccount}
-                  placeholder={displayName}
+                  placeholder={deleteConfirmName}
                   className="w-full rounded-lg border border-rose-200 px-3 py-2 text-sm outline-none focus:border-rose-500"
                   autoComplete="off"
                 />
@@ -1444,7 +1465,10 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => setIsDeleteDialogOpen(false)}
+                onClick={() => {
+                  setError(null);
+                  setIsDeleteDialogOpen(false);
+                }}
                 disabled={isDeletingAccount}
                 className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
               >
@@ -1453,7 +1477,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               <button
                 type="button"
                 onClick={handleDeleteAccount}
-                disabled={isDeletingAccount || deleteConfirmation !== displayName || (usesPasswordProvider && !deletePassword)}
+                disabled={isDeletingAccount || deleteConfirmation.trim() !== deleteConfirmName || (usesPasswordProvider && !deletePassword)}
                 className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
               >
                 {isDeletingAccount ? 'Deleting...' : 'Permanently Delete Account'}

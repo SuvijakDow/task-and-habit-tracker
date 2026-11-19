@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Activity, Flame, Clock, CalendarRange, Layers, Settings2, ChevronDown, Calendar, Palette, Plus, Check, X, Target, Pencil, Trash2, Sun } from 'lucide-react';
 import { DailyHabit, HabitSet, TimeSlot, getHabitSetIds } from '@/types';
@@ -35,6 +35,8 @@ export function HabitsPage() {
   const { user, loading: authLoading } = useAuth();
   const { registerRefreshHabits, registerRefreshHabitSets, refreshAnalytics } = useDataRefresh();
   const [habits, setHabits] = useState<DailyHabit[]>([]);
+  const habitsRef = useRef(habits);
+  habitsRef.current = habits;
   const [habitSets, setHabitSets] = useState<HabitSet[]>([]);
   const [activeSetId, setActiveSetId] = useState<string>('');
   const [isRoutineDropdownOpen, setIsRoutineDropdownOpen] = useState(false);
@@ -444,7 +446,7 @@ export function HabitsPage() {
   const handleProgressChange = useCallback(
     async (habitId: string, newProgressValue: number) => {
       if (!user) return;
-      const habit = habits.find((h) => h.id === habitId);
+      const habit = habitsRef.current.find((h) => h.id === habitId);
       if (!habit) return;
 
       const target = habit.targetValue && habit.targetValue > 0 ? habit.targetValue : 1;
@@ -485,14 +487,14 @@ export function HabitsPage() {
         showToast('Failed to update progress', 'error');
       }
     },
-    [habits, todayDate, user, refreshAnalytics]
+    [todayDate, user, refreshAnalytics]
   );
 
   const handleToggleHabit = useCallback(
     async (habitId: string, isCompletedToday: boolean) => {
       if (!user) return;
 
-      const habit = habits.find((h) => h.id === habitId);
+      const habit = habitsRef.current.find((h) => h.id === habitId);
       if (!habit) return;
 
       // If habit has a targetValue, toggle between 0 and targetValue!
@@ -530,7 +532,7 @@ export function HabitsPage() {
         console.error('Error toggling habit:', err);
       }
     },
-    [habits, handleProgressChange, todayDate, user, refreshAnalytics]
+    [handleProgressChange, todayDate, user, refreshAnalytics]
   );
 
   const handleEditHabit = (

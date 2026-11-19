@@ -24,6 +24,7 @@ export const DataRefreshProvider: React.FC<{ children: ReactNode }> = ({ childre
   const refreshHabitSetsRef = React.useRef<(() => void) | null>(null);
   const refreshCategoriesRef = React.useRef<(() => void) | null>(null);
   const refreshAnalyticsRef = React.useRef<(() => void) | null>(null);
+  const analyticsTimerRef = React.useRef<number | null>(null);
 
   const registerRefreshTasks = useCallback((fn: () => void) => {
     refreshTasksRef.current = fn;
@@ -80,9 +81,14 @@ export const DataRefreshProvider: React.FC<{ children: ReactNode }> = ({ childre
   }, []);
 
   const refreshAnalytics = useCallback(() => {
-    if (refreshAnalyticsRef.current) {
-      refreshAnalyticsRef.current();
+    if (!refreshAnalyticsRef.current) return;
+    if (analyticsTimerRef.current !== null) {
+      window.clearTimeout(analyticsTimerRef.current);
     }
+    analyticsTimerRef.current = window.setTimeout(() => {
+      analyticsTimerRef.current = null;
+      refreshAnalyticsRef.current?.();
+    }, 450);
   }, []);
 
   return (

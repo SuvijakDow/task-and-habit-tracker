@@ -11,9 +11,11 @@ export const getStoredGradientMode = (): GradientMode => {
   return DEFAULT_GRADIENT_MODE;
 };
 
-export const applyGradientMode = (mode: GradientMode) => {
+export const applyGradientMode = (mode: GradientMode, persist = true) => {
   if (typeof document === 'undefined') return;
   const validMode: GradientMode = mode === 'solid' ? 'solid' : 'gradient';
   document.documentElement.setAttribute('data-gradient-mode', validMode);
-  localStorage.setItem('app_gradient_mode', validMode);
+  if (persist) {
+    localStorage.setItem('app_gradient_mode', validMode);
+  }
 };

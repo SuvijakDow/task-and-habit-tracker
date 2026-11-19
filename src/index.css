@@ -30,30 +30,80 @@
 
 html {
   @apply scroll-smooth;
+  scrollbar-gutter: stable;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  @apply text-gray-900;
+  @apply text-gray-900 antialiased;
+  background-color: #efddf5;
+  overflow-x: hidden;
+}
+
+/* GPU-composited stationary ambient background (eliminates background-attachment: fixed scroll repaint jank) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  transform: translateZ(0);
   background:
-    radial-gradient(120% 110% at 10% 0%, rgba(255, 233, 244, 0.85) 0%, rgba(255, 233, 244, 0) 56%),
-    radial-gradient(120% 120% at 90% 8%, rgba(235, 224, 255, 0.82) 0%, rgba(235, 224, 255, 0) 58%),
-    radial-gradient(100% 100% at 50% 100%, rgba(216, 238, 255, 0.68) 0%, rgba(216, 238, 255, 0) 54%),
+    radial-gradient(120% 110% at 10% 0%, rgba(255, 233, 244, 0.88) 0%, rgba(255, 233, 244, 0) 56%),
+    radial-gradient(120% 120% at 90% 8%, rgba(235, 224, 255, 0.84) 0%, rgba(235, 224, 255, 0) 58%),
+    radial-gradient(100% 100% at 50% 100%, rgba(216, 238, 255, 0.7) 0%, rgba(216, 238, 255, 0) 54%),
     linear-gradient(142deg, #f8dfea 0%, #efddf5 45%, #dfebff 100%);
-  background-attachment: fixed;
+}
+
+/* Sleek thin custom scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.24);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.45);
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/60 rounded-xl shadow-lg shadow-purple-900/5;
-    transform: translateZ(0);
-    backface-visibility: hidden;
+    @apply bg-white/[0.92] border border-purple-100/90 rounded-2xl;
+    box-shadow: 0 6px 20px rgba(88, 28, 135, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
   }
 
   .glass-header {
-    @apply bg-white/80 backdrop-blur-md border-b border-white/60 shadow-sm;
-    transform: translateZ(0);
-    backface-visibility: hidden;
+    @apply bg-white/90 backdrop-blur-md border-b border-purple-100/80 shadow-sm;
   }
+
+  /* Virtualized-like paint skipping for long lists of cards */
+  .perf-list-item {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 108px;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(233, 213, 255, 0.45) 25%, rgba(250, 245, 255, 0.9) 50%, rgba(233, 213, 255, 0.45) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
 }
 
 @keyframes consistency-gradient-shift {
@@ -78,22 +128,22 @@ body {
 @keyframes page-fade-up {
   0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translate3d(0, 8px, 0);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 @keyframes fade-in-scale {
   0% {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translate3d(0, 6px, 0) scale(0.985);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -106,13 +156,115 @@ body {
   }
 }
 
-.page-enter {
-  animation: page-fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes click-spark-ring-anim {
+  0% {
+    transform: translate3d(-50%, -50%, 0) scale(0.2);
+    opacity: 0.95;
+  }
+  55% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translate3d(-50%, -50%, 0) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes click-spark-dot-anim {
+  0% {
+    transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) scale(1.15);
+    opacity: 1;
+  }
+  65% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(calc(-50% + var(--tx)), calc(-50% + var(--ty)), 0) rotate(calc(var(--rot, 0deg) + 45deg)) scale(0.15);
+    opacity: 0;
+  }
+}
+
+@keyframes click-spark-ray-anim {
+  0% {
+    transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) translateX(4px) scaleX(0.4);
+    opacity: 1;
+  }
+  45% {
+    transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) translateX(18px) scaleX(1.15);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(-50%, -50%, 0) rotate(var(--rot, 0deg)) translateX(34px) scaleX(0.2);
+    opacity: 0;
+  }
+}
+
+.click-spark-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  overflow: hidden;
+  contain: strict;
+}
+
+.click-spark-burst {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.click-spark-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  border: 2.5px solid #a855f7;
+  box-shadow:
+    0 0 10px rgba(236, 72, 153, 0.55),
+    inset 0 0 8px rgba(168, 85, 247, 0.35);
   will-change: transform, opacity;
+  animation: click-spark-ring-anim 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.click-spark-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  will-change: transform, opacity;
+  animation: click-spark-dot-anim 540ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.click-spark-diamond {
+  border-radius: 2px;
+}
+
+.click-spark-ray {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 13px;
+  height: 3px;
+  border-radius: 9999px;
+  will-change: transform, opacity;
+  animation: click-spark-ray-anim 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.page-enter {
+  animation: page-fade-up 210ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .modal-enter {
-  animation: fade-in-scale 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fade-in-scale 175ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .nav-animated {
@@ -121,11 +273,11 @@ body {
 
 .nav-item-motion {
   transition:
-    transform 220ms ease,
-    box-shadow 220ms ease,
-    background-color 220ms ease,
-    color 220ms ease,
-    border-color 220ms ease;
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
 }
 
 .nav-item-motion:hover {
@@ -136,22 +288,18 @@ body {
   animation: fab-breathe 3.2s ease-in-out infinite;
 }
 
-.list-stagger > * {
-  animation: page-fade-up 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.list-stagger > *:nth-child(-n+8) {
+  animation: page-fade-up 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.list-stagger > *:nth-child(1) { animation-delay: 20ms; }
-.list-stagger > *:nth-child(2) { animation-delay: 50ms; }
-.list-stagger > *:nth-child(3) { animation-delay: 80ms; }
-.list-stagger > *:nth-child(4) { animation-delay: 110ms; }
-.list-stagger > *:nth-child(5) { animation-delay: 140ms; }
-.list-stagger > *:nth-child(6) { animation-delay: 170ms; }
-.list-stagger > *:nth-child(7) { animation-delay: 200ms; }
-.list-stagger > *:nth-child(8) { animation-delay: 230ms; }
-.list-stagger > *:nth-child(9) { animation-delay: 260ms; }
-.list-stagger > *:nth-child(10) { animation-delay: 290ms; }
-.list-stagger > *:nth-child(11) { animation-delay: 320ms; }
-.list-stagger > *:nth-child(12) { animation-delay: 350ms; }
+.list-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.list-stagger > *:nth-child(2) { animation-delay: 18ms; }
+.list-stagger > *:nth-child(3) { animation-delay: 36ms; }
+.list-stagger > *:nth-child(4) { animation-delay: 54ms; }
+.list-stagger > *:nth-child(5) { animation-delay: 72ms; }
+.list-stagger > *:nth-child(6) { animation-delay: 90ms; }
+.list-stagger > *:nth-child(7) { animation-delay: 108ms; }
+.list-stagger > *:nth-child(8) { animation-delay: 126ms; }
 
 /* Global Mobile UI Scale & Touch Performance Optimizations (Both Portrait & Landscape) */
 @media (max-width: 768px), (max-height: 550px), (pointer: coarse) {
@@ -251,7 +399,8 @@ body {
    ========================================== */
 
 /* 1. Body background & cards: elegant solid pastel purple tint with distinct contrast against white cards */
-[data-gradient-mode="solid"] body {
+[data-gradient-mode="solid"] body,
+[data-gradient-mode="solid"] body::before {
   background-image: none !important;
   background: #e4d7f0 !important;
 }

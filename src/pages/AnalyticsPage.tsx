@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useDeferredValue } from 'react';
 import { createPortal } from 'react-dom';
 import { Award, Calendar, CheckCircle2, ChevronDown, Clock, Flame, Layers, Minus, RefreshCw, Search, Sparkles, TrendingUp, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -159,13 +159,16 @@ export function AnalyticsPage() {
     });
   }, [habits, selectedSetId, habitSets]);
 
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   const habitsToDisplay = useMemo(() => {
+    const normalized = deferredSearchQuery.trim().toLowerCase();
     return filteredHabits.filter((h) => {
       const matchesHabit = selectedHabitId ? h.id === selectedHabitId : true;
-      const matchesSearch = searchQuery.trim() === '' || h.title.toLowerCase().includes(searchQuery.trim().toLowerCase());
+      const matchesSearch = normalized === '' || h.title.toLowerCase().includes(normalized);
       return matchesHabit && matchesSearch;
     });
-  }, [filteredHabits, selectedHabitId, searchQuery]);
+  }, [filteredHabits, selectedHabitId, deferredSearchQuery]);
 
   const totalCompletions = useMemo(() => {
     const rawTotal = filteredHabits.reduce((acc, habit) => {
@@ -211,12 +214,11 @@ export function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-3 sm:px-6 pt-3 md:pt-6 pb-6 md:pb-12">
-        <div className="glass-card p-5 sm:p-8 md:p-12 text-center">
-          <div className="flex justify-center mb-3">
-            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-          </div>
-          <p className="text-gray-600">Loading your analytics...</p>
+      <div className="max-w-3xl lg:max-w-6xl xl:max-w-7xl mx-auto px-3 sm:px-6 pt-3 md:pt-4 pb-6 md:pb-12 space-y-5">
+        <div className="h-28 rounded-3xl skeleton-shimmer border border-purple-200/60" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-52 rounded-2xl skeleton-shimmer border border-purple-100/80" />
+          <div className="h-52 rounded-2xl skeleton-shimmer border border-purple-100/80" />
         </div>
       </div>
     );

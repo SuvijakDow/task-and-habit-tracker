@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, memo } from 'react';
+import { useEffect, useMemo, useState, useDeferredValue, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Task, Category } from '@/types';
 import { CalendarDays, Check, CheckCircle2, ChevronDown, Copy, ListChecks, ListTodo, Pencil, RefreshCw, Star, Trash2 } from 'lucide-react';
@@ -104,11 +104,21 @@ const TasksTable = memo(function TasksTable({
   };
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
 
-  const getCategory = (taskCategory: string) =>
-    categories.find((c) => c.id === taskCategory || c.name === taskCategory);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, Category>();
+    categories.forEach((c) => {
+      map.set(c.id, c);
+      map.set(c.name, c);
+    });
+    return map;
+  }, [categories]);
+
+  const getCategory = (taskCategory: string) => categoryMap.get(taskCategory);
 
   const matchesFilters = (task: Task): boolean => {
-    return filterTask(task, searchQuery, categoryFilter, quickFilter, categories);
+    return filterTask(task, deferredSearchQuery, categoryFilter, quickFilter, categories);
   };
 
   const pendingTasks = useMemo(
@@ -129,11 +139,11 @@ const TasksTable = memo(function TasksTable({
 
   const filteredPendingTasks = useMemo(
     () => pendingTasks.filter(matchesFilters),
-    [pendingTasks, searchQuery, categoryFilter, quickFilter, categories]
+    [pendingTasks, deferredSearchQuery, categoryFilter, quickFilter, categories]
   );
   const filteredCompletedTasks = useMemo(
     () => completedTasks.filter(matchesFilters),
-    [completedTasks, searchQuery, categoryFilter, quickFilter, categories]
+    [completedTasks, deferredSearchQuery, categoryFilter, quickFilter, categories]
   );
 
   const pendingTotalPages = Math.max(1, Math.ceil(filteredPendingTasks.length / pendingPageSize));

@@ -108,7 +108,7 @@ export const getStoredFontId = (): string => {
   return localStorage.getItem('app_master_font') || DEFAULT_FONT_ID;
 };
 
-export const applyAppFont = (fontId: string) => {
+export const applyAppFont = (fontId: string, persist = true) => {
   const font = APP_FONTS.find((f) => f.id === fontId) || APP_FONTS.find((f) => f.id === DEFAULT_FONT_ID)!;
 
   const linkId = 'app-master-font-link';
@@ -127,7 +127,9 @@ export const applyAppFont = (fontId: string) => {
   document.documentElement.style.setProperty('--font-master', font.fontFamily);
   document.body.style.fontFamily = font.fontFamily;
 
-  localStorage.setItem('app_master_font', font.id);
+  if (persist) {
+    localStorage.setItem('app_master_font', font.id);
+  }
 };
 
 export const preloadAllAppFonts = () => {

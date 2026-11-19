@@ -24,12 +24,18 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const today = startOfDay(new Date());
-  const trackingStart = startOfDay(startDate);
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const todayTime = today.getTime();
+  const trackingStart = useMemo(() => startOfDay(startDate), [startDate]);
+  const trackingStartTime = trackingStart.getTime();
   const currentYear = getYear(today);
   const startYear = getYear(trackingStart);
 
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+
+  const completedSet = useMemo(() => new Set(completedDates), [completedDates]);
+  const notScheduledSet = useMemo(() => new Set(notScheduledDates || []), [notScheduledDates]);
+  const scheduledSet = useMemo(() => new Set(scheduledDays), [scheduledDays]);
 
   const availableYears = useMemo(() => {
     const years = [];
@@ -70,7 +76,7 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
     });
 
     return weeksArray;
-  }, [startDate, selectedYear, currentYear, today, trackingStart]);
+  }, [selectedYear, currentYear, todayTime, trackingStartTime]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -131,14 +137,14 @@ export const ContributionHeatmap: React.FC<ContributionHeatmapProps> = React.mem
                   <div key={weekIndex} className="flex flex-col gap-1">
                     {week.map((day, dayIndex) => {
                       const dayStr = format(day, 'yyyy-MM-dd');
-                      const isCompleted = completedDates.includes(dayStr);
-                      const isExplicitlyNotScheduled = notScheduledDates?.includes(dayStr);
+                      const dayTime = day.getTime();
+                      const isCompleted = completedSet.has(dayStr);
+                      const isExplicitlyNotScheduled = notScheduledSet.has(dayStr);
                       const dayOfWeek = day.getDay();
-                      const isScheduled = !isExplicitlyNotScheduled && scheduledDays.includes(dayOfWeek);
-                      const isFuture = selectedYear === currentYear && isAfter(day, today);
-                      const isBeforeStart = isBefore(day, trackingStart);
-                      const todayObj = startOfDay(new Date());
-                      const isPast = isBefore(day, todayObj);
+                      const isScheduled = !isExplicitlyNotScheduled && scheduledSet.has(dayOfWeek);
+                      const isFuture = selectedYear === currentYear && dayTime > todayTime;
+                      const isBeforeStart = dayTime < trackingStartTime;
+                      const isPast = dayTime < todayTime;
 
                       const loggedVal = dailyProgress?.[dayStr];
                       const hasPartialProgress = !isCompleted && targetValue !== undefined && targetValue > 0 && loggedVal !== undefined && loggedVal > 0 && loggedVal < targetValue;

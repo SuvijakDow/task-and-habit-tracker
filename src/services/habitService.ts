@@ -264,6 +264,9 @@ export const createDailyHabit = async (
     if (Array.isArray(habitData.notScheduledDates)) {
       payload.notScheduledDates = habitData.notScheduledDates;
     }
+    if (typeof habitData.order === 'number') {
+      payload.order = habitData.order;
+    }
 
     const docRef = await addDoc(collection(db, DAILY_HABITS_COLLECTION), payload);
     return docRef.id;

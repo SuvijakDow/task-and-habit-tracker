@@ -13,6 +13,7 @@ A modern, full-featured productivity web application for managing tasks by time 
 ## ✨ Key Features
 
 ### 📋 Task Management
+- **Deadline Calendar Overview**: 🗓️ Full interactive **Month View** & **7-Day Week Comparison Board** accessible directly from the Task Hub—browse past and future deadlines for both main tasks and subtask milestones, spot busy days at a glance, compare nearby days (`±7 days`), toggle completion, edit, or schedule new tasks directly on any date across Desktop, iPad, and Mobile.
 - **Subtask Checklists & Individual Deadlines**: 📅 Actionable subtasks with live progress bars, auto-sync completion, per-subtask due dates (editable both inline and in modals), chronological subtask ordering, and a compact **"Next Up" subtask indicator** on task cards.
 - **Smart Effective Deadline Prioritization**: 🚀 Parent tasks automatically bubble up in the task list based on the earliest deadline among the main task and its incomplete subtasks, so urgent milestones inside large projects never get buried at the bottom.
 - **Unified Search & Quick Filters**: 🔍 Real-time search across task titles, descriptions, categories, and subtask titles, paired with category and due-state filters (`Due Today`, `Overdue`, `Due in 7 Days`) synchronized across **List** and **Table** views.
@@ -33,12 +34,13 @@ A modern, full-featured productivity web application for managing tasks by time 
 - **Editable History**: Click past dates to toggle status between **Completed**, **Not Scheduled**, **Missed**, or **Partial**.
 - **Excused Days**: Mark non-scheduled days so streaks and consistency scores stay accurate.
 
-### 🎨 Themes & Performance
-- **Color Style Modes**: Toggle between **Soft Gradients** and **High-Contrast Solid Color Mode** (with pixel-perfect border alignments).
-- **60 FPS Modal Performance**: Optimized React state memoization (`React.memo` & `useCallback`) and zero-lag overlay compositing for smooth typing.
+### 🎨 Themes, UX & Performance
+- **Ultra-Smooth 60–120 FPS Architecture**: Instant optimistic UI mutations, `useDeferredValue` zero-lag search, `content-visibility: auto` list virtualization, O(1) heatmap & category lookups, idle/hover route chunk prefetching, and a GPU-composited stationary ambient canvas.
+- **Tactile Micro-Interactions & Skeleton Loading**: Crisp GPU-accelerated **Click Spark Effect** on every click/tap, sleek shimmering skeleton loaders, custom thin lavender scrollbars, and mobile-safe floating pill toast notifications.
+- **Single-Viewport Auth Experience**: Split-panel Sign In / Sign Up showcase card engineered to fit cleanly at 100% zoom across Desktop, iPad, and Mobile, with Google Sign-In and password visibility toggle.
+- **Color Style Modes**: Live preview and seamless switching between **Gradient Theme** and **High-Contrast Solid Color Mode** (with safe Cancel revert).
 - **Typography**: Choose from curated Thai & English fonts (Bai Jamjuree, Prompt, Sarabun, Inter, Kanit, etc.).
-- **Mobile & Tablet Optimized**: Compact 3-dots action menus, full-height scrollable modal bounds, and responsive row alignments.
-- **Data Backup & Restore**: Export/import full JSON backups with **Replace** mode or intelligent non-destructive **Merge** mode (deduplicates categories, presets, tasks, subtasks, and habits).
+- **Data Backup, Restore & Account Management**: Full JSON export/import supporting **Replace** mode and intelligent non-destructive **Merge** mode (preserving habit ordering, subtask deadlines, link chips, and theme preferences), module resets, and verified account deletion for both Email/Password and Google users.
 
 ---
 
@@ -107,9 +109,10 @@ npm run build
 ```
 src/
 ├── components/          # Reusable UI, Habit, Task, and Modal components
-│   ├── habits/         # Heatmap, Timeline, Habits Table
-│   ├── modals/         # Category, Settings, History, Period modals
-│   └── tasks/          # TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
+│   ├── habits/         # ContributionHeatmap, HabitTimeline, HabitsTable
+│   ├── modals/         # TaskCalendarModal, SettingsModal, Categories, History, Period modals
+│   ├── tasks/          # TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
+│   └── ui/             # ClickSparkEffect, Toast, TimePickerInput
 ├── config/             # Firebase configuration
 ├── context/            # Auth and Refresh Context providers
 ├── pages/              # TasksPage, HabitsPage, AnalyticsPage, AuthPage
