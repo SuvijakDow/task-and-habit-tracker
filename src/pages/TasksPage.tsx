@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDown, ArrowUp, CalendarDays, CheckCircle2, ChevronDown, Copy, FolderTree, Layers, ListTodo, Settings2, ListChecks, MoreVertical, Pencil, Plus, RotateCcw, Search, Star, Trash2, X, Sparkles, ClipboardList } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronDown, Copy, FolderTree, Layers, ListTodo, Settings2, ListChecks, MoreVertical, Pencil, Plus, RotateCcw, Search, Star, Trash2, Sparkles, ClipboardList } from 'lucide-react';
 import { FirebaseError } from 'firebase/app';
-import { Category, Task, TaskPreset, Subtask } from '@/types';
+import { Category, Task, TaskPreset } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useDataRefresh } from '@/context/DataRefreshContext';
 import {
@@ -41,12 +41,15 @@ import {
 } from '@/services/taskPresetService';
 import { ManageTaskPresetsModal } from '@/components/modals/ManageTaskPresetsModal';
 import { TaskCalendarModal } from '@/components/modals/TaskCalendarModal';
-import { TaskSmartChip, CHIP_ICON_OPTIONS, autoDetectLinkChip } from '@/components/tasks/TaskSmartChip';
+import { TaskFormModal, TaskFormSubmitData } from '@/components/modals/TaskFormModal';
+import { TaskSmartChip } from '@/components/tasks/TaskSmartChip';
 import { SubtaskDateControl, NextSubtaskBadge } from '@/components/tasks/SubtaskDateControl';
 
 const DEFAULT_TASK_CATEGORY_NAME = 'Personal';
 const DEFAULT_TASK_CATEGORY_COLOR = '#C4B5FD';
 const COLOR_HEX_REGEX = /^#[0-9A-F]{6}$/i;
+const PENDING_LIST_BATCH_SIZE = 30;
+const COMPLETED_LIST_BATCH_SIZE = 20;
 
 const isValidHexColor = (value: string): boolean => COLOR_HEX_REGEX.test(value);
 
@@ -72,13 +75,6 @@ const getReadableCategoryTextColor = (hex: string): string => {
 
   const darken = (channel: number) => Math.max(28, Math.round(channel * 0.45));
   return `rgb(${darken(r)}, ${darken(g)}, ${darken(b)})`;
-};
-
-const findCategoryByTaskValue = (
-  categories: Category[],
-  taskCategory: string
-): Category | undefined => {
-  return categories.find((category) => category.id === taskCategory || category.name === taskCategory);
 };
 
 const getCategoryErrorMessage = (error: unknown): string => {
@@ -111,7 +107,6 @@ export function TasksPage() {
   const [isManagePresetsOpen, setIsManagePresetsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   // View mode: 'list' or 'table'
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
@@ -122,87 +117,17 @@ export function TasksPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
 
-  // Form state
-  const [formData, setFormData] = useState<{
-    title: string;
-    description: string;
-    category: string;
-    dueDate: string;
-    setId: string;
-    subtasks: Subtask[];
-    linkUrl: string;
-    linkLabel: string;
-    linkIcon: string;
-  }>({
-    title: '',
-    description: '',
-    category: DEFAULT_TASK_CATEGORY_NAME,
-    dueDate: '',
-    setId: '',
-    subtasks: [],
-    linkUrl: '',
-    linkLabel: '',
-    linkIcon: 'link',
-  });
-  const [subtaskInputText, setSubtaskInputText] = useState('');
-  const [subtaskInputDueDate, setSubtaskInputDueDate] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Progressive list rendering state (keeps 100-1000+ tasks snappy)
+  const [visiblePendingCount, setVisiblePendingCount] = useState(PENDING_LIST_BATCH_SIZE);
+  const [visibleCompletedCount, setVisibleCompletedCount] = useState(COMPLETED_LIST_BATCH_SIZE);
+  const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
 
-  // Edit state
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [editFormData, setEditFormData] = useState<{
-    title: string;
-    description: string;
-    category: string;
-    dueDate: string;
-    setId: string;
-    subtasks: Subtask[];
-    linkUrl: string;
-    linkLabel: string;
-    linkIcon: string;
-  }>({
-    title: '',
-    description: '',
-    category: DEFAULT_TASK_CATEGORY_NAME,
-    dueDate: '',
-    setId: '',
-    subtasks: [],
-    linkUrl: '',
-    linkLabel: '',
-    linkIcon: 'link',
-  });
-  const [editSubtaskInputText, setEditSubtaskInputText] = useState('');
-  const [editSubtaskInputDueDate, setEditSubtaskInputDueDate] = useState<string | null>(null);
+  // Isolated Add / Edit modal open triggers (form typing state lives inside TaskFormModal)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalInitialDueDate, setAddModalInitialDueDate] = useState('');
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const handleLinkUrlChange = (newUrl: string, isEdit = false) => {
-    const auto = autoDetectLinkChip(newUrl);
-    if (isEdit) {
-      setEditFormData((prev) => {
-        const shouldAutoIcon = !prev.linkIcon || prev.linkIcon === 'link' || !prev.linkUrl;
-        const shouldAutoLabel = !prev.linkLabel;
-        return {
-          ...prev,
-          linkUrl: newUrl,
-          linkIcon: shouldAutoIcon ? auto.icon : prev.linkIcon,
-          linkLabel: shouldAutoLabel ? auto.suggestedLabel : prev.linkLabel,
-        };
-      });
-    } else {
-      setFormData((prev) => {
-        const shouldAutoIcon = !prev.linkIcon || prev.linkIcon === 'link' || !prev.linkUrl;
-        const shouldAutoLabel = !prev.linkLabel;
-        return {
-          ...prev,
-          linkUrl: newUrl,
-          linkIcon: shouldAutoIcon ? auto.icon : prev.linkIcon,
-          linkLabel: shouldAutoLabel ? auto.suggestedLabel : prev.linkLabel,
-        };
-      });
-    }
-  };
-
-  // Delete confirmation state
+  // Delete confirmation & toggling state
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
@@ -210,6 +135,12 @@ export function TasksPage() {
   useEffect(() => {
     tasksRef.current = tasks;
   }, [tasks]);
+
+  // Reset progressive list counts when switching period or filters
+  useEffect(() => {
+    setVisiblePendingCount(PENDING_LIST_BATCH_SIZE);
+    setVisibleCompletedCount(COMPLETED_LIST_BATCH_SIZE);
+  }, [activePresetId, searchQuery, categoryFilter, quickFilter]);
 
   // Load tasks when user changes
   useEffect(() => {
@@ -266,25 +197,15 @@ export function TasksPage() {
     return () => document.removeEventListener('click', closeDropdown);
   }, [isPresetDropdownOpen]);
 
-  const getDefaultCategoryValue = (categoryList: Category[] = categories): string => {
-    const defaultCategory =
-      categoryList.find((category) => category.name === DEFAULT_TASK_CATEGORY_NAME) ||
-      categoryList[0];
-
-    return defaultCategory?.id || DEFAULT_TASK_CATEGORY_NAME;
-  };
-
   const loadTasks = useCallback(async () => {
     if (!user) return;
     try {
       setLoadError(null);
       const userTasks = await getUserTasks(user.uid);
       setTasks(userTasks);
-      setError(null);
     } catch (err) {
       const message = 'Could not load tasks. Refresh and try again.';
       setLoadError(message);
-      setError(message);
       console.error('Error loading tasks:', err);
     }
   }, [user]);
@@ -298,23 +219,8 @@ export function TasksPage() {
 
       const userCategories = await getUserCategories(user.uid);
       setCategories(userCategories);
-
-      if (userCategories.length > 0) {
-        const validValues = new Set(userCategories.flatMap((category) => [category.id, category.name]));
-        const defaultCategoryValue = getDefaultCategoryValue(userCategories);
-
-        setFormData((prev) => ({
-          ...prev,
-          category: validValues.has(prev.category) ? prev.category : defaultCategoryValue,
-        }));
-
-        setEditFormData((prev) => ({
-          ...prev,
-          category: validValues.has(prev.category) ? prev.category : defaultCategoryValue,
-        }));
-      }
     } catch (err) {
-      setError(getCategoryErrorMessage(err));
+      showToast(getCategoryErrorMessage(err), 'error');
       console.error('Error loading categories:', err);
     }
   };
@@ -327,7 +233,6 @@ export function TasksPage() {
       const active = userPresets.find((preset) => preset.isActive) || userPresets[0];
       if (active) {
         setActivePresetId(active.id);
-        setFormData((previous) => ({ ...previous, setId: previous.setId || active.id }));
       }
     } catch (err) {
       console.error('Error loading task presets:', err);
@@ -335,214 +240,54 @@ export function TasksPage() {
     }
   };
 
-  // Add modal subtask handlers
-  const handleAddModalSubtask = () => {
-    if (!subtaskInputText.trim()) return;
-    const newSt: Subtask = {
-      id: 'subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-      title: subtaskInputText.trim(),
-      isCompleted: false,
-      ...(subtaskInputDueDate ? { dueDate: subtaskInputDueDate } : {}),
-    };
-    setFormData((prev) => ({
-      ...prev,
-      subtasks: [...prev.subtasks, newSt],
-    }));
-    setSubtaskInputText('');
-    setSubtaskInputDueDate(null);
-  };
-
-  const handleRemoveModalSubtask = (id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.filter((st) => st.id !== id),
-    }));
-  };
-
-  const handleToggleModalSubtask = (id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, isCompleted: !st.isCompleted } : st)),
-    }));
-  };
-
-  const handleUpdateModalSubtaskTitle = (id: string, newTitle: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, title: newTitle } : st)),
-    }));
-  };
-
-  const handleUpdateModalSubtaskDueDate = (id: string, newDueDate: string | null) => {
-    setFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, dueDate: newDueDate } : st)),
-    }));
-  };
-
-  const handleMoveModalSubtaskUp = (index: number) => {
-    if (index <= 0) return;
-    setFormData((prev) => {
-      const updated = [...prev.subtasks];
-      const temp = updated[index];
-      updated[index] = updated[index - 1];
-      updated[index - 1] = temp;
-      return { ...prev, subtasks: updated };
-    });
-  };
-
-  const handleMoveModalSubtaskDown = (index: number) => {
-    setFormData((prev) => {
-      if (index >= prev.subtasks.length - 1) return prev;
-      const updated = [...prev.subtasks];
-      const temp = updated[index];
-      updated[index] = updated[index + 1];
-      updated[index + 1] = temp;
-      return { ...prev, subtasks: updated };
-    });
-  };
-
-  // Edit modal subtask handlers
-  const handleAddEditSubtask = () => {
-    if (!editSubtaskInputText.trim()) return;
-    const newSt: Subtask = {
-      id: 'subtask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-      title: editSubtaskInputText.trim(),
-      isCompleted: false,
-      ...(editSubtaskInputDueDate ? { dueDate: editSubtaskInputDueDate } : {}),
-    };
-    setEditFormData((prev) => ({
-      ...prev,
-      subtasks: [...prev.subtasks, newSt],
-    }));
-    setEditSubtaskInputText('');
-    setEditSubtaskInputDueDate(null);
-  };
-
-  const handleRemoveEditSubtask = (id: string) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.filter((st) => st.id !== id),
-    }));
-  };
-
-  const handleToggleEditSubtask = (id: string) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, isCompleted: !st.isCompleted } : st)),
-    }));
-  };
-
-  const handleUpdateEditSubtaskTitle = (id: string, newTitle: string) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, title: newTitle } : st)),
-    }));
-  };
-
-  const handleUpdateEditSubtaskDueDate = (id: string, newDueDate: string | null) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      subtasks: prev.subtasks.map((st) => (st.id === id ? { ...st, dueDate: newDueDate } : st)),
-    }));
-  };
-
-  const handleMoveEditSubtaskUp = (index: number) => {
-    if (index <= 0) return;
-    setEditFormData((prev) => {
-      const updated = [...prev.subtasks];
-      const temp = updated[index];
-      updated[index] = updated[index - 1];
-      updated[index - 1] = temp;
-      return { ...prev, subtasks: updated };
-    });
-  };
-
-  const handleMoveEditSubtaskDown = (index: number) => {
-    setEditFormData((prev) => {
-      if (index >= prev.subtasks.length - 1) return prev;
-      const updated = [...prev.subtasks];
-      const temp = updated[index];
-      updated[index] = updated[index + 1];
-      updated[index + 1] = temp;
-      return { ...prev, subtasks: updated };
-    });
-  };
-
   const retryLoadData = async () => {
     await Promise.all([loadTasks(), loadCategories(), loadPresets()]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleOpenAddModal = useCallback((dueDateStr = '') => {
+    setAddModalInitialDueDate(dueDateStr);
+    setIsAddModalOpen(true);
+  }, []);
+
+  const handleCloseAddModal = useCallback(() => {
+    setIsAddModalOpen(false);
+  }, []);
+
+  const handleCreateTaskSubmit = useCallback(async (data: TaskFormSubmitData) => {
     if (!user) return;
 
-    if (!formData.title.trim()) {
-      setError('Add a task title.');
-      return;
-    }
+    const createdTaskId = await createTask(user.uid, {
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      dueDate: data.dueDate,
+      isCompleted: false,
+      setId: data.setId,
+      subtasks: data.subtasks,
+      linkChip: data.linkChip,
+    });
 
-    try {
-      setIsSubmitting(true);
-      setError(null);
+    const now = new Date();
+    const newTask: Task = {
+      id: createdTaskId,
+      userId: user.uid,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      dueDate: data.dueDate,
+      isCompleted: false,
+      isStarred: false,
+      setId: data.setId,
+      subtasks: data.subtasks,
+      linkChip: data.linkChip,
+      createdAt: now,
+      updatedAt: now,
+    };
 
-      const selectedCategory = findCategoryByTaskValue(categories, formData.category);
-      const linkChipToSave = formData.linkUrl.trim()
-        ? {
-            url: formData.linkUrl.trim(),
-            label: formData.linkLabel.trim() || undefined,
-            icon: formData.linkIcon || 'link',
-          }
-        : undefined;
-
-      const resolvedCategory = selectedCategory?.id || formData.category || getDefaultCategoryValue();
-      const resolvedDueDate = formData.dueDate ? new Date(formData.dueDate) : null;
-      const resolvedSetId = formData.setId || activePresetId || undefined;
-      const resolvedSubtasks = formData.subtasks || [];
-
-      const createdTaskId = await createTask(user.uid, {
-        title: formData.title,
-        description: formData.description,
-        category: resolvedCategory,
-        dueDate: resolvedDueDate,
-        isCompleted: false,
-        setId: resolvedSetId,
-        subtasks: resolvedSubtasks,
-        linkChip: linkChipToSave,
-      });
-
-      const now = new Date();
-      const newTask: Task = {
-        id: createdTaskId,
-        userId: user.uid,
-        title: formData.title,
-        description: formData.description,
-        category: resolvedCategory,
-        dueDate: resolvedDueDate,
-        isCompleted: false,
-        isStarred: false,
-        setId: resolvedSetId,
-        subtasks: resolvedSubtasks,
-        linkChip: linkChipToSave,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      // Update local state immediately without triggering a full collection re-fetch
-      setTasks((prev) => [newTask, ...prev]);
-
-      // Reset form and close modal
-      setFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [], linkUrl: '', linkLabel: '', linkIcon: 'link' });
-      setSubtaskInputText('');
-      setSubtaskInputDueDate(null);
-      setIsModalOpen(false);
-    } catch (err) {
-      setError('Could not create the task. Check your connection and try again.');
-      console.error('Error creating task:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Update local state immediately without triggering a full collection re-fetch
+    setTasks((prev) => [newTask, ...prev]);
+    setIsAddModalOpen(false);
+  }, [user]);
 
   const handleToggleCompletion = useCallback(async (taskId: string, currentStatus: boolean) => {
     const task = tasksRef.current.find((t) => t.id === taskId);
@@ -687,7 +432,7 @@ export function TasksPage() {
     }
   }, []);
 
-  const handleBulkSetCompletion = async (taskIds: string[], isCompleted: boolean) => {
+  const handleBulkSetCompletion = useCallback(async (taskIds: string[], isCompleted: boolean) => {
     if (taskIds.length === 0) return;
 
     if (isCompleted) {
@@ -696,31 +441,31 @@ export function TasksPage() {
 
     try {
       const idSet = new Set(taskIds);
-      
+      const currentTasks = tasksRef.current;
+
       // Prepare updates for each task - update subtasks to match the task completion status
       const updatePromises = taskIds.map((taskId) => {
-        const task = tasks.find((t) => t.id === taskId);
+        const task = currentTasks.find((t) => t.id === taskId);
         if (!task) return updateTask(taskId, { isCompleted });
-        
-        // If task has subtasks, update them to match the task completion status
+
         if (task.subtasks && task.subtasks.length > 0) {
           const updatedSubtasks = task.subtasks.map((st) => ({ ...st, isCompleted }));
           return updateTask(taskId, { isCompleted, subtasks: updatedSubtasks });
         }
-        
+
         return updateTask(taskId, { isCompleted });
       });
 
       await Promise.all(updatePromises);
-      
+
       setTasks((prev) =>
         prev.map((task) => {
           if (idSet.has(task.id)) {
-            // Update subtasks to match the task completion status
-            const updatedSubtasks = task.subtasks && task.subtasks.length > 0
-              ? task.subtasks.map((st) => ({ ...st, isCompleted }))
-              : task.subtasks;
-            
+            const updatedSubtasks =
+              task.subtasks && task.subtasks.length > 0
+                ? task.subtasks.map((st) => ({ ...st, isCompleted }))
+                : task.subtasks;
+
             return {
               ...task,
               isCompleted,
@@ -730,7 +475,7 @@ export function TasksPage() {
           return task;
         })
       );
-      
+
       showToast(
         isCompleted
           ? `Marked ${taskIds.length} task(s) as completed.`
@@ -742,9 +487,9 @@ export function TasksPage() {
       console.error('Error bulk updating tasks:', err);
       await loadTasks();
     }
-  };
+  }, [loadTasks]);
 
-  const handleBulkDelete = async (taskIds: string[]) => {
+  const handleBulkDelete = useCallback(async (taskIds: string[]) => {
     if (taskIds.length === 0) return;
 
     try {
@@ -757,7 +502,7 @@ export function TasksPage() {
       console.error('Error bulk deleting tasks:', err);
       await loadTasks();
     }
-  };
+  }, [loadTasks]);
 
   const handleDuplicateTask = useCallback(async (task: Task) => {
     if (!user) return;
@@ -774,10 +519,11 @@ export function TasksPage() {
     }
   }, [user, loadTasks]);
 
-  const handleBulkDuplicate = async (taskIds: string[]) => {
+  const handleBulkDuplicate = useCallback(async (taskIds: string[]) => {
     if (!user || taskIds.length === 0) return;
     try {
-      const tasksToDuplicate = tasks.filter((t) => taskIds.includes(t.id));
+      const idSet = new Set(taskIds);
+      const tasksToDuplicate = tasksRef.current.filter((t) => idSet.has(t.id));
       await Promise.all(tasksToDuplicate.map((task) => duplicateTask(user.uid, task)));
       await loadTasks();
       showToast(`Duplicated ${tasksToDuplicate.length} task(s).`, 'success');
@@ -786,107 +532,58 @@ export function TasksPage() {
       console.error('Error bulk duplicating tasks:', err);
       await loadTasks();
     }
-  };
+  }, [user, loadTasks]);
 
   const handleEditTask = useCallback((task: Task) => {
-    const matchedCategory = findCategoryByTaskValue(categories, task.category);
-    setEditingTaskId(task.id);
-    setEditFormData({
-      title: task.title,
-      description: task.description,
-      category: matchedCategory?.id || task.category || getDefaultCategoryValue(),
-      dueDate: task.dueDate
-        ? task.dueDate.toISOString().split('T')[0]
-        : '',
-      setId: task.setId || presets[0]?.id || activePresetId,
-      subtasks: task.subtasks ?? [],
-      linkUrl: task.linkChip?.url || '',
-      linkLabel: task.linkChip?.label || '',
-      linkIcon: task.linkChip?.icon || 'link',
-    });
-    setEditSubtaskInputText('');
-  }, [categories, presets, activePresetId]);
+    setEditingTask(task);
+  }, []);
 
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingTaskId) return;
+  const handleCloseEditModal = useCallback(() => {
+    setEditingTask(null);
+  }, []);
 
-    if (!editFormData.title.trim()) {
-      setError('Add a task title.');
-      return;
+  const handleSaveEditSubmit = useCallback(async (data: TaskFormSubmitData) => {
+    if (!editingTask) return;
+    const taskId = editingTask.id;
+    const currentTask = tasksRef.current.find((t) => t.id === taskId) || editingTask;
+    const isCompleted = currentTask.isCompleted ?? false;
+
+    const updates: any = {
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      dueDate: data.dueDate,
+      setId: data.setId,
+      isCompleted,
+      linkChip: data.linkChip || null,
+    };
+
+    if (data.subtasks.length > 0 || (currentTask.subtasks && currentTask.subtasks.length > 0)) {
+      updates.subtasks = data.subtasks;
     }
 
-    try {
-      setIsSubmitting(true);
-      setError(null);
+    await updateTask(taskId, updates);
 
-      const selectedCategory = findCategoryByTaskValue(categories, editFormData.category);
-      const subtasks = editFormData.subtasks ?? [];
-      const currentTask = tasks.find((t) => t.id === editingTaskId);
-      
-      // Preserve current isCompleted status - don't recalculate
-      const isCompleted = currentTask?.isCompleted ?? false;
-
-      const linkChipToSave = editFormData.linkUrl.trim()
-        ? {
-            url: editFormData.linkUrl.trim(),
-            label: editFormData.linkLabel.trim() || undefined,
-            icon: editFormData.linkIcon || 'link',
-          }
-        : undefined;
-
-      // Prepare updates
-      const updates: any = {
-        title: editFormData.title,
-        description: editFormData.description,
-        category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
-        dueDate: editFormData.dueDate ? new Date(editFormData.dueDate) : null,
-        setId: editFormData.setId || activePresetId || undefined,
-        isCompleted: isCompleted,
-        linkChip: linkChipToSave || null,
-      };
-
-      // Update subtasks if they exist
-      if (subtasks.length > 0 || (currentTask?.subtasks && currentTask.subtasks.length > 0)) {
-        updates.subtasks = subtasks;
-      }
-
-      await updateTask(editingTaskId, updates);
-
-      setTasks(
-        tasks.map((t) =>
-          t.id === editingTaskId
-            ? {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? {
               ...t,
-              title: editFormData.title,
-              description: editFormData.description,
-              category: selectedCategory?.id || editFormData.category || getDefaultCategoryValue(),
-              dueDate: editFormData.dueDate
-                ? new Date(editFormData.dueDate)
-                : null,
-              setId: editFormData.setId || activePresetId || undefined,
-              subtasks: updates.subtasks !== undefined ? subtasks : t.subtasks,
-              isCompleted: isCompleted,
-              linkChip: linkChipToSave,
+              title: data.title,
+              description: data.description,
+              category: data.category,
+              dueDate: data.dueDate,
+              setId: data.setId,
+              subtasks: updates.subtasks !== undefined ? data.subtasks : t.subtasks,
+              isCompleted,
+              linkChip: data.linkChip,
             }
-            : t
-        )
-      );
+          : t
+      )
+    );
 
-      setEditingTaskId(null);
-    } catch (err) {
-      setError('Could not save task changes. Please try again.');
-      console.error('Error updating task:', err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTaskId(null);
-    setEditFormData({ title: '', description: '', category: getDefaultCategoryValue(), dueDate: '', setId: activePresetId, subtasks: [], linkUrl: '', linkLabel: '', linkIcon: 'link' });
-    setEditSubtaskInputText('');
-  };
+    setEditingTask(null);
+  }, [editingTask]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setDeletingTaskId(taskId);
@@ -897,10 +594,10 @@ export function TasksPage() {
 
     try {
       await deleteTask(deletingTaskId);
-      setTasks(tasks.filter((t) => t.id !== deletingTaskId));
+      setTasks((prev) => prev.filter((t) => t.id !== deletingTaskId));
       setDeletingTaskId(null);
     } catch (err) {
-      setError('Could not delete this task. Please try again.');
+      showToast('Could not delete this task. Please try again.', 'error');
       console.error('Error deleting task:', err);
       setDeletingTaskId(null);
     }
@@ -1037,6 +734,15 @@ export function TasksPage() {
     [visibleTasks]
   );
 
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, Category>();
+    for (const category of categories) {
+      map.set(category.id, category);
+      map.set(category.name, category);
+    }
+    return map;
+  }, [categories]);
+
   const incompleteTasks = useMemo(
     () =>
       filteredVisibleTasks
@@ -1051,31 +757,21 @@ export function TasksPage() {
         .sort(sortCompletedTasks),
     [filteredVisibleTasks]
   );
-  const isEditCategoryMissing =
-    !!editFormData.category &&
-    !categories.some(
-      (category) =>
-        category.id === editFormData.category || category.name === editFormData.category
-    );
+
+  const visibleIncompleteTasks = useMemo(
+    () => incompleteTasks.slice(0, visiblePendingCount),
+    [incompleteTasks, visiblePendingCount]
+  );
+  const visibleCompletedTasks = useMemo(
+    () => completedTasks.slice(0, visibleCompletedCount),
+    [completedTasks, visibleCompletedCount]
+  );
 
   const handleAddTaskForDate = useCallback(
     (dateStr: string) => {
-      setFormData({
-        title: '',
-        description: '',
-        category: getDefaultCategoryValue(),
-        dueDate: dateStr,
-        setId: activePresetId,
-        subtasks: [],
-        linkUrl: '',
-        linkLabel: '',
-        linkIcon: 'link',
-      });
-      setSubtaskInputText('');
-      setSubtaskInputDueDate(null);
-      setIsModalOpen(true);
+      handleOpenAddModal(dateStr);
     },
-    [activePresetId, categories]
+    [handleOpenAddModal]
   );
 
   return (
@@ -1121,22 +817,7 @@ export function TasksPage() {
                 </button>
 
                 <button
-                  onClick={() => {
-                    setFormData({
-                      title: '',
-                      description: '',
-                      category: getDefaultCategoryValue(),
-                      dueDate: '',
-                      setId: activePresetId,
-                      subtasks: [],
-                      linkUrl: '',
-                      linkLabel: '',
-                      linkIcon: 'link',
-                    });
-                    setSubtaskInputText('');
-                    setSubtaskInputDueDate(null);
-                    setIsModalOpen(true);
-                  }}
+                  onClick={() => handleOpenAddModal()}
                   className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-[11px] sm:text-sm font-bold whitespace-nowrap min-w-0"
                 >
                   <Plus className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.5] shrink-0" />
@@ -1184,22 +865,7 @@ export function TasksPage() {
               </button>
 
               <button
-                onClick={() => {
-                  setFormData({
-                    title: '',
-                    description: '',
-                    category: getDefaultCategoryValue(),
-                    dueDate: '',
-                    setId: activePresetId,
-                    subtasks: [],
-                    linkUrl: '',
-                    linkLabel: '',
-                    linkIcon: 'link',
-                  });
-                  setSubtaskInputText('');
-                  setSubtaskInputDueDate(null);
-                  setIsModalOpen(true);
-                }}
+                onClick={() => handleOpenAddModal()}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl shadow-[0_8px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_12px_28px_rgba(244,63,94,0.4)] hover:-translate-y-0.5 transition-all text-sm font-bold whitespace-nowrap"
               >
                 <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -1273,361 +939,6 @@ export function TasksPage() {
           </div>
         </div>
 
-        {/* Add Task Form Modal */}
-        {isModalOpen && createPortal(
-          <div className="fixed inset-0 bg-slate-950/40 sm:backdrop-blur-xs flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4 overflow-hidden">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[88dvh] max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
-              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-purple-600" />
-                    Add New Task
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="h-8 w-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition flex items-center justify-center"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Scrollable Form Body */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
-                  {/* Error Message */}
-                  {error && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
-                      {error}
-                    </div>
-                  )}
-
-                  {/* Title Input */}
-                  <div>
-                    <label htmlFor="title" className="block text-xs font-semibold text-gray-700 mb-1">
-                      Task Title *
-                    </label>
-                    <input
-                      id="title"
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
-                      placeholder="Enter task title"
-                      className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                      disabled={isSubmitting}
-                      autoFocus
-                    />
-                  </div>
-
-                  {/* Description Textarea */}
-                  <div>
-                    <label htmlFor="description" className="block text-xs font-semibold text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
-                      placeholder="Enter task description (optional)"
-                      rows={2}
-                      className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition resize-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {/* Link Smart Chip Section */}
-                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/50 border border-purple-100/90 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-purple-600" />
-                        Link Smart Chip (Optional)
-                      </label>
-                      {formData.linkUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setFormData((prev) => ({ ...prev, linkUrl: '', linkLabel: '', linkIcon: 'link' }))}
-                          className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-
-                    <div>
-                      <input
-                        type="url"
-                        value={formData.linkUrl}
-                        onChange={(e) => handleLinkUrlChange(e.target.value, false)}
-                        placeholder="Paste URL (e.g. https://github.com/user/repo, Drive link...)"
-                        className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-
-                    {formData.linkUrl.trim() !== '' && (
-                      <div className="space-y-2 pt-1 border-t border-purple-100/70">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">
-                            Display Text (Label)
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.linkLabel}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, linkLabel: e.target.value }))}
-                            placeholder="Display text for link (e.g. GitHub Repo)"
-                            className="w-full min-h-[36px] rounded-xl border border-purple-200 bg-white px-3 py-1 text-xs text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1.5">
-                            Chip Icon
-                          </label>
-                          <div className="grid grid-cols-3 gap-1.5">
-                            {CHIP_ICON_OPTIONS.map((opt) => {
-                              const IconComp = opt.icon;
-                              const isSelected = (formData.linkIcon || 'link') === opt.id;
-                              return (
-                                <button
-                                  key={opt.id}
-                                  type="button"
-                                  onClick={() => setFormData((prev) => ({ ...prev, linkIcon: opt.id }))}
-                                  className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs transition-all ${
-                                    isSelected
-                                      ? 'bg-purple-600 text-white shadow-xs font-semibold'
-                                      : 'bg-white text-gray-700 hover:bg-purple-100/80 border border-purple-200/90 font-medium'
-                                  }`}
-                                >
-                                  <IconComp className="w-3.5 h-3.5 shrink-0" />
-                                  <span className="truncate text-center">{opt.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Live Chip Preview */}
-                        <div className="pt-1.5 flex items-center gap-2">
-                          <span className="text-[11px] font-semibold text-gray-500">Preview:</span>
-                          <TaskSmartChip chip={{ url: formData.linkUrl, label: formData.linkLabel, icon: formData.linkIcon }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Grouped Grid Controls */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Category */}
-                    <div>
-                      <label htmlFor="category" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Category
-                      </label>
-                      <select
-                        id="category"
-                        value={formData.category}
-                        onChange={(e) =>
-                          setFormData({ ...formData, category: e.target.value })
-                        }
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      >
-                        {categories.length === 0 ? (
-                          <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
-                        ) : (
-                          categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    {/* Task Preset */}
-                    <div>
-                      <label htmlFor="task-preset" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Preset
-                      </label>
-                      <select
-                        id="task-preset"
-                        value={formData.setId}
-                        onChange={(e) => setFormData({ ...formData, setId: e.target.value })}
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      >
-                        {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
-                      </select>
-                    </div>
-
-                    {/* Due Date */}
-                    <div>
-                      <label htmlFor="dueDate" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Due Date
-                      </label>
-                      <input
-                        id="dueDate"
-                        type="date"
-                        value={formData.dueDate}
-                        onChange={(e) =>
-                          setFormData({ ...formData, dueDate: e.target.value })
-                        }
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-1.5 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Subtasks Framed Section */}
-                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                        <ListChecks className="w-4 h-4 text-purple-700" />
-                        Subtasks (Checklist)
-                      </label>
-                      {formData.subtasks.length > 0 && (
-                        <span className="text-[11px] font-semibold text-purple-700 bg-white/90 px-2 py-0.5 rounded-full border border-purple-200/80">
-                          {formData.subtasks.filter((s) => s.isCompleted).length}/{formData.subtasks.length} Completed
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <input
-                        type="text"
-                        value={subtaskInputText}
-                        onChange={(e) => setSubtaskInputText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddModalSubtask();
-                          }
-                        }}
-                        placeholder="Type subtask title and press Enter..."
-                        className="flex-1 min-w-0 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      />
-                      <SubtaskDateControl
-                        variant="input"
-                        dueDate={subtaskInputDueDate}
-                        onChange={setSubtaskInputDueDate}
-                        disabled={isSubmitting}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddModalSubtask}
-                        disabled={isSubmitting || !subtaskInputText.trim()}
-                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs shrink-0"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add
-                      </button>
-                    </div>
-
-                    {formData.subtasks.length > 0 && (
-                      <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                        {formData.subtasks.map((st, index) => (
-                          <div
-                            key={st.id}
-                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/90 border border-purple-100 hover:border-purple-200 transition group shadow-2xs"
-                          >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <button
-                                type="button"
-                                role="checkbox"
-                                aria-checked={st.isCompleted}
-                                onClick={() => handleToggleModalSubtask(st.id)}
-                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${st.isCompleted
-                                    ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
-                                    : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                                  }`}
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </button>
-                              <input
-                                type="text"
-                                value={st.title}
-                                onChange={(e) => handleUpdateModalSubtaskTitle(st.id, e.target.value)}
-                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                                  }`}
-                                placeholder="Subtask title..."
-                              />
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              <SubtaskDateControl
-                                variant="modal"
-                                dueDate={st.dueDate}
-                                isCompleted={st.isCompleted}
-                                onChange={(newDate) => handleUpdateModalSubtaskDueDate(st.id, newDate)}
-                                disabled={isSubmitting}
-                              />
-                              <div className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition">
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveModalSubtaskUp(index)}
-                                  disabled={index === 0}
-                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                  title="Move up"
-                                >
-                                  <ArrowUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveModalSubtaskDown(index)}
-                                  disabled={index === formData.subtasks.length - 1}
-                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                  title="Move down"
-                                >
-                                  <ArrowDown className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveModalSubtask(st.id)}
-                                  className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
-                                  title="Remove subtask"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer Actions */}
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
-                  >
-                    {isSubmitting ? 'Adding...' : 'Add Task'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body
-        )}
-
         {/* Tasks Sections */}
         {loading ? (
           <div className="space-y-4">
@@ -1669,21 +980,7 @@ export function TasksPage() {
             <p className="text-xs sm:text-sm text-gray-600 mb-5 font-medium max-w-sm mx-auto">Add your first task to start planning your week.</p>
             <button
               type="button"
-              onClick={() => {
-                setFormData({
-                  title: '',
-                  description: '',
-                  category: getDefaultCategoryValue(),
-                  dueDate: '',
-                  setId: activePresetId,
-                  subtasks: [],
-                  linkUrl: '',
-                  linkLabel: '',
-                  linkIcon: 'link',
-                });
-                setSubtaskInputText('');
-                setIsModalOpen(true);
-              }}
+              onClick={() => handleOpenAddModal()}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all hover:scale-[1.02]"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -1792,55 +1089,153 @@ export function TasksPage() {
                           </div>
                         )
                       ) : (
-                        <div className="space-y-3 sm:space-y-4 list-stagger">
-                          {incompleteTasks.map((task) => (
-                            <TaskItem
-                              key={task.id}
-                              task={task}
-                              categories={categories}
-                              onToggleCompletion={handleToggleCompletion}
-                              onToggleStar={handleToggleStar}
-                              onToggleSubtask={handleToggleTaskSubtask}
-                              onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
-                              onEdit={handleEditTask}
-                              onDuplicate={handleDuplicateTask}
-                              onDelete={handleDeleteTask}
-                              togglingTaskId={togglingTaskId}
-                            />
-                          ))}
-                        </div>
+                        <>
+                          <div className="space-y-3 sm:space-y-4 list-stagger">
+                            {visibleIncompleteTasks.map((task) => (
+                              <TaskItem
+                                key={task.id}
+                                task={task}
+                                matchedCategory={categoryMap.get(task.category)}
+                                onToggleCompletion={handleToggleCompletion}
+                                onToggleStar={handleToggleStar}
+                                onToggleSubtask={handleToggleTaskSubtask}
+                                onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
+                                onEdit={handleEditTask}
+                                onDuplicate={handleDuplicateTask}
+                                onDelete={handleDeleteTask}
+                                isToggling={togglingTaskId === task.id}
+                              />
+                            ))}
+                          </div>
+                          {incompleteTasks.length > PENDING_LIST_BATCH_SIZE && (
+                            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                              {visiblePendingCount < incompleteTasks.length ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setVisiblePendingCount((prev) => prev + PENDING_LIST_BATCH_SIZE)
+                                    }
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-pink-50 text-pink-800 border border-pink-200/90 text-xs sm:text-sm font-bold shadow-2xs transition"
+                                  >
+                                    <span>
+                                      Show {Math.min(PENDING_LIST_BATCH_SIZE, incompleteTasks.length - visiblePendingCount)} more
+                                    </span>
+                                    <span className="text-pink-500 font-semibold">
+                                      ({incompleteTasks.length - visiblePendingCount} left)
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setVisiblePendingCount(incompleteTasks.length)}
+                                    className="inline-flex items-center px-3.5 py-2 rounded-xl bg-pink-50/80 hover:bg-pink-100 text-pink-700 border border-pink-200/80 text-xs sm:text-sm font-semibold transition"
+                                  >
+                                    Show all ({incompleteTasks.length})
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisiblePendingCount(PENDING_LIST_BATCH_SIZE)}
+                                  className="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-white/90 hover:bg-pink-50 text-pink-700 border border-pink-200/80 text-xs font-semibold shadow-2xs transition"
+                                >
+                                  Show less
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
                     {/* Completed Tasks Section */}
                     {completedTasks.length > 0 && (
                       <div>
-                        <div className="flex items-center justify-between mb-3.5 px-1">
-                          <h2 className="text-base sm:text-lg md:text-xl font-bold text-purple-950 flex items-center gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                        <div className="flex items-center justify-between mb-3.5 px-1 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsCompletedExpanded((prev) => !prev)}
+                            className="text-base sm:text-lg md:text-xl font-bold text-purple-950 flex items-center gap-2 group text-left"
+                            aria-expanded={isCompletedExpanded}
+                          >
+                            <CheckCircle2 className="w-5 h-5 text-purple-600 shrink-0" />
                             <span>Completed Tasks</span>
                             <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-purple-100/90 text-purple-800 border border-purple-200/90 shadow-2xs">
                               {completedTasks.length}
                             </span>
-                          </h2>
-                        </div>
-                        <div className="space-y-3 sm:space-y-4 list-stagger">
-                          {completedTasks.map((task) => (
-                            <TaskItem
-                              key={task.id}
-                              task={task}
-                              categories={categories}
-                              onToggleCompletion={handleToggleCompletion}
-                              onToggleStar={handleToggleStar}
-                              onToggleSubtask={handleToggleTaskSubtask}
-                              onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
-                              onEdit={handleEditTask}
-                              onDuplicate={handleDuplicateTask}
-                              onDelete={handleDeleteTask}
-                              togglingTaskId={togglingTaskId}
+                            <ChevronDown
+                              className={`w-4 h-4 text-purple-500 transition-transform duration-200 ${
+                                isCompletedExpanded ? 'rotate-180' : ''
+                              }`}
                             />
-                          ))}
+                          </button>
+
+                          {isCompletedExpanded && completedTasks.length > COMPLETED_LIST_BATCH_SIZE && (
+                            <span className="text-[11px] sm:text-xs font-semibold text-purple-700/75 whitespace-nowrap">
+                              Showing {Math.min(visibleCompletedCount, completedTasks.length)} of {completedTasks.length}
+                            </span>
+                          )}
                         </div>
+
+                        {isCompletedExpanded && (
+                          <>
+                            <div className="space-y-3 sm:space-y-4 list-stagger">
+                              {visibleCompletedTasks.map((task) => (
+                                <TaskItem
+                                  key={task.id}
+                                  task={task}
+                                  matchedCategory={categoryMap.get(task.category)}
+                                  onToggleCompletion={handleToggleCompletion}
+                                  onToggleStar={handleToggleStar}
+                                  onToggleSubtask={handleToggleTaskSubtask}
+                                  onUpdateSubtaskDueDate={handleUpdateTaskSubtaskDueDate}
+                                  onEdit={handleEditTask}
+                                  onDuplicate={handleDuplicateTask}
+                                  onDelete={handleDeleteTask}
+                                  isToggling={togglingTaskId === task.id}
+                                />
+                              ))}
+                            </div>
+
+                            {completedTasks.length > COMPLETED_LIST_BATCH_SIZE && (
+                              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                {visibleCompletedCount < completedTasks.length ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setVisibleCompletedCount((prev) => prev + COMPLETED_LIST_BATCH_SIZE)
+                                      }
+                                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-purple-50 text-purple-800 border border-purple-200/90 text-xs sm:text-sm font-bold shadow-2xs transition"
+                                    >
+                                      <span>
+                                        Show {Math.min(COMPLETED_LIST_BATCH_SIZE, completedTasks.length - visibleCompletedCount)} more
+                                      </span>
+                                      <span className="text-purple-500 font-semibold">
+                                        ({completedTasks.length - visibleCompletedCount} left)
+                                      </span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setVisibleCompletedCount(completedTasks.length)}
+                                      className="inline-flex items-center px-3.5 py-2 rounded-xl bg-purple-50/90 hover:bg-purple-100 text-purple-700 border border-purple-200/80 text-xs sm:text-sm font-semibold transition"
+                                    >
+                                      Show all ({completedTasks.length})
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setVisibleCompletedCount(COMPLETED_LIST_BATCH_SIZE)}
+                                    className="inline-flex items-center px-3.5 py-1.5 rounded-xl bg-white/90 hover:bg-purple-50 text-purple-700 border border-purple-200/80 text-xs font-semibold shadow-2xs transition"
+                                  >
+                                    Show less
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     )}
                   </>
@@ -1849,362 +1244,27 @@ export function TasksPage() {
             )}
           </>
         )}
-        {/* Edit Task Modal */}
-        {editingTaskId && createPortal(
-          <div className="fixed inset-0 bg-slate-950/40 sm:backdrop-blur-xs flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4 overflow-hidden">
-            <div className="modal-enter w-full sm:max-w-lg h-dvh sm:h-[88dvh] max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-white border border-white/80 rounded-none sm:rounded-3xl shadow-[0_24px_56px_rgba(120,87,255,0.28)] overflow-hidden">
-              <form onSubmit={handleSaveEdit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-purple-100/80 bg-purple-50/50 shrink-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                    <Settings2 className="w-5 h-5 text-purple-600" />
-                    Edit Task
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="h-8 w-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition flex items-center justify-center"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Scrollable Form Body */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
-                  {/* Error Message */}
-                  {error && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
-                      {error}
-                    </div>
-                  )}
-
-                  {/* Title Input */}
-                  <div>
-                    <label htmlFor="edit-title" className="block text-xs font-semibold text-gray-700 mb-1">
-                      Task Title *
-                    </label>
-                    <input
-                      id="edit-title"
-                      type="text"
-                      value={editFormData.title}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, title: e.target.value })
-                      }
-                      placeholder="Enter task title"
-                      className="w-full min-h-[42px] rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {/* Description Textarea */}
-                  <div>
-                    <label htmlFor="edit-description" className="block text-xs font-semibold text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      id="edit-description"
-                      value={editFormData.description}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, description: e.target.value })
-                      }
-                      placeholder="Enter task description (optional)"
-                      rows={2}
-                      className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition resize-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  {/* Link Smart Chip Section */}
-                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/50 border border-purple-100/90 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-purple-600" />
-                        Link Smart Chip (Optional)
-                      </label>
-                      {editFormData.linkUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setEditFormData((prev) => ({ ...prev, linkUrl: '', linkLabel: '', linkIcon: 'link' }))}
-                          className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-
-                    <div>
-                      <input
-                        type="url"
-                        value={editFormData.linkUrl}
-                        onChange={(e) => handleLinkUrlChange(e.target.value, true)}
-                        placeholder="Paste URL (e.g. https://github.com/user/repo, Drive link...)"
-                        className="w-full min-h-[38px] rounded-xl border border-purple-200 bg-white px-3.5 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-
-                    {editFormData.linkUrl.trim() !== '' && (
-                      <div className="space-y-2 pt-1 border-t border-purple-100/70">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">
-                            Display Text (Label)
-                          </label>
-                          <input
-                            type="text"
-                            value={editFormData.linkLabel}
-                            onChange={(e) => setEditFormData((prev) => ({ ...prev, linkLabel: e.target.value }))}
-                            placeholder="Display text for link (e.g. GitHub Repo)"
-                            className="w-full min-h-[36px] rounded-xl border border-purple-200 bg-white px-3 py-1 text-xs text-gray-800 placeholder:text-gray-400 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold text-gray-600 mb-1.5">
-                            Chip Icon
-                          </label>
-                          <div className="grid grid-cols-3 gap-1.5">
-                            {CHIP_ICON_OPTIONS.map((opt) => {
-                              const IconComp = opt.icon;
-                              const isSelected = (editFormData.linkIcon || 'link') === opt.id;
-                              return (
-                                <button
-                                  key={opt.id}
-                                  type="button"
-                                  onClick={() => setEditFormData((prev) => ({ ...prev, linkIcon: opt.id }))}
-                                  className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs transition-all ${
-                                    isSelected
-                                      ? 'bg-purple-600 text-white shadow-xs font-semibold'
-                                      : 'bg-white text-gray-700 hover:bg-purple-100/80 border border-purple-200/90 font-medium'
-                                  }`}
-                                >
-                                  <IconComp className="w-3.5 h-3.5 shrink-0" />
-                                  <span className="truncate text-center">{opt.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Live Chip Preview */}
-                        <div className="pt-1.5 flex items-center gap-2">
-                          <span className="text-[11px] font-semibold text-gray-500">Preview:</span>
-                          <TaskSmartChip chip={{ url: editFormData.linkUrl, label: editFormData.linkLabel, icon: editFormData.linkIcon }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Grouped Grid Controls */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Category */}
-                    <div>
-                      <label htmlFor="edit-category" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Category
-                      </label>
-                      <select
-                        id="edit-category"
-                        value={editFormData.category}
-                        onChange={(e) =>
-                          setEditFormData({ ...editFormData, category: e.target.value })
-                        }
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      >
-                        {isEditCategoryMissing && (
-                          <option value={editFormData.category}>{editFormData.category}</option>
-                        )}
-                        {categories.length === 0 ? (
-                          <option value={DEFAULT_TASK_CATEGORY_NAME}>{DEFAULT_TASK_CATEGORY_NAME}</option>
-                        ) : (
-                          categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    {/* Task Preset */}
-                    <div>
-                      <label htmlFor="edit-task-preset" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Preset
-                      </label>
-                      <select
-                        id="edit-task-preset"
-                        value={editFormData.setId}
-                        onChange={(e) => setEditFormData({ ...editFormData, setId: e.target.value })}
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-2 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      >
-                        {presets.map((preset) => <option key={preset.id} value={preset.id}>{preset.name}</option>)}
-                      </select>
-                    </div>
-
-                    {/* Due Date */}
-                    <div>
-                      <label htmlFor="edit-dueDate" className="block text-xs font-semibold text-gray-700 mb-1">
-                        Due Date
-                      </label>
-                      <input
-                        id="edit-dueDate"
-                        type="date"
-                        value={editFormData.dueDate}
-                        onChange={(e) =>
-                          setEditFormData({ ...editFormData, dueDate: e.target.value })
-                        }
-                        className="w-full min-h-[40px] rounded-xl border border-purple-200 bg-white px-2.5 py-1.5 text-xs sm:text-sm text-gray-800 shadow-2xs transition focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Subtasks Framed Section */}
-                  <div className="p-3.5 sm:p-4 rounded-2xl bg-purple-50/60 border border-purple-100/90 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                        <ListChecks className="w-4 h-4 text-purple-700" />
-                        Subtasks (Checklist)
-                      </label>
-                      {editFormData.subtasks.length > 0 && (
-                        <span className="text-[11px] font-semibold text-purple-700 bg-white/90 px-2 py-0.5 rounded-full border border-purple-200/80">
-                          {editFormData.subtasks.filter((s) => s.isCompleted).length}/{editFormData.subtasks.length} Completed
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <input
-                        type="text"
-                        value={editSubtaskInputText}
-                        onChange={(e) => setEditSubtaskInputText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddEditSubtask();
-                          }
-                        }}
-                        placeholder="Type subtask title and press Enter..."
-                        className="flex-1 min-w-0 min-h-[38px] rounded-xl border border-purple-200 bg-white px-3 py-1.5 text-xs sm:text-sm text-gray-800 placeholder:text-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-400/30 focus:outline-none"
-                        disabled={isSubmitting}
-                      />
-                      <SubtaskDateControl
-                        variant="input"
-                        dueDate={editSubtaskInputDueDate}
-                        onChange={setEditSubtaskInputDueDate}
-                        disabled={isSubmitting}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddEditSubtask}
-                        disabled={isSubmitting || !editSubtaskInputText.trim()}
-                        className="min-h-[38px] px-3 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:opacity-50 rounded-xl transition inline-flex items-center gap-1 shadow-2xs shrink-0"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add
-                      </button>
-                    </div>
-
-                    {editFormData.subtasks.length > 0 && (
-                      <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                        {editFormData.subtasks.map((st, index) => (
-                          <div
-                            key={st.id}
-                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/90 border border-purple-100 hover:border-purple-200 transition group shadow-2xs"
-                          >
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <button
-                                type="button"
-                                role="checkbox"
-                                aria-checked={st.isCompleted}
-                                onClick={() => handleToggleEditSubtask(st.id)}
-                                className={`h-4 w-4 rounded border transition flex items-center justify-center shrink-0 ${st.isCompleted
-                                    ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white'
-                                    : 'bg-white border-purple-300 text-transparent hover:border-purple-400'
-                                  }`}
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </button>
-                              <input
-                                type="text"
-                                value={st.title}
-                                onChange={(e) => handleUpdateEditSubtaskTitle(st.id, e.target.value)}
-                                className={`flex-1 min-w-0 bg-transparent text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-purple-400 rounded px-2 py-1 transition ${st.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 font-medium'
-                                  }`}
-                                placeholder="Subtask title..."
-                              />
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              <SubtaskDateControl
-                                variant="modal"
-                                dueDate={st.dueDate}
-                                isCompleted={st.isCompleted}
-                                onChange={(newDate) => handleUpdateEditSubtaskDueDate(st.id, newDate)}
-                                disabled={isSubmitting}
-                              />
-                              <div className="flex items-center gap-0.5 opacity-70 group-hover:opacity-100 transition">
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveEditSubtaskUp(index)}
-                                  disabled={index === 0}
-                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                  title="Move up"
-                                >
-                                  <ArrowUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveEditSubtaskDown(index)}
-                                  disabled={index === editFormData.subtasks.length - 1}
-                                  className="p-1 rounded text-gray-400 hover:text-purple-700 hover:bg-purple-100/70 disabled:opacity-25 disabled:hover:bg-transparent transition"
-                                  title="Move down"
-                                >
-                                  <ArrowDown className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveEditSubtask(st.id)}
-                                  className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition ml-0.5"
-                                  title="Remove subtask"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer Actions */}
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 p-4 sm:p-5 bg-purple-50/50 border-t border-purple-100/80 shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] bg-white hover:bg-gray-50 text-gray-700 border border-purple-200/80 disabled:opacity-50 text-sm font-semibold py-2 px-4 rounded-xl transition shadow-2xs"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 min-h-[42px] bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white text-sm font-semibold py-2 px-4 rounded-xl transition shadow-md"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>,
-          document.body
-        )}
+        {/* Isolated Add & Edit Task Form Modals (prevents keystroke re-renders across the task list) */}
+        <TaskFormModal
+          isOpen={isAddModalOpen}
+          mode="add"
+          initialDueDate={addModalInitialDueDate}
+          categories={categories}
+          presets={presets}
+          activePresetId={activePresetId}
+          onClose={handleCloseAddModal}
+          onSubmit={handleCreateTaskSubmit}
+        />
+        <TaskFormModal
+          isOpen={Boolean(editingTask)}
+          mode="edit"
+          initialTask={editingTask}
+          categories={categories}
+          presets={presets}
+          activePresetId={activePresetId}
+          onClose={handleCloseEditModal}
+          onSubmit={handleSaveEditSubmit}
+        />
 
         {/* Delete Confirmation Modal */}
         {deletingTaskId && createPortal(
@@ -2278,7 +1338,7 @@ export function TasksPage() {
 // Task Item Component
 interface TaskItemProps {
   task: Task;
-  categories: Category[];
+  matchedCategory?: Category;
   onToggleCompletion: (taskId: string, currentStatus: boolean) => void;
   onToggleStar?: (taskId: string, currentStarred: boolean) => void;
   onToggleSubtask?: (taskId: string, subtaskId: string) => void;
@@ -2286,10 +1346,10 @@ interface TaskItemProps {
   onDelete: (taskId: string) => void;
   onEdit: (task: Task) => void;
   onDuplicate: (task: Task) => void;
-  togglingTaskId: string | null;
+  isToggling: boolean;
 }
 
-const TaskItem = React.memo(function TaskItem({ task, categories, onToggleCompletion, onToggleStar, onToggleSubtask, onUpdateSubtaskDueDate, onDelete, onEdit, onDuplicate, togglingTaskId }: TaskItemProps) {
+const TaskItem = React.memo(function TaskItem({ task, matchedCategory, onToggleCompletion, onToggleStar, onToggleSubtask, onUpdateSubtaskDueDate, onDelete, onEdit, onDuplicate, isToggling }: TaskItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -2305,7 +1365,6 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMobileMenuOpen]);
 
-  const matchedCategory = findCategoryByTaskValue(categories, task.category);
   const categoryName = matchedCategory?.name || task.category || DEFAULT_TASK_CATEGORY_NAME;
   const categoryColor = isValidHexColor(matchedCategory?.color || '')
     ? (matchedCategory?.color as string)
@@ -2335,7 +1394,7 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
       className={`group glass-card ${!isMobileMenuOpen ? 'perf-list-item' : ''} ${borderStyleClass} ${task.isCompleted ? 'opacity-80' : ''
         } transition-[box-shadow,transform,opacity,border-color] duration-150 sm:hover:shadow-xl relative py-3 sm:py-4 px-3 sm:px-6 flex flex-col gap-2`}
     >
-      {togglingTaskId === task.id && (
+      {isToggling && (
         <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-purple-50/70 to-pink-50/70 backdrop-blur-[3px] rounded-lg sm:rounded-xl flex items-center justify-center z-10">
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
@@ -2357,13 +1416,13 @@ const TaskItem = React.memo(function TaskItem({ task, categories, onToggleComple
             aria-checked={task.isCompleted}
             aria-label={`Mark ${task.title} as ${task.isCompleted ? 'incomplete' : 'completed'}`}
             onClick={() => onToggleCompletion(task.id, task.isCompleted)}
-            disabled={togglingTaskId === task.id}
+            disabled={isToggling}
             className={`h-5 w-5 sm:h-6 sm:w-6 aspect-square rounded-lg border-2 transition-all duration-200 flex items-center justify-center shrink-0 shadow-2xs ${task.isCompleted
                 ? 'bg-gradient-to-br from-pink-400 to-purple-500 border-transparent text-white shadow-[0_6px_16px_rgba(184,109,214,0.45)]'
                 : 'bg-purple-50/90 border-purple-400/90 text-transparent hover:border-purple-600 hover:bg-purple-100/90'
-              } ${togglingTaskId === task.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+              } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {togglingTaskId === task.id ? (
+            {isToggling ? (
               <div className="w-3.5 h-3.5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
