@@ -41,7 +41,7 @@ export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
   const selectedDateStatus = getDeadlineStatus(selectedDate);
 
   return (
-    <div className="w-full lg:w-80 xl:w-96 border-t-2 lg:border-t-0 lg:border-l-2 border-purple-300/75 bg-white flex flex-col lg:min-h-0 lg:overflow-hidden shrink-0">
+    <div className="flex-1 lg:flex-none w-full lg:w-80 xl:w-96 border-t-2 lg:border-t-0 lg:border-l-2 border-purple-300/75 bg-white flex flex-col lg:min-h-0 lg:overflow-hidden shrink-0">
       {/* Selected Date Header */}
       <div
         className={`p-3.5 sm:p-4 border-b flex items-center justify-between gap-2 shrink-0 ${

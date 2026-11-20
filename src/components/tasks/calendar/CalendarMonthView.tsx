@@ -36,13 +36,13 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
   shouldSuppressClick,
 }) => {
   return (
-    <div className="flex-1 min-w-0 flex flex-col p-2.5 sm:p-4 lg:p-5 lg:overflow-y-auto shrink-0 lg:shrink">
+    <div className="sm:flex-1 min-w-0 flex flex-col p-2 sm:p-4 lg:p-5 lg:overflow-y-auto shrink-0 lg:shrink">
       {/* Weekday Headers — Harmonious Thai Day-of-Week Colors */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-1.5 sm:mb-2">
         {WEEKDAY_SHORT_LABELS.map((day, idx) => (
           <div
             key={day}
-            className={`text-center text-[10px] sm:text-xs font-extrabold uppercase tracking-wider py-1.5 rounded-lg border ${WEEKDAY_STYLES[idx].pill}`}
+            className={`text-center text-[10px] sm:text-xs font-extrabold uppercase tracking-wider py-1 sm:py-1.5 rounded-lg border ${WEEKDAY_STYLES[idx].pill}`}
           >
             {day}
           </div>
@@ -50,7 +50,7 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
       </div>
 
       {/* Calendar Day Cells */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1 auto-rows-fr">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 sm:flex-1 auto-rows-fr">
         {monthDays.map((day) => {
           const dateKey = formatToDateString(day);
           const items = itemsByDate.get(dateKey) || [];
@@ -107,10 +107,10 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
                   onSelectDay(day);
                 }
               }}
-              className={`group relative flex flex-col items-stretch text-left rounded-xl sm:rounded-2xl border p-1 sm:p-1.5 min-h-[54px] sm:min-h-[86px] lg:min-h-[96px] transition-all cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${cellClasses}`}
+              className={`group relative flex flex-col items-stretch text-left rounded-xl sm:rounded-2xl border p-1 sm:p-1.5 min-h-[42px] sm:min-h-[86px] lg:min-h-[96px] transition-all cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${cellClasses}`}
             >
               {/* Day Number + Status Count Pill */}
-              <div className="flex items-center justify-between gap-0.5 mb-1">
+              <div className="flex items-center justify-between gap-0.5 mb-0.5 sm:mb-1">
                 <span
                   className={`inline-flex items-center justify-center text-[11px] sm:text-xs font-extrabold w-5 h-5 sm:w-6 sm:h-6 rounded-full transition ${
                     isDropTarget
@@ -158,7 +158,7 @@ export const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
               {/* Mobile (< sm): Clean colored dots */}
               {items.length > 0 && (
                 <div
-                  className={`flex sm:hidden flex-wrap items-center gap-0.5 mt-auto pt-0.5 ${
+                  className={`flex sm:hidden flex-wrap items-center gap-0.5 px-0.5 mt-auto ${
                     !inCurrentMonth ? 'opacity-55' : ''
                   }`}
                 >
