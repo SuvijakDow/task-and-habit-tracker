@@ -141,9 +141,29 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
 
     for (const task of scopedTasks) {
       const catMeta = resolveCategoryDisplay(categoryMap.get(task.category), task.category);
-
       const taskDue = toLocalDate(task.dueDate);
-      if (taskDue) {
+      const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+      const hasScheduledSubtask = subtasks.some((st) => Boolean(toLocalDate(st.dueDate)));
+
+      if (hasScheduledSubtask) {
+        // Smart Adaptive: when a task schedules milestones on subtasks, hide the parent wrapper
+        // to avoid double-counting; unscheduled sibling subtasks inherit the parent due date.
+        for (const st of subtasks) {
+          const effectiveDue = toLocalDate(st.dueDate) || taskDue;
+          if (!effectiveDue) continue;
+          pushItem({
+            id: `${task.id}__${st.id}`,
+            type: 'subtask',
+            dateKey: formatToDateString(effectiveDue),
+            title: st.title,
+            parentTask: task,
+            subtask: st,
+            isCompleted: Boolean(st.isCompleted),
+            isStarred: Boolean(task.isStarred),
+            ...catMeta,
+          });
+        }
+      } else if (taskDue) {
         pushItem({
           id: task.id,
           type: 'task',
@@ -154,24 +174,6 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
           isStarred: Boolean(task.isStarred),
           ...catMeta,
         });
-      }
-
-      if (Array.isArray(task.subtasks)) {
-        for (const st of task.subtasks) {
-          const stDue = toLocalDate(st.dueDate);
-          if (!stDue) continue;
-          pushItem({
-            id: `${task.id}__${st.id}`,
-            type: 'subtask',
-            dateKey: formatToDateString(stDue),
-            title: st.title,
-            parentTask: task,
-            subtask: st,
-            isCompleted: Boolean(st.isCompleted),
-            isStarred: Boolean(task.isStarred),
-            ...catMeta,
-          });
-        }
       }
     }
 
