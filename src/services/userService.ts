@@ -90,6 +90,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
       selectedFont: data.selectedFont || undefined,
       gradientMode: data.gradientMode || undefined,
       soundTheme: data.soundTheme || undefined,
+      soundVolume: typeof data.soundVolume === 'number' ? data.soundVolume : undefined,
       createdAt: data.createdAt?.toDate?.() || new Date(),
       updatedAt: data.updatedAt?.toDate?.() || new Date(),
     };
@@ -142,7 +143,12 @@ export const createUserProfile = async (
  */
 export const updateUserProfile = async (
   uid: string,
-  updates: Partial<Pick<UserProfile, 'displayName' | 'photoURL' | 'selectedFont' | 'gradientMode' | 'soundTheme'>>
+  updates: Partial<
+    Pick<
+      UserProfile,
+      'displayName' | 'photoURL' | 'selectedFont' | 'gradientMode' | 'soundTheme' | 'soundVolume'
+    >
+  >
 ): Promise<void> => {
   try {
     const docRef = doc(db, USERS_COLLECTION, uid);

@@ -7,7 +7,7 @@ import { createTaskPreset, getUserTaskPresets } from '@/services/taskPresetServi
 import { clearAllUserData } from '@/services/accountService';
 import { getStoredFontId } from '@/utils/fontUtils';
 import { GradientMode, getStoredGradientMode } from '@/utils/gradientUtils';
-import { SoundTheme, getStoredSoundTheme } from '@/utils/audio';
+import { SoundTheme, getStoredSoundTheme, getStoredSoundVolume } from '@/utils/audio';
 
 export type BackupImportMode = 'replace' | 'merge';
 
@@ -19,6 +19,7 @@ export interface ImportBackupResult {
   importedFont?: string;
   importedGradient?: GradientMode;
   importedSoundTheme?: SoundTheme;
+  importedSoundVolume?: number;
 }
 
 export const exportUserBackupFile = async (
@@ -36,6 +37,10 @@ export const exportUserBackupFile = async (
   const selectedFont = userProfile?.selectedFont || getStoredFontId();
   const gradientMode = userProfile?.gradientMode || getStoredGradientMode();
   const soundTheme = userProfile?.soundTheme || getStoredSoundTheme();
+  const soundVolume =
+    typeof userProfile?.soundVolume === 'number'
+      ? userProfile.soundVolume
+      : getStoredSoundVolume();
 
   const backupObj = {
     exportDate: new Date().toISOString(),
@@ -48,6 +53,7 @@ export const exportUserBackupFile = async (
       selectedFont,
       gradientMode,
       soundTheme,
+      soundVolume,
     },
     data: {
       tasks: userTasks,
@@ -59,6 +65,7 @@ export const exportUserBackupFile = async (
         selectedFont,
         gradientMode,
         soundTheme,
+        soundVolume,
       },
     },
   };
@@ -402,6 +409,8 @@ export const importUserBackupFile = async (
   const importedFont = backupObj.data?.settings?.selectedFont || backupObj.user?.selectedFont;
   const importedGradient = backupObj.data?.settings?.gradientMode || backupObj.user?.gradientMode;
   const importedSoundTheme = backupObj.data?.settings?.soundTheme || backupObj.user?.soundTheme;
+  const rawImportedVolume = backupObj.data?.settings?.soundVolume ?? backupObj.user?.soundVolume;
+  const importedSoundVolume = typeof rawImportedVolume === 'number' ? rawImportedVolume : undefined;
 
   return {
     tasksAddedCount,
@@ -411,5 +420,6 @@ export const importUserBackupFile = async (
     importedFont,
     importedGradient,
     importedSoundTheme,
+    importedSoundVolume,
   };
 };

@@ -20,6 +20,8 @@ interface ProfileThemeTabProps {
   onSelectGradientMode: (mode: GradientMode) => void;
   selectedSoundTheme: SoundTheme;
   onSelectSoundTheme: (theme: SoundTheme) => void;
+  selectedSoundVolume: number;
+  onSelectSoundVolume: (volume: number, preview?: boolean) => void;
   disabled: boolean;
 }
 
@@ -38,6 +40,8 @@ export const ProfileThemeTab: React.FC<ProfileThemeTabProps> = ({
   onSelectGradientMode,
   selectedSoundTheme,
   onSelectSoundTheme,
+  selectedSoundVolume,
+  onSelectSoundVolume,
   disabled,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -353,6 +357,71 @@ export const ProfileThemeTab: React.FC<ProfileThemeTabProps> = ({
             );
           })}
         </div>
+
+        {/* Sound Volume Slider + Quick Presets */}
+        {selectedSoundTheme !== 'off' && (
+          <div className="pt-2.5 border-t border-purple-200/75 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="settings-sound-volume"
+                className="text-xs font-bold text-purple-900 flex items-center gap-1.5"
+              >
+                <span>Volume</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-white border border-purple-200/80 text-[11px] font-extrabold text-purple-700 tabular-nums">
+                  {selectedSoundVolume}%
+                </span>
+              </label>
+
+              <div className="flex items-center gap-1">
+                {[
+                  { label: 'Soft', value: 40 },
+                  { label: 'Medium', value: 75 },
+                  { label: 'Loud', value: 100 },
+                ].map((preset) => {
+                  const isActive = Math.abs(selectedSoundVolume - preset.value) <= 5;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      data-sound="none"
+                      disabled={disabled}
+                      onClick={() => onSelectSoundVolume(preset.value, true)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition ${
+                        isActive
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-2xs'
+                          : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <Volume2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <input
+                id="settings-sound-volume"
+                type="range"
+                min={10}
+                max={100}
+                step={5}
+                value={selectedSoundVolume}
+                disabled={disabled}
+                onChange={(e) => onSelectSoundVolume(Number(e.target.value), false)}
+                onPointerUp={(e) =>
+                  onSelectSoundVolume(Number((e.target as HTMLInputElement).value), true)
+                }
+                onKeyUp={(e) =>
+                  onSelectSoundVolume(Number((e.target as HTMLInputElement).value), true)
+                }
+                className="flex-1 h-2 rounded-full accent-purple-600 cursor-pointer bg-white/90"
+              />
+              <Volume2 className="w-4 h-4 text-purple-700 shrink-0" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

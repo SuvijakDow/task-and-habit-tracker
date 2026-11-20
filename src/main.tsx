@@ -4,12 +4,13 @@ import App from './App.tsx'
 import './index.css'
 import { applyAppFont, getStoredFontId } from './utils/fontUtils'
 import { applyGradientMode, getStoredGradientMode } from './utils/gradientUtils'
-import { applySoundTheme, getStoredSoundTheme } from './utils/audio'
+import { applySoundTheme, applySoundVolume, getStoredSoundTheme, getStoredSoundVolume } from './utils/audio'
 
-// Apply cached master font, gradient mode, and sound theme immediately before initial render
+// Apply cached master font, gradient mode, and sound preferences immediately before initial render
 applyAppFont(getStoredFontId());
 applyGradientMode(getStoredGradientMode());
 applySoundTheme(getStoredSoundTheme(), false);
+applySoundVolume(getStoredSoundVolume(), false);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

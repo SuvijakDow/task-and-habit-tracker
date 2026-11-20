@@ -35,15 +35,24 @@ export const SOUND_THEMES: SoundThemeOption[] = [
 ];
 
 const SOUND_THEME_STORAGE_KEY = 'app_sound_theme';
+const SOUND_VOLUME_STORAGE_KEY = 'app_sound_volume';
+const DEFAULT_SOUND_VOLUME = 75;
 const VALID_THEMES = new Set<SoundTheme>(['bubble', 'crisp', 'arcade', 'off']);
 
 let sharedAudioCtx: AudioContext | null = null;
 let activeSoundTheme: SoundTheme = 'bubble';
+let activeSoundVolume: number = DEFAULT_SOUND_VOLUME;
 let lastSemanticSoundAt = 0;
 let lastAutoSoundAt = 0;
 
 const isValidSoundTheme = (val: unknown): val is SoundTheme => {
   return typeof val === 'string' && VALID_THEMES.has(val as SoundTheme);
+};
+
+const clampVolume = (val: unknown): number => {
+  const num = typeof val === 'number' ? val : Number(val);
+  if (!Number.isFinite(num)) return DEFAULT_SOUND_VOLUME;
+  return Math.max(10, Math.min(100, Math.round(num)));
 };
 
 export const getStoredSoundTheme = (): SoundTheme => {
@@ -56,7 +65,18 @@ export const getStoredSoundTheme = (): SoundTheme => {
   return 'bubble';
 };
 
+export const getStoredSoundVolume = (): number => {
+  try {
+    const raw = localStorage.getItem(SOUND_VOLUME_STORAGE_KEY);
+    if (raw !== null) return clampVolume(raw);
+  } catch {
+    // Ignore storage restrictions
+  }
+  return DEFAULT_SOUND_VOLUME;
+};
+
 export const getActiveSoundTheme = (): SoundTheme => activeSoundTheme;
+export const getActiveSoundVolume = (): number => activeSoundVolume;
 
 export const applySoundTheme = (theme?: string | null, persist = true): SoundTheme => {
   const resolved: SoundTheme = isValidSoundTheme(theme) ? theme : 'bubble';
@@ -71,8 +91,22 @@ export const applySoundTheme = (theme?: string | null, persist = true): SoundThe
   return resolved;
 };
 
+export const applySoundVolume = (volume?: number | null, persist = true): number => {
+  const resolved = volume === undefined || volume === null ? DEFAULT_SOUND_VOLUME : clampVolume(volume);
+  activeSoundVolume = resolved;
+  if (persist) {
+    try {
+      localStorage.setItem(SOUND_VOLUME_STORAGE_KEY, String(resolved));
+    } catch {
+      // Ignore storage restrictions
+    }
+  }
+  return resolved;
+};
+
 // Initialize from storage immediately on module load
 activeSoundTheme = getStoredSoundTheme();
+activeSoundVolume = getStoredSoundVolume();
 
 const getAudioContext = (): AudioContext | null => {
   if (typeof window === 'undefined') return null;
@@ -120,11 +154,14 @@ const scheduleTones = (tones: ToneSpec[], overrideTheme?: SoundTheme) => {
     if (!ctx) return;
 
     const run = () => {
+      // Volume multiplier: 10% -> 0.24x, 50% -> 1.15x, 75% (default) -> 1.72x, 100% -> 2.3x (crisp on mobile speakers)
+      const volumeScale = (activeSoundVolume / 100) * 2.3;
       const now = ctx.currentTime + 0.004;
       for (const spec of tones) {
         const start = now + (spec.delay || 0);
         const end = start + spec.duration;
         const attack = Math.min(spec.attack ?? 0.006, spec.duration * 0.35);
+        const scaledGain = Math.min(0.42, Math.max(0.002, spec.gain * volumeScale));
 
         const osc = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -137,7 +174,7 @@ const scheduleTones = (tones: ToneSpec[], overrideTheme?: SoundTheme) => {
 
         // Smooth attack & natural decay curve for gentle, clearly audible tone on all speakers
         gainNode.gain.setValueAtTime(0.001, start);
-        gainNode.gain.linearRampToValueAtTime(spec.gain, start + attack);
+        gainNode.gain.linearRampToValueAtTime(scaledGain, start + attack);
         gainNode.gain.exponentialRampToValueAtTime(0.001, end);
 
         if (spec.lowpassFreq) {

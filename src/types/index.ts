@@ -103,6 +103,7 @@ export interface UserProfile {
   selectedFont?: string;
   gradientMode?: 'gradient' | 'solid';
   soundTheme?: 'bubble' | 'crisp' | 'arcade' | 'off';
+  soundVolume?: number;
   createdAt: Date;
   updatedAt: Date;
 }
