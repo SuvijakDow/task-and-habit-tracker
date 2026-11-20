@@ -1,6 +1,6 @@
 # Task & Habit Tracker ⚡
 
-A modern, full-featured productivity web application for managing tasks by time periods, building daily routines, and tracking habits with rich visual analytics. Built with **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Firebase**.
+A fast, modular productivity web application for managing period-based tasks, daily routines, and long-term habit analytics—engineered with **React 18**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Firebase**.
 
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-3178C6?logo=typescript&logoColor=white)
@@ -13,59 +13,54 @@ A modern, full-featured productivity web application for managing tasks by time 
 ## ✨ Key Features
 
 ### 📋 Task Management
-- **Deadline Calendar Overview**: 🗓️ Full interactive **Month View** & **7-Day Week Comparison Board** accessible directly from the Task Hub—browse past and future deadlines for both main tasks and subtask milestones, spot busy days at a glance, compare nearby days (`±7 days`), toggle completion, edit, or schedule new tasks directly on any date across Desktop, iPad, and Mobile.
-- **Subtask Checklists & Individual Deadlines**: 📅 Actionable subtasks with live progress bars, auto-sync completion, per-subtask due dates (editable both inline and in modals), chronological subtask ordering, and a compact **"Next Up" subtask indicator** on task cards.
-- **Smart Effective Deadline Prioritization**: 🚀 Parent tasks automatically bubble up in the task list based on the earliest deadline among the main task and its incomplete subtasks, so urgent milestones inside large projects never get buried at the bottom.
-- **Unified Search & Quick Filters**: 🔍 Real-time search across task titles, descriptions, categories, and subtask titles, paired with category and due-state filters (`Due Today`, `Overdue`, `Due in 7 Days`) synchronized across **List** and **Table** views.
-- **Link Smart Chips**: 🔗 Google Docs-style Smart Chips for URLs with auto-detect icons (GitHub, Drive, Figma, YouTube, Notion), custom display labels, and organized 3x3 icon grid.
-- **Star & Pin Tasks**: ⭐ Star any task to pin it to the top of your list instantly in both List and Table views.
-- **Task Presets (Periods)**: Group tasks by terms, semesters, or custom project periods (e.g., `2569/1`).
-- **Dual View Modes**: Switch seamlessly between **Card/List View** and **Table View** with batch multi-select actions.
-- **Color Categories**: Custom color-coded categories with automatic fallback handling.
+- **Deadline Calendar Overview**: 🗓️ Interactive **Month View** & **7-Day Week Comparison Board** accessible directly from the Task Hub—inspect past and future deadlines for both main tasks and subtask milestones, jump between nearby deadlines (`±7 days`), toggle completion, edit, or schedule tasks on any date across Desktop, iPad, and Mobile.
+  - Clear 1-to-1 status color language: **Red Aura** (Overdue), **Yellow Aura** (Due Today), **Purple** (Upcoming), **Green** (All Done), **Dashed Chip `↳`** (Subtask), paired with Thai day-of-week header colors (`Sun`–`Sat`).
+- **Subtask Checklists & Individual Deadlines**: 📅 Actionable checklists with live progress bars, auto-sync completion, per-subtask due dates (editable inline and in modals), chronological sorting, and a **"Next Up" subtask indicator** on task cards.
+- **Smart Effective Deadline Prioritization**: 🚀 Parent tasks automatically bubble up based on the earliest deadline among the main task and its incomplete subtasks, keeping urgent milestones visible.
+- **Unified Search & Quick Filters**: 🔍 Real-time deferred search across titles, descriptions, categories, and subtask titles, paired with category and deadline quick filters (`Due Today`, `Overdue`, `Due in 7 Days`) synced across **List** and **Table** views.
+- **Link Smart Chips**: 🔗 Auto-detected URL chips (GitHub, Google Drive, Figma, YouTube, Notion, Docs, etc.) with customizable labels and icons.
+- **Star & Pin + Task Presets (Periods)**: ⭐ Pin top-priority tasks and organize workloads by terms, semesters, or custom project periods (e.g., `2569/1`).
+- **Scalable List & Table Views**: Progressive batch rendering (`Show more` / collapsible Completed section) in **List View** and paginated bulk-action **Table View** built to stay smooth with 100–1,000+ tasks.
 
-### 🔄 Habit Tracking & Routines
-- **Multi-Routine Tagging**: Organize habits into multiple active routines or sets.
-- **Partial Goal Logging**: Log fractional progress towards daily targets (e.g., read 10 pages).
-- **Weekly Schedule**: Visual daily timetable displaying habit time slots across the week.
-- **Drag-and-Drop**: Easily reorder daily habits.
+### 🔄 Daily Habits & Routines
+- **Multi-Routine Presets**: Assign habits across one or multiple routines (`General`, `Exam Week`, `Vacation`, etc.) and switch active routines instantaneously.
+- **Flexible Per-Day Schedules**: Support single daily time slots or multiple custom time slots per day of the week, visualized on both a **Daily Timeline** and a **Weekly Timetable Modal**.
+- **Quantitative Target Goals**: Track fractional daily goals (e.g., `5 videos`, `20 pages`) with quick `+/-` counters, inline numeric input, and live completion progress bars.
+- **Dual View Modes**: Switch between **Card/List View** (split into Today's Scheduled vs. Other Days) and **Table View** with search and multi-select deletion.
 
-### 📊 Visual Analytics & History
-- **Contribution Heatmap**: GitHub-style activity heatmap tracking long-term consistency.
-- **Editable History**: Click past dates to toggle status between **Completed**, **Not Scheduled**, **Missed**, or **Partial**.
-- **Excused Days**: Mark non-scheduled days so streaks and consistency scores stay accurate.
+### 📊 Analytics & History
+- **Contribution Heatmap**: GitHub-style activity heatmap showing consistency intensity across tracked history.
+- **Editable Past History**: Click any past date on the heatmap or 7-day strip to set **Completed**, **Partial**, **Not Scheduled (Excused)**, or **Missed** without losing streak accuracy.
+- **Consistency Tiers & Streaks**: Real-time streak calculation, fractional total completion scoring, and rank badges (`Building Habit`, `High Momentum`, `Master`).
 
-### 🎨 Themes, UX & Performance
-- **Ultra-Smooth 60–120 FPS Architecture**: Instant optimistic UI mutations, `useDeferredValue` zero-lag search, `content-visibility: auto` list virtualization, O(1) heatmap & category lookups, idle/hover route chunk prefetching, and a GPU-composited stationary ambient canvas.
-- **Tactile Micro-Interactions & Skeleton Loading**: Crisp GPU-accelerated **Click Spark Effect** on every click/tap, sleek shimmering skeleton loaders, custom thin lavender scrollbars, and mobile-safe floating pill toast notifications.
-- **Single-Viewport Auth Experience**: Split-panel Sign In / Sign Up showcase card engineered to fit cleanly at 100% zoom across Desktop, iPad, and Mobile, with Google Sign-In and password visibility toggle.
-- **Color Style Modes**: Live preview and seamless switching between **Gradient Theme** and **High-Contrast Solid Color Mode** (with safe Cancel revert).
-- **Typography**: Choose from curated Thai & English fonts (Bai Jamjuree, Prompt, Sarabun, Inter, Kanit, etc.).
-- **Data Backup, Restore & Account Management**: Full JSON export/import supporting **Replace** mode and intelligent non-destructive **Merge** mode (preserving habit ordering, subtask deadlines, link chips, and theme preferences), module resets, and verified account deletion for both Email/Password and Google users.
+### 🎨 Themes, Micro-Interactions & Backup
+- **60–120 FPS UI Architecture**: Optimistic Firestore mutations, isolated Add/Edit modal states, `React.memo` + `O(1)` category/date-set lookups, `content-visibility: auto` list virtualization, idle/hover route chunk prefetching, and a GPU-composited stationary ambient canvas.
+- **Tactile Polish**: GPU-accelerated **Click Spark Effect** on click/tap, skeleton shimmer loaders, hidden visual scrollbars for centered mobile layouts, and floating toast notifications.
+- **Single-Viewport Auth Screen**: Split-panel Sign In / Sign Up showcase engineered to fit at 100% zoom across Desktop, iPad, and Mobile with Email/Password and Google Sign-In.
+- **Live Theme & Font Customization**: Switch between **Gradient Theme** and **High-Contrast Solid Color Mode** with live preview & safe Cancel revert, plus curated Thai & English Google Fonts.
+- **Full JSON Backup, Merge & Account Control**: Export v2.0 JSON backups (tasks, subtasks, deadlines, link chips, habits, categories, periods, routines, theme settings), restore via **Replace** or intelligent non-destructive **Merge** mode, reset individual modules, or permanently delete accounts with re-authentication (Email/Password & Google).
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, Custom Glassmorphism UI
-- **Backend & Database**: Firebase (Cloud Firestore, Authentication)
-- **Icons & Utilities**: Lucide React, date-fns
+- **Frontend**: React 18, TypeScript 5, Vite 5
+- **Styling**: Tailwind CSS 3, Custom Glassmorphism & Solid Mode CSS
+- **Backend & Database**: Firebase v10 (Authentication, Cloud Firestore)
+- **Utilities**: `lucide-react`, `date-fns`, `html-to-image`
 
 ---
 
 ## 🚀 Quick Start
 
 ### 1. Prerequisites
-- Node.js v18+
-- Firebase Project with Auth and Firestore enabled
+- **Node.js** v18+
+- A **Firebase** project with **Authentication** (Email/Password & Google) and **Cloud Firestore** enabled
 
-### 2. Installation & Setup
+### 2. Installation
 ```bash
-# Clone repository
 git clone https://github.com/SuvijakDow/task-and-habit-tracker.git
 cd task_and_habit_tracker
-
-# Install dependencies
 npm install
 ```
 
@@ -80,8 +75,8 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-### 4. Firebase Firestore Setup
-Enable **Authentication (Email/Password)** and **Cloud Firestore** in your Firebase console. Add the following rules in Firestore Security Rules:
+### 4. Firestore Security Rules
+Configure your Firestore Security Rules in Firebase Console:
 ```firestore
 rules_version = '2';
 service cloud.firestore {
@@ -93,32 +88,70 @@ service cloud.firestore {
 }
 ```
 
-### 5. Run & Build
+### 5. Scripts
 ```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
+npm run dev         # Start local Vite dev server
+npm run type-check  # Run TypeScript type checking (tsc --noEmit)
+npm run build       # Type-check and build production bundle
+npm run preview     # Preview production build locally
 ```
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Architecture
+
+The codebase is organized cleanly by domain and architectural layer—separating UI components, pure domain utilities, constants, and Firebase service modules:
 
 ```
 src/
-├── components/          # Reusable UI, Habit, Task, and Modal components
-│   ├── habits/         # ContributionHeatmap, HabitTimeline, HabitsTable
-│   ├── modals/         # TaskCalendarModal, SettingsModal, Categories, History, Period modals
-│   ├── tasks/          # TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
-│   └── ui/             # ClickSparkEffect, Toast, TimePickerInput
-├── config/             # Firebase configuration
-├── context/            # Auth and Refresh Context providers
-├── pages/              # TasksPage, HabitsPage, AnalyticsPage, AuthPage
-├── services/           # Firebase CRUD service layer (tasks, habits, categories, user)
-├── types/              # Shared TypeScript definitions
-└── utils/              # Sorting, Audio, Date, Font, and Theme utilities
+├── config/
+│   └── firebase.ts                     # Firebase app, Auth & Firestore initialization
+├── constants/
+│   ├── calendar.ts                     # Weekday labels & harmonious Thai day-of-week palette
+│   ├── colors.ts                       # Shared hex regex & pastel palettes for categories/habits
+│   └── defaults.ts                     # Default category/preset names & weekday constants
+├── context/
+│   ├── AuthContext.tsx                 # Firebase Auth state & user profile synchronization
+│   └── DataRefreshContext.tsx          # Cross-page refresh coordination
+├── types/
+│   └── index.ts                        # Shared domain interfaces (Task, DailyHabit, Category, etc.)
+├── utils/
+│   ├── audio.ts                        # Web Audio API completion sound feedback
+│   ├── categoryUtils.ts                # O(1) category map builder, display resolver & error mapping
+│   ├── colorUtils.ts                   # Shared hex validation, rgba conversion & contrast helpers
+│   ├── dateUtils.ts                    # Local date coercion, formatting & deadline status helpers
+│   ├── fontUtils.ts                    # Curated Thai/English font registry & dynamic loader
+│   ├── gradientUtils.ts                # Gradient vs. Solid color mode switcher
+│   ├── habitSchedule.ts                # Pure habit time-slot, schedule formatting & sorting helpers
+│   ├── habitStats.ts                   # Pure streak, consistency & fractional completion math
+│   └── taskUtils.ts                    # Effective deadline sorting, subtask sorting & task filtering
+├── services/
+│   ├── accountService.ts               # Module resets & full Firestore user data cleanup
+│   ├── authService.ts                  # Email/Password, Google Auth & re-authentication
+│   ├── backupService.ts                # JSON backup export & Replace/Merge import engine
+│   ├── categoryService.ts              # Category CRUD & safe task reassignment
+│   ├── habitService.ts                 # Daily habit CRUD, completion & quantitative progress logs
+│   ├── habitSetService.ts              # Routine preset (HabitSet) CRUD & deduplication
+│   ├── taskPresetService.ts            # Task period (TaskPreset) CRUD & deduplication
+│   ├── taskService.ts                  # Task CRUD, subtask normalization & duplication
+│   └── userService.ts                  # User profile CRUD & avatar upload/normalization
+├── components/
+│   ├── ui/                             # Shared primitives (ConfirmDialog, Toast, ClickSparkEffect, TimePickerInput)
+│   ├── tasks/                          # TaskItem, TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
+│   │   └── calendar/                   # TaskCalendarModal, CalendarMonthView, CalendarDayInspector, CalendarWeekView
+│   ├── habits/                         # HabitCard, HabitFormModal, HabitsTable, HabitTimeline, ContributionHeatmap, RoutineSelectorDropdown
+│   ├── analytics/                      # HabitAnalyticsCard
+│   ├── settings/                       # SettingsModal, ProfileThemeTab, DataDangerZoneTab, ImportBackupDialog, DeleteAccountDialog
+│   └── modals/                         # CategoriesModal, TaskFormModal, ManageTaskPresetsModal, ManageHabitSetsModal, WeeklyScheduleModal, EditHabitHistoryModal
+├── pages/
+│   ├── AuthPage.tsx                    # Split-panel authentication & top user header
+│   ├── MainPage.tsx                    # Lazy-loaded tab router with idle/hover chunk prefetching
+│   ├── TasksPage.tsx                   # Task Hub orchestrator with progressive rendering
+│   ├── HabitsPage.tsx                  # Daily Habits orchestrator
+│   └── AnalyticsPage.tsx               # Habit Analytics & Insights orchestrator
+├── App.tsx
+├── main.tsx
+└── index.css                           # Global theme tokens, animations & Solid Color Mode overrides
 ```
 
 ---

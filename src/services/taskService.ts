@@ -1,63 +1,61 @@
 import {
-  collection,
   addDoc,
-  updateDoc,
+  collection,
   deleteDoc,
   doc,
   getDocs,
-  getDoc,
   query,
-  where,
   Timestamp,
+  updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { Task, Subtask } from '@/types';
+import { Subtask, Task } from '@/types';
+import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/defaults';
+import { formatToDateString, toLocalDate } from '@/utils/dateUtils';
 
 const TASKS_COLLECTION = 'tasks';
-const DEFAULT_TASK_CATEGORY = 'Personal';
 
 const normalizeTaskCategory = (value: unknown): string => {
-  return typeof value === 'string' && value.trim() ? value : DEFAULT_TASK_CATEGORY;
+  return typeof value === 'string' && value.trim() ? value : DEFAULT_TASK_CATEGORY_NAME;
 };
 
-const normalizeSubtaskDueDate = (rawDueDate: any): string | null => {
+const normalizeSubtaskDueDate = (rawDueDate: unknown): string | null => {
   if (!rawDueDate) return null;
   if (typeof rawDueDate === 'string') {
     const trimmed = rawDueDate.trim();
     if (!trimmed) return null;
     if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-    const d = new Date(trimmed);
-    return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : null;
   }
-  if (typeof rawDueDate?.toDate === 'function') {
-    const d = rawDueDate.toDate();
-    return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : null;
-  }
-  if (rawDueDate instanceof Date && !isNaN(rawDueDate.getTime())) {
-    return rawDueDate.toISOString().split('T')[0];
-  }
-  return null;
+  const parsed = toLocalDate(rawDueDate);
+  return parsed ? formatToDateString(parsed) : null;
 };
 
-export const normalizeSubtasks = (rawSubtasks: any): Subtask[] => {
-  if (!Array.isArray(rawSubtasks)) {
-    return [];
-  }
-  const normalized = rawSubtasks.map((st, index) => {
+const normalizeSubtasks = (rawSubtasks: unknown): Subtask[] => {
+  if (!Array.isArray(rawSubtasks)) return [];
+  return rawSubtasks.map((st: any, index: number) => {
     const dueDate = normalizeSubtaskDueDate(st?.dueDate);
     return {
       id: typeof st?.id === 'string' && st.id ? st.id : `st-${Date.now()}-${index}`,
-      title: typeof st?.title === 'string' ? st.title : (st?.name || st?.text || ''),
+      title: typeof st?.title === 'string' ? st.title : st?.name || st?.text || '',
       isCompleted: Boolean(st?.isCompleted ?? st?.completed ?? false),
       ...(dueDate ? { dueDate } : {}),
     };
   });
-  return normalized;
 };
 
-/**
- * Create a new task
- */
+const mapDocToTask = (docId: string, data: Record<string, any>): Task =>
+  ({
+    id: docId,
+    ...data,
+    isStarred: Boolean(data.isStarred),
+    subtasks: normalizeSubtasks(data.subtasks),
+    category: normalizeTaskCategory(data.category),
+    dueDate: toLocalDate(data.dueDate),
+    createdAt: toLocalDate(data.createdAt) || new Date(),
+    updatedAt: toLocalDate(data.updatedAt) || new Date(),
+  }) as Task;
+
 export const createTask = async (
   userId: string,
   taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'userId'>
@@ -96,144 +94,17 @@ export const createTask = async (
   }
 };
 
-const toSafeDate = (value: any): Date => {
-  if (!value) return new Date();
-  if (typeof value?.toDate === 'function') return value.toDate();
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? new Date() : d;
-};
-
-const toSafeNullableDate = (value: any): Date | null => {
-  if (!value) return null;
-  if (typeof value?.toDate === 'function') return value.toDate();
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? null : d;
-};
-
-/**
- * Get all tasks for a user
- */
 export const getUserTasks = async (userId: string): Promise<Task[]> => {
   try {
-    const q = query(
-      collection(db, TASKS_COLLECTION),
-      where('userId', '==', userId)
-    );
+    const q = query(collection(db, TASKS_COLLECTION), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map((doc) => {
-      const task = doc.data();
-      return {
-        id: doc.id,
-        ...task,
-        isStarred: Boolean(task.isStarred),
-        subtasks: normalizeSubtasks(task.subtasks),
-        category: normalizeTaskCategory(task.category),
-        dueDate: toSafeNullableDate(task.dueDate),
-        createdAt: toSafeDate(task.createdAt),
-        updatedAt: toSafeDate(task.updatedAt),
-      };
-    }) as Task[];
+    return querySnapshot.docs.map((d) => mapDocToTask(d.id, d.data()));
   } catch (error) {
     console.error('Error getting user tasks:', error);
     throw error;
   }
 };
 
-/**
- * Get completed tasks for a user
- */
-export const getCompletedTasks = async (userId: string): Promise<Task[]> => {
-  try {
-    const q = query(
-      collection(db, TASKS_COLLECTION),
-      where('userId', '==', userId),
-      where('isCompleted', '==', true)
-    );
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map((doc) => {
-      const task = doc.data();
-      return {
-        id: doc.id,
-        ...task,
-        isStarred: Boolean(task.isStarred),
-        subtasks: normalizeSubtasks(task.subtasks),
-        category: normalizeTaskCategory(task.category),
-        dueDate: toSafeNullableDate(task.dueDate),
-        createdAt: toSafeDate(task.createdAt),
-        updatedAt: toSafeDate(task.updatedAt),
-      };
-    }) as Task[];
-  } catch (error) {
-    console.error('Error getting completed tasks:', error);
-    throw error;
-  }
-};
-
-/**
- * Get pending tasks for a user
- */
-export const getPendingTasks = async (userId: string): Promise<Task[]> => {
-  try {
-    const q = query(
-      collection(db, TASKS_COLLECTION),
-      where('userId', '==', userId),
-      where('isCompleted', '==', false)
-    );
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map((doc) => {
-      const task = doc.data();
-      return {
-        id: doc.id,
-        ...task,
-        isStarred: Boolean(task.isStarred),
-        subtasks: normalizeSubtasks(task.subtasks),
-        category: normalizeTaskCategory(task.category),
-        dueDate: toSafeNullableDate(task.dueDate),
-        createdAt: toSafeDate(task.createdAt),
-        updatedAt: toSafeDate(task.updatedAt),
-      };
-    }) as Task[];
-  } catch (error) {
-    console.error('Error getting pending tasks:', error);
-    throw error;
-  }
-};
-
-/**
- * Get a single task by ID
- */
-export const getTaskById = async (taskId: string): Promise<Task | null> => {
-  try {
-    const docRef = doc(db, TASKS_COLLECTION, taskId);
-    const docSnap = await getDoc(docRef);
-    
-    if (!docSnap.exists()) {
-      return null;
-    }
-    
-    const task = docSnap.data();
-    return {
-      id: docSnap.id,
-      ...task,
-      isStarred: Boolean(task.isStarred),
-      subtasks: normalizeSubtasks(task.subtasks),
-      category: normalizeTaskCategory(task.category),
-      dueDate: toSafeNullableDate(task.dueDate),
-      createdAt: toSafeDate(task.createdAt),
-      updatedAt: toSafeDate(task.updatedAt),
-    } as Task;
-  } catch (error) {
-    console.error('Error getting task:', error);
-    throw error;
-  }
-};
-
-/**
- * Update a task
- */
 export const updateTask = async (
   taskId: string,
   updates: Partial<Omit<Task, 'id' | 'userId' | 'createdAt'>>
@@ -244,11 +115,9 @@ export const updateTask = async (
       ...updates,
       updatedAt: Timestamp.now(),
     };
-    
+
     if (updates.dueDate !== undefined) {
-      dataToUpdate.dueDate = updates.dueDate
-        ? Timestamp.fromDate(updates.dueDate)
-        : null;
+      dataToUpdate.dueDate = updates.dueDate ? Timestamp.fromDate(updates.dueDate) : null;
     }
 
     if (updates.category !== undefined) {
@@ -256,11 +125,9 @@ export const updateTask = async (
     }
 
     if (updates.subtasks !== undefined) {
-      // Ensure subtasks is an array before normalizing
-      const subtasksToSave = Array.isArray(updates.subtasks) ? updates.subtasks : [];
-      dataToUpdate.subtasks = normalizeSubtasks(subtasksToSave);
+      dataToUpdate.subtasks = normalizeSubtasks(updates.subtasks);
     }
-    
+
     await updateDoc(docRef, dataToUpdate);
   } catch (error) {
     console.error('Error updating task:', error);
@@ -268,28 +135,7 @@ export const updateTask = async (
   }
 };
 
-/**
- * Toggle task completion status
- */
-export const toggleTaskCompletion = async (
-  taskId: string,
-  isCompleted: boolean
-): Promise<void> => {
-  try {
-    await updateTask(taskId, { isCompleted });
-  } catch (error) {
-    console.error('Error toggling task completion:', error);
-    throw error;
-  }
-};
-
-/**
- * Toggle task star status
- */
-export const toggleTaskStar = async (
-  taskId: string,
-  isStarred: boolean
-): Promise<void> => {
+export const toggleTaskStar = async (taskId: string, isStarred: boolean): Promise<void> => {
   try {
     await updateTask(taskId, { isStarred });
   } catch (error) {
@@ -298,26 +144,16 @@ export const toggleTaskStar = async (
   }
 };
 
-/**
- * Delete a task
- */
 export const deleteTask = async (taskId: string): Promise<void> => {
   try {
-    const docRef = doc(db, TASKS_COLLECTION, taskId);
-    await deleteDoc(docRef);
+    await deleteDoc(doc(db, TASKS_COLLECTION, taskId));
   } catch (error) {
     console.error('Error deleting task:', error);
     throw error;
   }
 };
 
-/**
- * Duplicate an existing task
- */
-export const duplicateTask = async (
-  userId: string,
-  task: Task
-): Promise<string> => {
+export const duplicateTask = async (userId: string, task: Task): Promise<string> => {
   try {
     const rawSubtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
     const newSubtasks = rawSubtasks.map((st, index) => ({
@@ -327,9 +163,7 @@ export const duplicateTask = async (
       ...(st.dueDate ? { dueDate: st.dueDate } : {}),
     }));
 
-    const duplicateTitle = task.title.endsWith('(Copy)')
-      ? task.title
-      : `${task.title} (Copy)`;
+    const duplicateTitle = task.title.endsWith('(Copy)') ? task.title : `${task.title} (Copy)`;
 
     return await createTask(userId, {
       title: duplicateTitle,
@@ -347,4 +181,3 @@ export const duplicateTask = async (
     throw error;
   }
 };
-

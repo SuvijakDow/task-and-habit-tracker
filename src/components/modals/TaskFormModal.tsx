@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, ListChecks, Plus, Settings2, Sparkles, X } from 'lucide-react';
 import { Category, Subtask, Task, TaskPreset } from '@/types';
-import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/taskConstants';
+import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/defaults';
 import { formatToDateString, toLocalDate } from '@/utils/dateUtils';
+import { findCategoryByTaskValue, getDefaultCategoryValue } from '@/utils/categoryUtils';
 import { CHIP_ICON_OPTIONS, TaskSmartChip, autoDetectLinkChip } from '@/components/tasks/TaskSmartChip';
 import { SubtaskDateControl } from '@/components/tasks/SubtaskDateControl';
 
@@ -44,19 +45,6 @@ interface LocalFormState {
   linkLabel: string;
   linkIcon: string;
 }
-
-const findCategoryByTaskValue = (
-  categories: Category[],
-  taskCategory: string
-): Category | undefined => {
-  return categories.find((category) => category.id === taskCategory || category.name === taskCategory);
-};
-
-const getDefaultCategoryValue = (categories: Category[]): string => {
-  const defaultCategory =
-    categories.find((category) => category.name === DEFAULT_TASK_CATEGORY_NAME) || categories[0];
-  return defaultCategory?.id || DEFAULT_TASK_CATEGORY_NAME;
-};
 
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   isOpen,

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
-import { FirebaseError } from 'firebase/app';
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Category, Task } from '@/types';
 import { useAuth } from '@/context/AuthContext';
@@ -12,25 +11,8 @@ import {
   PASTEL_CATEGORY_COLORS,
   updateCategory,
 } from '@/services/categoryService';
-import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/categoryConstants';
-
-const getCategoryErrorMessage = (error: unknown): string => {
-  if (error instanceof FirebaseError) {
-    if (error.code === 'permission-denied') {
-      return 'You do not have access to categories yet. Update Firestore rules for /categories, then refresh.';
-    }
-
-    if (error.code === 'failed-precondition') {
-      return 'Category lookup needs a Firestore index. Create the suggested index in Firebase Console.';
-    }
-
-    if (error.code === 'unauthenticated') {
-      return 'Your session expired. Sign in again to manage categories.';
-    }
-  }
-
-  return 'Could not load categories. Refresh and try again.';
-};
+import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/defaults';
+import { getCategoryErrorMessage } from '@/utils/categoryUtils';
 
 interface CategoriesModalProps {
   isOpen: boolean;

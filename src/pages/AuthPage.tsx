@@ -18,7 +18,9 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { normalizeProfilePhotoURL } from '@/services/userService';
 const MainPage = lazy(() => import('./MainPage').then((m) => ({ default: m.MainPage })));
-const SettingsModal = lazy(() => import('@/components/modals/SettingsModal').then((m) => ({ default: m.default || m.SettingsModal })));
+const SettingsModal = lazy(() =>
+  import('@/components/settings/SettingsModal').then((m) => ({ default: m.SettingsModal }))
+);
 
 
 type AuthMode = 'login' | 'signup' | 'profile';

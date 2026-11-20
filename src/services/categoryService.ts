@@ -10,31 +10,16 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Category } from '@/types';
+import { DEFAULT_CATEGORIES, PASTEL_CATEGORY_COLORS } from '@/constants/colors';
+import { isValidHexColor } from '@/utils/colorUtils';
+
+export { PASTEL_CATEGORY_COLORS };
 
 const CATEGORIES_COLLECTION = 'categories';
 const TASKS_COLLECTION = 'tasks';
 
-// Simple in-memory lock to prevent race conditions
+// Simple in-memory lock to prevent duplicate default category creation
 const categoryCreationLocks = new Map<string, Promise<void>>();
-
-export const PASTEL_CATEGORY_COLORS = [
-  '#93C5FD', // blue
-  '#A5B4FC', // indigo
-  '#C4B5FD', // purple
-  '#F9A8D4', // pink
-  '#FDBA74', // orange
-  '#86EFAC', // green
-  '#67E8F9', // cyan
-  '#FDE68A', // yellow
-] as const;
-
-const DEFAULT_CATEGORIES: Array<{ name: string; color: string }> = [
-  { name: 'Personal', color: '#C4B5FD' },
-  { name: 'Education', color: '#F9A8D4' },
-  { name: 'Health', color: '#86EFAC' },
-];
-
-const isValidHexColor = (value: string): boolean => /^#[0-9A-F]{6}$/i.test(value);
 
 const normalizeCategoryName = (value: string): string => value.trim();
 
@@ -42,9 +27,6 @@ const normalizeCategoryColor = (value: string): string => {
   return isValidHexColor(value) ? value.toUpperCase() : PASTEL_CATEGORY_COLORS[0];
 };
 
-/**
- * Create a new category for a user.
- */
 export const createCategory = async (
   userId: string,
   data: { name: string; color: string }
@@ -80,15 +62,9 @@ export const createCategory = async (
   }
 };
 
-/**
- * Get all categories for a user.
- */
 export const getUserCategories = async (userId: string): Promise<Category[]> => {
   try {
-    const q = query(
-      collection(db, CATEGORIES_COLLECTION),
-      where('userId', '==', userId)
-    );
+    const q = query(collection(db, CATEGORIES_COLLECTION), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
 
     const categories = querySnapshot.docs.map((categoryDoc) => {
@@ -110,23 +86,16 @@ export const getUserCategories = async (userId: string): Promise<Category[]> => 
   }
 };
 
-/**
- * Ensure default categories exist for a user.
- */
 export const ensureDefaultCategories = async (userId: string): Promise<void> => {
-  // Check if there's already an ongoing creation for this user
   const existingLock = categoryCreationLocks.get(userId);
   if (existingLock) {
     await existingLock;
     return;
   }
 
-  // Create a new lock
   const creationPromise = (async () => {
     try {
       const now = Timestamp.now();
-
-      // Check and create each default category individually to avoid duplicates
       await Promise.all(
         DEFAULT_CATEGORIES.map(async (category) => {
           const categoryQuery = query(
@@ -149,9 +118,7 @@ export const ensureDefaultCategories = async (userId: string): Promise<void> => 
       );
     } catch (error) {
       console.error('Error ensuring default categories:', error);
-      // Don't throw error to avoid blocking sign-in
     } finally {
-      // Remove the lock after completion
       categoryCreationLocks.delete(userId);
     }
   })();
@@ -160,9 +127,6 @@ export const ensureDefaultCategories = async (userId: string): Promise<void> => 
   await creationPromise;
 };
 
-/**
- * Delete a category and reassign related tasks to another category.
- */
 export const deleteCategoryAndReassignTasks = async (
   userId: string,
   params: {
@@ -197,13 +161,8 @@ export const deleteCategoryAndReassignTasks = async (
     const now = Timestamp.now();
     const taskDocMap = new Map<string, (typeof tasksByCategoryId.docs)[number]['ref']>();
 
-    tasksByCategoryId.docs.forEach((taskDoc) => {
-      taskDocMap.set(taskDoc.id, taskDoc.ref);
-    });
-
-    tasksByCategoryName.docs.forEach((taskDoc) => {
-      taskDocMap.set(taskDoc.id, taskDoc.ref);
-    });
+    tasksByCategoryId.docs.forEach((taskDoc) => taskDocMap.set(taskDoc.id, taskDoc.ref));
+    tasksByCategoryName.docs.forEach((taskDoc) => taskDocMap.set(taskDoc.id, taskDoc.ref));
 
     taskDocMap.forEach((taskRef) => {
       batch.update(taskRef, {
@@ -220,9 +179,6 @@ export const deleteCategoryAndReassignTasks = async (
   }
 };
 
-/**
- * Update a category and normalize legacy tasks that still store category name.
- */
 export const updateCategory = async (
   userId: string,
   params: {
@@ -252,11 +208,7 @@ export const updateCategory = async (
     const batch = writeBatch(db);
     const now = Timestamp.now();
 
-    batch.update(categoryRef, {
-      name,
-      color,
-      updatedAt: now,
-    });
+    batch.update(categoryRef, { name, color, updatedAt: now });
 
     legacyTasks.docs.forEach((taskDoc) => {
       batch.update(taskDoc.ref, {
@@ -271,4 +223,3 @@ export const updateCategory = async (
     throw error;
   }
 };
-

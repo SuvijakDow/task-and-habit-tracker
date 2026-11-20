@@ -26,11 +26,7 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@services/*": ["src/services/*"],
-      "@types/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src"],

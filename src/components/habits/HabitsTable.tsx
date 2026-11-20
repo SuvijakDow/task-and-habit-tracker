@@ -2,14 +2,8 @@ import { useEffect, useMemo, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { DailyHabit } from '@/types';
 import { Activity, Calendar, Check, Clock, Flame, Pencil, RefreshCw, Search, Trash2, X } from 'lucide-react';
-import { getHabitColorHex, getHabitTimeSlotsForDay, sortHabitsByTodaySchedule } from '@/services/habitService';
-
-const formatScheduledDays = (days: number[]): string => {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  if (!days || days.length === 7) return 'Everyday';
-  if (days.length === 0) return 'No days';
-  return days.map((d) => dayNames[d]).join(', ');
-};
+import { getHabitColorHex } from '@/utils/colorUtils';
+import { formatScheduledDays, getHabitTimeSlotsForDay, sortHabitsByTodaySchedule } from '@/utils/habitSchedule';
 
 interface Props {
   habits: DailyHabit[];

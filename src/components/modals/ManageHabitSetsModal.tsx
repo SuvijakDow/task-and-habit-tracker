@@ -26,7 +26,7 @@ export const ManageHabitSetsModal: React.FC<ManageHabitSetsModalProps> = React.m
   onDeleteSet,
 }) => {
   const [newSetName, setNewSetName] = useState('');
-  const [newSetColor, setNewSetColor] = useState(PASTEL_HABIT_COLORS[7]); // Purple default
+  const [newSetColor, setNewSetColor] = useState<string>(PASTEL_HABIT_COLORS[7]); // Purple default
   const [isCreating, setIsCreating] = useState(false);
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
