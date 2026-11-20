@@ -46,8 +46,8 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden bg-[#ece6f5] bg-gradient-to-br from-[#ece5f6] via-[#efeaf6] to-[#e6ecf8]">
-      {/* Mobile (< md): 7-Day Jump Strip + Vertical Day-by-Day Timeline */}
-      <div className="flex md:hidden flex-col flex-1 min-h-0">
+      {/* Mobile & Narrow Tablet (< lg): 7-Day Jump Strip + Vertical Day-by-Day Timeline */}
+      <div className="flex lg:hidden flex-col flex-1 min-h-0">
         {/* Top Sticky 7-Day Mini Strip */}
         <div className="grid grid-cols-7 gap-1 px-2.5 py-2 bg-white border-b-2 border-purple-200 shrink-0">
           {weekDays.map((day) => {
@@ -292,9 +292,9 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
         </div>
       </div>
 
-      {/* iPad & Desktop (md+): 7-Column Side-by-Side Comparison Board */}
-      <div className="hidden md:flex flex-1 min-h-0 overflow-x-auto p-3.5 lg:p-4">
-        <div className="grid grid-cols-7 gap-2.5 min-w-[1040px] xl:min-w-0 w-full h-full">
+      {/* iPad Landscape & Desktop (lg+): Full 7-Column Side-by-Side Board (No Horizontal Scroll) */}
+      <div className="hidden lg:flex flex-1 min-h-0 overflow-hidden p-2.5 xl:p-4">
+        <div className="grid grid-cols-7 gap-1.5 xl:gap-2.5 w-full h-full min-w-0">
           {weekDays.map((day) => {
             const dateKey = formatToDateString(day);
             const items = itemsByDate.get(dateKey) || [];
@@ -311,7 +311,7 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
               <div
                 key={dateKey}
                 data-calendar-drop-date={dateKey}
-                className={`group/col relative flex flex-col min-h-0 rounded-2xl border overflow-hidden transition ${
+                className={`group/col relative flex flex-col min-w-0 min-h-0 rounded-2xl border overflow-hidden transition ${
                   isDropTarget
                     ? 'bg-pink-50/75 border-2 border-pink-500 ring-2 ring-pink-300/90 shadow-[0_0_0_3px_rgba(236,72,153,0.18),0_8px_20px_rgba(147,51,234,0.16)]'
                     : hasOverdue
@@ -327,7 +327,7 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
               >
                 {/* Column Day Header */}
                 <div
-                  className={`p-2.5 border-b shrink-0 ${
+                  className={`p-2 xl:p-2.5 border-b shrink-0 ${
                     isToday
                       ? 'bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-500 text-white border-pink-400'
                       : hasOverdue
@@ -408,7 +408,7 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                 </div>
 
                 {/* Column Scrollable Deadlines Stack */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 bg-purple-50/20">
+                <div className="flex-1 min-h-0 overflow-y-auto p-1.5 xl:p-2 space-y-1.5 xl:space-y-2 bg-purple-50/20">
                   {items.length === 0 ? (
                     <div className="h-full min-h-[120px] flex flex-col items-center justify-center text-center px-2 opacity-60">
                       <span className="text-xs font-medium text-gray-400">No deadlines</span>
@@ -421,7 +421,7 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                         <div
                           key={item.id}
                           onPointerDown={(e) => onStartItemDrag?.(item, e)}
-                          className={`group/card p-2 rounded-xl border transition shadow-2xs select-none cursor-grab active:cursor-grabbing ${
+                          className={`group/card p-1.5 xl:p-2 rounded-xl border transition shadow-2xs select-none cursor-grab active:cursor-grabbing ${
                             isBeingDragged ? 'opacity-35 scale-[0.97] border-dashed' : ''
                           } ${
                             item.isCompleted
@@ -484,9 +484,9 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                                 )}
                                 {item.title}
                               </div>
-                              <div className="flex items-center justify-between gap-1 mt-1.5">
+                              <div className="flex items-center justify-between gap-1 mt-1.5 min-w-0">
                                 <span
-                                  className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.2 rounded border truncate max-w-[100px]"
+                                  className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.2 rounded border min-w-0 truncate"
                                   style={{
                                     backgroundColor: hexToRgba(item.categoryColor, 0.25),
                                     color: item.categoryTextColor,
