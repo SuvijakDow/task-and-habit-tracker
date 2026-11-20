@@ -31,6 +31,12 @@ import { showToast } from '@/components/ui/Toast';
 import { playSuccessSound } from '@/utils/audio';
 import { buildCategoryMap, getCategoryErrorMessage } from '@/utils/categoryUtils';
 import {
+  formatShortDueDateDisplay,
+  formatToDateString,
+  parseToDate,
+  toLocalDate,
+} from '@/utils/dateUtils';
+import {
   sortIncompleteTasks,
   sortCompletedTasks,
   QuickFilter,
@@ -375,7 +381,185 @@ export function TasksPage() {
       showToast('Failed to update subtask due date.', 'error');
       await loadTasks();
     }
+  }, [loadTasks]);
+
+  const handleMoveTaskDate = useCallback(async (taskId: string, targetDateKey: string) => {
+    const currentTask = tasksRef.current.find((t) => t.id === taskId);
+    if (!currentTask) return;
+
+    const previousDueDate = currentTask.dueDate;
+    const targetDate = parseToDate(targetDateKey);
+
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, dueDate: targetDate } : t))
+    );
+
+    try {
+      await updateTask(taskId, { dueDate: targetDate });
+      showToast(
+        `Moved "${currentTask.title}" to ${formatShortDueDateDisplay(targetDate)}`,
+        'success'
+      );
+    } catch (err) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, dueDate: previousDueDate } : t))
+      );
+      console.error('Error moving task date:', err);
+      showToast('Could not move task. Please try again.', 'error');
+    }
   }, []);
+
+  const handleDuplicateTaskToDate = useCallback(
+    async (task: Task, targetDateKey: string) => {
+      if (!user) return;
+
+      const targetDate = parseToDate(targetDateKey);
+      const duplicateTitle = task.title.endsWith('(Copy)') ? task.title : `${task.title} (Copy)`;
+      const tempId = `temp-dup-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+      let dayOffsetMs = 0;
+      if (task.dueDate) {
+        const origStart = new Date(
+          task.dueDate.getFullYear(),
+          task.dueDate.getMonth(),
+          task.dueDate.getDate()
+        );
+        dayOffsetMs = targetDate.getTime() - origStart.getTime();
+      }
+
+      const clonedSubtasks = (task.subtasks || []).map((st, index) => {
+        let shiftedDueDate = st.dueDate;
+        if (st.dueDate && dayOffsetMs !== 0) {
+          const parsed = toLocalDate(st.dueDate);
+          if (parsed) {
+            shiftedDueDate = formatToDateString(new Date(parsed.getTime() + dayOffsetMs));
+          }
+        }
+        return {
+          id: `st-${Date.now()}-${index}`,
+          title: st.title,
+          isCompleted: false,
+          ...(shiftedDueDate ? { dueDate: shiftedDueDate } : {}),
+        };
+      });
+
+      const now = new Date();
+      const optimisticTask: Task = {
+        ...task,
+        id: tempId,
+        title: duplicateTitle,
+        dueDate: targetDate,
+        isCompleted: false,
+        subtasks: clonedSubtasks,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setTasks((prev) => [optimisticTask, ...prev]);
+
+      try {
+        const createdId = await duplicateTask(user.uid, task, { dueDate: targetDate });
+        setTasks((prev) =>
+          prev.map((t) => (t.id === tempId ? { ...t, id: createdId } : t))
+        );
+        showToast(
+          `Duplicated "${duplicateTitle}" to ${formatShortDueDateDisplay(targetDate)}`,
+          'success'
+        );
+      } catch (err) {
+        setTasks((prev) => prev.filter((t) => t.id !== tempId));
+        console.error('Error duplicating task to date:', err);
+        showToast('Could not duplicate task. Please try again.', 'error');
+      }
+    },
+    [user]
+  );
+
+  const handleMoveSubtaskDate = useCallback(
+    async (taskId: string, subtaskId: string, targetDateKey: string) => {
+      const currentTask = tasksRef.current.find((t) => t.id === taskId);
+      const sourceSubtask = currentTask?.subtasks?.find((st) => st.id === subtaskId);
+      if (!currentTask || !sourceSubtask) return;
+
+      const updatedSubtasks = (currentTask.subtasks || []).map((st) =>
+        st.id === subtaskId ? { ...st, dueDate: targetDateKey } : st
+      );
+
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t))
+      );
+
+      try {
+        await updateTask(taskId, { subtasks: updatedSubtasks });
+        showToast(
+          `Moved "${sourceSubtask.title}" to ${formatShortDueDateDisplay(parseToDate(targetDateKey))}`,
+          'success'
+        );
+      } catch (err) {
+        console.error('Error moving subtask date:', err);
+        showToast('Could not move subtask. Please try again.', 'error');
+        await loadTasks();
+      }
+    },
+    [loadTasks]
+  );
+
+  const handleDuplicateSubtaskToDate = useCallback(
+    async (taskId: string, subtaskId: string, targetDateKey: string) => {
+      const currentTask = tasksRef.current.find((t) => t.id === taskId);
+      if (!currentTask || !Array.isArray(currentTask.subtasks)) return;
+
+      const sourceIndex = currentTask.subtasks.findIndex((st) => st.id === subtaskId);
+      if (sourceIndex === -1) return;
+
+      const sourceSubtask = currentTask.subtasks[sourceIndex];
+      const duplicateTitle = sourceSubtask.title.endsWith('(Copy)')
+        ? sourceSubtask.title
+        : `${sourceSubtask.title} (Copy)`;
+
+      const newSubtask = {
+        id: `st-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title: duplicateTitle,
+        isCompleted: false,
+        dueDate: targetDateKey,
+      };
+
+      const updatedSubtasks = [
+        ...currentTask.subtasks.slice(0, sourceIndex + 1),
+        newSubtask,
+        ...currentTask.subtasks.slice(sourceIndex + 1),
+      ];
+      const shouldReopenParent = Boolean(currentTask.isCompleted);
+
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId
+            ? {
+                ...t,
+                subtasks: updatedSubtasks,
+                ...(shouldReopenParent ? { isCompleted: false } : {}),
+              }
+            : t
+        )
+      );
+
+      try {
+        await updateTask(taskId, {
+          subtasks: updatedSubtasks,
+          ...(shouldReopenParent ? { isCompleted: false } : {}),
+        });
+        showToast(
+          `Duplicated "${duplicateTitle}" to ${formatShortDueDateDisplay(parseToDate(targetDateKey))}`,
+          'success'
+        );
+      } catch (err) {
+        console.error('Error duplicating subtask to date:', err);
+        showToast('Could not duplicate subtask. Please try again.', 'error');
+        await loadTasks();
+      }
+    },
+    [loadTasks]
+  );
 
   const handleBulkSetCompletion = useCallback(async (taskIds: string[], isCompleted: boolean) => {
     if (taskIds.length === 0) return;
@@ -533,6 +717,46 @@ export function TasksPage() {
   const handleDeleteTask = useCallback((taskId: string) => {
     setDeletingTaskId(taskId);
   }, []);
+
+  const handleDeleteTaskDirect = useCallback(async (taskId: string) => {
+    const targetTask = tasksRef.current.find((t) => t.id === taskId);
+    try {
+      await deleteTask(taskId);
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      showToast(
+        targetTask ? `Deleted "${targetTask.title}"` : 'Task deleted.',
+        'success'
+      );
+    } catch (err) {
+      showToast('Could not delete this task. Please try again.', 'error');
+      console.error('Error deleting task:', err);
+    }
+  }, []);
+
+  const handleDeleteSubtaskDirect = useCallback(
+    async (taskId: string, subtaskId: string) => {
+      const currentTask = tasksRef.current.find((t) => t.id === taskId);
+      if (!currentTask || !Array.isArray(currentTask.subtasks)) return;
+
+      const targetSubtask = currentTask.subtasks.find((st) => st.id === subtaskId);
+      if (!targetSubtask) return;
+
+      const updatedSubtasks = currentTask.subtasks.filter((st) => st.id !== subtaskId);
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t))
+      );
+
+      try {
+        await updateTask(taskId, { subtasks: updatedSubtasks });
+        showToast(`Deleted subtask "${targetSubtask.title}"`, 'success');
+      } catch (err) {
+        console.error('Error deleting subtask:', err);
+        showToast('Could not delete subtask. Please try again.', 'error');
+        await loadTasks();
+      }
+    },
+    [loadTasks]
+  );
 
   const handleConfirmDelete = async () => {
     if (!deletingTaskId) return;
@@ -1232,7 +1456,13 @@ export function TasksPage() {
           onToggleTaskCompletion={handleToggleCompletion}
           onToggleSubtask={handleToggleTaskSubtask}
           onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTaskDirect}
+          onDeleteSubtask={handleDeleteSubtaskDirect}
           onAddTaskForDate={handleAddTaskForDate}
+          onMoveTaskDate={handleMoveTaskDate}
+          onDuplicateTaskToDate={handleDuplicateTaskToDate}
+          onMoveSubtaskDate={handleMoveSubtaskDate}
+          onDuplicateSubtaskToDate={handleDuplicateSubtaskToDate}
           togglingTaskId={togglingTaskId}
         />
         <ManageTaskPresetsModal

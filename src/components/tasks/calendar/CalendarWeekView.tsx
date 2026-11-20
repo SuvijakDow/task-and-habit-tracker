@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { format } from 'date-fns';
-import { Check, CornerDownRight, Pencil, Plus, Star } from 'lucide-react';
+import { Check, CornerDownRight, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { Task } from '@/types';
 import { WEEKDAY_STYLES } from '@/constants/calendar';
 import { formatToDateString } from '@/utils/dateUtils';
@@ -13,10 +13,16 @@ interface CalendarWeekViewProps {
   selectedDateKey: string;
   itemsByDate: Map<string, CalendarDeadlineItem[]>;
   togglingTaskId: string | null;
+  draggingItemId?: string | null;
+  highlightedDropDateKey?: string | null;
+  isPendingDropTarget?: boolean;
   onSelectDate: (day: Date) => void;
   onToggleItem: (item: CalendarDeadlineItem) => void;
   onEditTask: (task: Task) => void;
+  onRequestDeleteItem: (item: CalendarDeadlineItem) => void;
   onAddTaskForDate: (dateStr: string) => void;
+  onStartItemDrag?: (item: CalendarDeadlineItem, e: React.PointerEvent) => void;
+  shouldSuppressClick?: () => boolean;
 }
 
 export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
@@ -25,10 +31,16 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
   selectedDateKey,
   itemsByDate,
   togglingTaskId,
+  draggingItemId = null,
+  highlightedDropDateKey = null,
+  isPendingDropTarget = false,
   onSelectDate,
   onToggleItem,
   onEditTask,
+  onRequestDeleteItem,
   onAddTaskForDate,
+  onStartItemDrag,
+  shouldSuppressClick,
 }) => {
   const mobileDaySectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -106,15 +118,19 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
             const hasDueToday = isToday && pendingCount > 0;
             const isAllDoneDay = pendingCount === 0 && completedCount > 0;
             const dayStyle = WEEKDAY_STYLES[day.getDay()];
+            const isDropTarget = highlightedDropDateKey === dateKey;
 
             return (
               <div
                 key={dateKey}
+                data-calendar-drop-date={dateKey}
                 ref={(el) => {
                   mobileDaySectionRefs.current[dateKey] = el;
                 }}
                 className={`rounded-2xl border overflow-hidden transition ${
-                  hasOverdue
+                  isDropTarget
+                    ? 'bg-pink-50/70 border-2 border-pink-500 ring-2 ring-pink-300/90 shadow-md'
+                    : hasOverdue
                     ? 'bg-white border-2 border-rose-400 shadow-[0_0_0_2px_rgba(244,63,94,0.16),0_4px_12px_rgba(244,63,94,0.16)]'
                     : hasDueToday
                     ? 'bg-white border-2 border-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.18),0_4px_12px_rgba(245,158,11,0.16)]'
@@ -188,7 +204,10 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className={`flex items-start gap-2 p-2.5 rounded-xl border shadow-2xs ${
+                        onPointerDown={(e) => onStartItemDrag?.(item, e)}
+                        className={`flex items-start gap-2 p-2.5 rounded-xl border shadow-2xs select-none cursor-grab active:cursor-grabbing transition ${
+                          draggingItemId === item.id ? 'opacity-40 scale-[0.98] border-dashed' : ''
+                        } ${
                           item.isCompleted
                             ? 'bg-emerald-50/60 border-emerald-200/80 opacity-80'
                             : 'bg-white border-purple-200'
@@ -244,14 +263,25 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                             </span>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => onEditTask(item.parentTask)}
-                          className="p-1 text-gray-500 hover:text-blue-600 rounded-lg shrink-0"
-                          aria-label={`Edit ${item.parentTask.title}`}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => onEditTask(item.parentTask)}
+                            className="p-1 text-gray-500 hover:text-blue-600 rounded-lg shrink-0"
+                            aria-label={`Edit ${item.parentTask.title}`}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onRequestDeleteItem(item)}
+                            className="p-1 text-gray-400 hover:text-rose-600 rounded-lg shrink-0"
+                            title={item.type === 'subtask' ? 'Delete subtask' : 'Delete task'}
+                            aria-label={`Delete ${item.title}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -275,12 +305,16 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
             const hasDueToday = isToday && pendingCount > 0;
             const isAllDoneDay = pendingCount === 0 && completedCount > 0;
             const dayStyle = WEEKDAY_STYLES[day.getDay()];
+            const isDropTarget = highlightedDropDateKey === dateKey;
 
             return (
               <div
                 key={dateKey}
-                className={`group/col flex flex-col min-h-0 rounded-2xl border overflow-hidden transition ${
-                  hasOverdue
+                data-calendar-drop-date={dateKey}
+                className={`group/col relative flex flex-col min-h-0 rounded-2xl border overflow-hidden transition ${
+                  isDropTarget
+                    ? 'bg-pink-50/75 border-2 border-pink-500 ring-2 ring-pink-300/90 shadow-[0_0_0_3px_rgba(236,72,153,0.18),0_8px_20px_rgba(147,51,234,0.16)]'
+                    : hasOverdue
                     ? 'bg-white border-2 border-rose-400 shadow-[0_0_0_2px_rgba(244,63,94,0.16),0_4px_14px_rgba(244,63,94,0.18)]'
                     : hasDueToday
                     ? 'bg-white border-2 border-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.2),0_4px_14px_rgba(245,158,11,0.18)]'
@@ -382,10 +416,14 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                   ) : (
                     items.map((item) => {
                       const isUpdating = togglingTaskId === item.parentTask.id;
+                      const isBeingDragged = draggingItemId === item.id;
                       return (
                         <div
                           key={item.id}
-                          className={`group/card p-2 rounded-xl border transition shadow-2xs ${
+                          onPointerDown={(e) => onStartItemDrag?.(item, e)}
+                          className={`group/card p-2 rounded-xl border transition shadow-2xs select-none cursor-grab active:cursor-grabbing ${
+                            isBeingDragged ? 'opacity-35 scale-[0.97] border-dashed' : ''
+                          } ${
                             item.isCompleted
                               ? 'bg-emerald-50/60 border-emerald-200/80 opacity-75'
                               : item.type === 'subtask'
@@ -424,8 +462,11 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
 
                             <div
                               className="flex-1 min-w-0 cursor-pointer"
-                              onClick={() => onEditTask(item.parentTask)}
-                              title="Click to edit task"
+                              onClick={() => {
+                                if (shouldSuppressClick?.()) return;
+                                onEditTask(item.parentTask);
+                              }}
+                              title="Click to edit, or hold & drag to another day"
                             >
                               {item.type === 'subtask' && (
                                 <div className="flex items-center gap-0.5 text-[9px] font-bold text-purple-600 truncate mb-0.5">
@@ -454,7 +495,21 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                                 >
                                   {item.categoryName}
                                 </span>
-                                <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover/card:opacity-100 transition shrink-0" />
+                                <div className="flex items-center gap-0.5 shrink-0">
+                                  <Pencil className="w-3 h-3 text-gray-400 group-hover/card:text-blue-600 transition" />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onRequestDeleteItem(item);
+                                    }}
+                                    className="p-0.5 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50/90 transition"
+                                    title={item.type === 'subtask' ? 'Delete subtask' : 'Delete task'}
+                                    aria-label={`Delete ${item.title}`}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -463,6 +518,14 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                     })
                   )}
                 </div>
+
+                {isDropTarget && (
+                  <div className="pointer-events-none absolute inset-x-2 bottom-2 flex justify-center">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-md">
+                      {isPendingDropTarget ? 'Move / Copy' : 'Drop here'}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}

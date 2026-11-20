@@ -13,8 +13,10 @@ A fast, modular productivity web application for managing period-based tasks, da
 ## ✨ Key Features
 
 ### 📋 Task Management
-- **Deadline Calendar Overview**: 🗓️ Interactive **Month View** & **7-Day Week Comparison Board** accessible directly from the Task Hub—inspect past and future deadlines for both main tasks and subtask milestones, jump between nearby deadlines (`±7 days`), toggle completion, edit, or schedule tasks on any date across Desktop, iPad, and Mobile.
-  - Clear 1-to-1 status color language: **Red Aura** (Overdue), **Yellow Aura** (Due Today), **Purple** (Upcoming), **Green** (All Done), **Dashed Chip `↳`** (Subtask), paired with Thai day-of-week header colors (`Sun`–`Sat`).
+- **Deadline Calendar Overview**: 🗓️ Interactive **Month View** & **7-Day Week Comparison Board** accessible directly from the Task Hub—inspect past and future deadlines for both main tasks and subtask milestones, jump between nearby deadlines (`±7 days`), toggle completion, edit, delete tasks/subtasks, or schedule new items on any date across Desktop, iPad, and Mobile.
+  - **Drag to Move or Duplicate Across Dates**: Hold & drag any task or subtask from Month View chips, the Day Inspector, or Week View columns onto any other date (including adjacent-month trailing/leading cells) with a 60fps floating drag ghost, then pick **Move** or **Duplicate (`(Copy)`)** from a crisp drop popover—backed by instant optimistic UI updates and automatic subtask date shifting.
+  - **Quick Month & Year Picker**: Click the calendar month label to open a 12-month and 12-year jump grid with deadline indicators for navigating distant dates in two taps, paired with a compact single-row desktop header and full-width mobile controls.
+  - **Clear 1-to-1 Status Color Language**: **Red Aura** (Overdue), **Yellow Aura** (Due Today), **Purple** (Upcoming), **Green** (All Done), **Dashed Chip `↳`** (Subtask), paired with Thai day-of-week header colors (`Sun`–`Sat`).
 - **Subtask Checklists & Individual Deadlines**: 📅 Actionable checklists with live progress bars, auto-sync completion, per-subtask due dates (editable inline and in modals), chronological sorting, and a **"Next Up" subtask indicator** on task cards.
 - **Smart Effective Deadline Prioritization**: 🚀 Parent tasks automatically bubble up based on the earliest deadline among the main task and its incomplete subtasks, keeping urgent milestones visible.
 - **Unified Search & Quick Filters**: 🔍 Real-time deferred search across titles, descriptions, categories, and subtask titles, paired with category and deadline quick filters (`Due Today`, `Overdue`, `Due in 7 Days`) synced across **List** and **Table** views.
@@ -133,12 +135,12 @@ src/
 │   ├── habitService.ts                 # Daily habit CRUD, completion & quantitative progress logs
 │   ├── habitSetService.ts              # Routine preset (HabitSet) CRUD & deduplication
 │   ├── taskPresetService.ts            # Task period (TaskPreset) CRUD & deduplication
-│   ├── taskService.ts                  # Task CRUD, subtask normalization & duplication
+│   ├── taskService.ts                  # Task CRUD, subtask normalization & date-aware duplication
 │   └── userService.ts                  # User profile CRUD & avatar upload/normalization
 ├── components/
 │   ├── ui/                             # Shared primitives (ConfirmDialog, Toast, ClickSparkEffect, TimePickerInput)
 │   ├── tasks/                          # TaskItem, TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
-│   │   └── calendar/                   # TaskCalendarModal, CalendarMonthView, CalendarDayInspector, CalendarWeekView
+│   │   └── calendar/                   # TaskCalendarModal, CalendarMonthView, CalendarDayInspector, CalendarWeekView, CalendarMonthYearPicker, CalendarDragOverlay, useCalendarDrag
 │   ├── habits/                         # HabitCard, HabitFormModal, HabitsTable, HabitTimeline, ContributionHeatmap, RoutineSelectorDropdown
 │   ├── analytics/                      # HabitAnalyticsCard
 │   ├── settings/                       # SettingsModal, ProfileThemeTab, DataDangerZoneTab, ImportBackupDialog, DeleteAccountDialog

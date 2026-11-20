@@ -38,7 +38,7 @@ export function ToastContainer() {
   }, []);
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[10000] flex flex-col gap-2.5 items-center pointer-events-none px-4 w-full max-w-md">
+    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[10000] flex flex-col gap-2.5 items-center pointer-events-none px-4 w-full sm:w-auto max-w-[calc(100vw-1rem)] sm:max-w-[min(92vw,760px)]">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onDismiss={removeToast} />
       ))}
@@ -88,7 +88,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: (id: 
 
   return (
     <div
-      className={`pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border text-white text-xs sm:text-sm font-semibold shadow-xl ${styleClasses} w-full transition-[transform,opacity] duration-250 ease-out will-change-transform ${
+      className={`pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border text-white text-xs sm:text-sm font-semibold shadow-xl ${styleClasses} w-full sm:w-auto sm:min-w-[260px] max-w-full transition-[transform,opacity] duration-250 ease-out will-change-transform ${
         isVisible && !isExiting
           ? 'opacity-100 translate-y-0 scale-100'
           : 'opacity-0 translate-y-3 scale-95'

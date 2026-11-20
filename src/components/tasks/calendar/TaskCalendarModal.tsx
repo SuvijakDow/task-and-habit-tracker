@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   addDays,
@@ -17,6 +17,7 @@ import {
 } from 'date-fns';
 import {
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Columns3,
@@ -33,6 +34,10 @@ import { CalendarDeadlineItem, NearbyDeadlineDay } from './calendarTypes';
 import { CalendarMonthView } from './CalendarMonthView';
 import { CalendarDayInspector } from './CalendarDayInspector';
 import { CalendarWeekView } from './CalendarWeekView';
+import { useCalendarDrag } from './useCalendarDrag';
+import { CalendarDragGhost, CalendarDropActionPopover } from './CalendarDragOverlay';
+import { CalendarMonthYearPicker } from './CalendarMonthYearPicker';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface TaskCalendarModalProps {
   isOpen: boolean;
@@ -45,7 +50,13 @@ interface TaskCalendarModalProps {
   onToggleTaskCompletion: (taskId: string, currentStatus: boolean) => void;
   onToggleSubtask: (taskId: string, subtaskId: string) => void;
   onEditTask: (task: Task) => void;
+  onDeleteTask: (taskId: string) => Promise<void> | void;
+  onDeleteSubtask: (taskId: string, subtaskId: string) => Promise<void> | void;
   onAddTaskForDate: (dateStr: string) => void;
+  onMoveTaskDate: (taskId: string, targetDateKey: string) => void;
+  onDuplicateTaskToDate: (task: Task, targetDateKey: string) => void;
+  onMoveSubtaskDate: (taskId: string, subtaskId: string, targetDateKey: string) => void;
+  onDuplicateSubtaskToDate: (taskId: string, subtaskId: string, targetDateKey: string) => void;
   togglingTaskId: string | null;
 }
 
@@ -60,7 +71,13 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
   onToggleTaskCompletion,
   onToggleSubtask,
   onEditTask,
+  onDeleteTask,
+  onDeleteSubtask,
   onAddTaskForDate,
+  onMoveTaskDate,
+  onDuplicateTaskToDate,
+  onMoveSubtaskDate,
+  onDuplicateSubtaskToDate,
   togglingTaskId,
 }) => {
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
@@ -68,6 +85,20 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [hideCompleted, setHideCompleted] = useState(false);
   const [scopeAllPresets, setScopeAllPresets] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<CalendarDeadlineItem | null>(null);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const monthPickerTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const {
+    activeDrag,
+    hoveredDateKey,
+    pendingDrop,
+    ghostRef,
+    startItemDrag,
+    dismissPendingDrop,
+    shouldSuppressClick,
+  } = useCalendarDrag(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,6 +114,8 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
       const now = new Date();
       setAnchorDate(now);
       setSelectedDate(now);
+      setIsMonthPickerOpen(false);
+      setDeletingItem(null);
     }
   }, [isOpen]);
 
@@ -204,6 +237,27 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
     return results.slice(0, 6);
   }, [selectedDate, itemsByDate]);
 
+  const activeYearMonths = useMemo(() => {
+    const set = new Set<string>();
+    itemsByDate.forEach((_items, dateKey) => {
+      if (dateKey.length >= 7) {
+        set.add(dateKey.slice(0, 7));
+      }
+    });
+    return set;
+  }, [itemsByDate]);
+
+  const handleSelectMonthYear = (year: number, monthIndex: number) => {
+    const target =
+      year === today.getFullYear() && monthIndex === today.getMonth()
+        ? new Date(today)
+        : new Date(year, monthIndex, 1);
+    setAnchorDate(target);
+    if (viewMode === 'week') {
+      setSelectedDate(target);
+    }
+  };
+
   const handlePrev = () => {
     if (viewMode === 'month') {
       setAnchorDate(subMonths(anchorDate, 1));
@@ -245,6 +299,50 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
     }
   };
 
+  const handleConfirmDropMove = () => {
+    if (!pendingDrop) return;
+    const { item, targetDateKey } = pendingDrop;
+    dismissPendingDrop();
+    if (item.type === 'task') {
+      onMoveTaskDate(item.parentTask.id, targetDateKey);
+    } else if (item.subtask) {
+      onMoveSubtaskDate(item.parentTask.id, item.subtask.id, targetDateKey);
+    }
+  };
+
+  const handleConfirmDropDuplicate = () => {
+    if (!pendingDrop) return;
+    const { item, targetDateKey } = pendingDrop;
+    dismissPendingDrop();
+    if (item.type === 'task') {
+      onDuplicateTaskToDate(item.parentTask, targetDateKey);
+    } else if (item.subtask) {
+      onDuplicateSubtaskToDate(item.parentTask.id, item.subtask.id, targetDateKey);
+    }
+  };
+
+  const handleConfirmDeleteItem = async () => {
+    if (!deletingItem || isDeletingItem) return;
+    setIsDeletingItem(true);
+    try {
+      if (deletingItem.type === 'task') {
+        await onDeleteTask(deletingItem.parentTask.id);
+      } else if (deletingItem.subtask) {
+        await onDeleteSubtask(deletingItem.parentTask.id, deletingItem.subtask.id);
+      }
+      setDeletingItem(null);
+    } finally {
+      setIsDeletingItem(false);
+    }
+  };
+
+  const highlightedDropDateKey = pendingDrop
+    ? pendingDrop.targetDateKey
+    : activeDrag && hoveredDateKey && hoveredDateKey !== activeDrag.item.dateKey
+    ? hoveredDateKey
+    : null;
+  const draggingItemId = activeDrag?.item.id ?? null;
+
   const isViewingCurrentPeriod =
     viewMode === 'month'
       ? isSameMonth(anchorDate, today)
@@ -269,30 +367,33 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-slate-950/45 sm:backdrop-blur-xs flex items-end sm:items-center justify-center z-[9990] p-0 sm:p-3 md:p-5 overflow-hidden"
-      onClick={onClose}
+      className="fixed inset-0 bg-slate-950/45 sm:backdrop-blur-xs flex items-end sm:items-center justify-center z-[9990] p-0 sm:p-2 md:p-3 overflow-hidden"
+      onClick={() => {
+        if (activeDrag || pendingDrop || deletingItem || shouldSuppressClick()) return;
+        onClose();
+      }}
     >
       <div
-        className="modal-enter w-full sm:max-w-6xl h-dvh sm:h-[90dvh] max-h-dvh sm:max-h-[calc(100dvh-2rem)] flex flex-col bg-[#3b0764] border-0 sm:ring-1 sm:ring-purple-950/30 rounded-none sm:rounded-3xl shadow-[0_24px_60px_rgba(59,7,100,0.38)] overflow-hidden"
+        className="modal-enter w-full sm:max-w-6xl h-dvh sm:h-[94dvh] max-h-dvh sm:max-h-[calc(100dvh-1rem)] flex flex-col bg-[#3b0764] border-0 sm:ring-1 sm:ring-purple-950/30 rounded-none sm:rounded-3xl shadow-[0_24px_60px_rgba(59,7,100,0.38)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Modal Header — Rich Signature Dark Plum-Violet Banner matching Task Hub */}
-        <div className="relative overflow-hidden px-3.5 sm:px-6 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2.5 sm:pt-2.5 sm:pb-3.5 border-b border-pink-400/25 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white shrink-0 space-y-2 sm:space-y-2.5">
-          <div className="pointer-events-none absolute -right-12 -top-12 w-44 h-44 rounded-full bg-pink-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute -left-12 -bottom-12 w-44 h-44 rounded-full bg-amber-400/15 blur-3xl" />
+        {/* Compact Single-Row Desktop / Tight Mobile Header */}
+        <div className="relative overflow-hidden px-3 sm:px-4 pt-[max(0.35rem,env(safe-area-inset-top))] pb-2 sm:pt-1.5 sm:pb-2 border-b border-pink-400/25 bg-gradient-to-br from-[#3b0764] via-[#581c87] to-[#701a75] text-white shrink-0">
+          <div className="pointer-events-none absolute -right-12 -top-12 w-40 h-40 rounded-full bg-pink-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -left-12 -bottom-12 w-40 h-40 rounded-full bg-amber-400/15 blur-3xl" />
 
-          {/* Row 1: Title, Summary & Close */}
-          <div className="relative z-10 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-white/15 border border-white/25 text-amber-300 flex items-center justify-center shadow-sm shrink-0">
-                <CalendarDays className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight leading-tight truncate">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-1.5 lg:gap-2">
+            {/* Title, Period Badge & Mobile Close */}
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-7 w-7 rounded-lg bg-white/15 border border-white/25 text-amber-300 flex items-center justify-center shadow-xs shrink-0">
+                  <CalendarDays className="w-4 h-4" />
+                </div>
+                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-black text-white tracking-tight leading-none truncate">
                     Deadline Calendar
                   </h2>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/15 text-amber-300 border border-white/20 shadow-2xs">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-amber-300 border border-white/20 leading-none shrink-0">
                     <span>{periodSummary.pending} pending</span>
                     {!hideCompleted && periodSummary.completed > 0 && (
                       <span className="text-emerald-300 font-semibold">
@@ -300,130 +401,153 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
                       </span>
                     )}
                   </span>
+                  {!scopeAllPresets && activePresetName && (
+                    <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-black/20 text-purple-200 border border-white/15 leading-none max-w-[120px] truncate">
+                      {activePresetName}
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] sm:text-xs text-purple-200/90 font-medium leading-tight mt-0.5 truncate">
-                  {scopeAllPresets
-                    ? 'Showing all periods · tasks & subtask milestones'
-                    : `${activePresetName ? `Period: ${activePresetName} · ` : ''}Tasks & subtask deadlines`}
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white/15 hover:bg-white/25 text-purple-100 hover:text-white border border-white/25 transition flex items-center justify-center shrink-0 shadow-xs"
-              aria-label="Close calendar"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
-
-          {/* Row 2: Navigation, View Mode Switcher & Quick Toggles */}
-          <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="inline-flex items-center bg-white/15 rounded-xl border border-white/25 p-0.5 shadow-xs">
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg text-purple-100 hover:text-white hover:bg-white/20 flex items-center justify-center transition"
-                  title={viewMode === 'month' ? 'Previous month' : 'Previous week'}
-                  aria-label={viewMode === 'month' ? 'Previous month' : 'Previous week'}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="px-2 sm:px-3 text-xs sm:text-sm font-extrabold text-white min-w-[118px] sm:min-w-[155px] text-center select-none">
-                  {headerDateLabel}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg text-purple-100 hover:text-white hover:bg-white/20 flex items-center justify-center transition"
-                  title={viewMode === 'month' ? 'Next month' : 'Next week'}
-                  aria-label={viewMode === 'month' ? 'Next month' : 'Next week'}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
 
               <button
                 type="button"
-                onClick={handleJumpToday}
-                className={`h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl text-xs font-bold border transition shadow-xs ${
-                  isViewingCurrentPeriod && isSameDay(selectedDate, today)
-                    ? 'bg-amber-400 text-purple-950 border-amber-300'
-                    : 'bg-white/15 text-white border-white/25 hover:bg-white/25'
-                }`}
+                onClick={onClose}
+                className="lg:hidden h-7 w-7 rounded-full bg-white/15 hover:bg-white/25 text-purple-100 hover:text-white border border-white/25 transition flex items-center justify-center shrink-0 shadow-xs"
+                aria-label="Close calendar"
               >
-                Today
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setHideCompleted((prev) => !prev)}
-                className={`h-8 sm:h-9 px-2.5 rounded-xl text-[11px] sm:text-xs font-semibold border inline-flex items-center gap-1.5 transition shadow-xs ${
-                  hideCompleted
-                    ? 'bg-pink-500 text-white border-pink-400'
-                    : 'bg-white/15 text-purple-100 border-white/25 hover:bg-white/25 hover:text-white'
-                }`}
-                title={hideCompleted ? 'Showing pending only' : 'Showing all tasks (including completed)'}
-              >
-                {hideCompleted ? (
-                  <EyeOff className="w-3.5 h-3.5" />
-                ) : (
-                  <Eye className="w-3.5 h-3.5 text-pink-200" />
-                )}
-                <span>{hideCompleted ? 'Pending only' : 'All status'}</span>
-              </button>
+            {/* Navigation, Quick Toggles, View Switcher & Desktop Close */}
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between lg:justify-end gap-1.5">
+              {/* Mobile: Full-width Date Selector + Today */}
+              <div className="flex items-center gap-1.5 sm:gap-1 w-full sm:w-auto">
+                <div className="flex sm:inline-flex flex-1 sm:flex-none items-center justify-between bg-white/15 rounded-lg border border-white/25 p-0.5 shadow-xs">
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    className="h-7 w-8 sm:h-7 sm:w-7 rounded-md text-purple-100 hover:text-white hover:bg-white/20 flex items-center justify-center transition shrink-0"
+                    title={viewMode === 'month' ? 'Previous month' : 'Previous week'}
+                    aria-label={viewMode === 'month' ? 'Previous month' : 'Previous week'}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    ref={monthPickerTriggerRef}
+                    type="button"
+                    onClick={() => setIsMonthPickerOpen((prev) => !prev)}
+                    className={`flex-1 sm:flex-none h-7 px-2 rounded-md text-xs font-extrabold text-white min-w-[116px] sm:min-w-[138px] inline-flex items-center justify-center gap-1 transition select-none leading-none ${
+                      isMonthPickerOpen ? 'bg-white/25' : 'hover:bg-white/20'
+                    }`}
+                    title="Click to jump to any month or year"
+                    aria-expanded={isMonthPickerOpen}
+                    aria-haspopup="dialog"
+                  >
+                    <span className="truncate">{headerDateLabel}</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-purple-200 shrink-0 transition-transform duration-150 ${
+                        isMonthPickerOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="h-7 w-8 sm:h-7 sm:w-7 rounded-md text-purple-100 hover:text-white hover:bg-white/20 flex items-center justify-center transition shrink-0"
+                    title={viewMode === 'month' ? 'Next month' : 'Next week'}
+                    aria-label={viewMode === 'month' ? 'Next month' : 'Next week'}
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
-              {hasMultiplePresets && (
                 <button
                   type="button"
-                  onClick={() => setScopeAllPresets((prev) => !prev)}
-                  className={`h-8 sm:h-9 px-2.5 rounded-xl text-[11px] sm:text-xs font-semibold border inline-flex items-center gap-1.5 transition shadow-xs ${
-                    scopeAllPresets
+                  onClick={handleJumpToday}
+                  className={`h-8 sm:h-8 px-3.5 sm:px-2.5 rounded-lg text-[11px] font-bold border transition shadow-xs shrink-0 ${
+                    isViewingCurrentPeriod && isSameDay(selectedDate, today)
+                      ? 'bg-amber-400 text-purple-950 border-amber-300'
+                      : 'bg-white/15 text-white border-white/25 hover:bg-white/25'
+                  }`}
+                >
+                  Today
+                </button>
+              </div>
+
+              {/* Mobile: Full-width Filter & View Switcher Row */}
+              <div className="flex items-center gap-1.5 sm:gap-1.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setHideCompleted((prev) => !prev)}
+                  className={`flex-1 sm:flex-none h-8 px-2 rounded-lg text-[11px] font-semibold border inline-flex items-center justify-center gap-1 transition shadow-xs whitespace-nowrap ${
+                    hideCompleted
                       ? 'bg-pink-500 text-white border-pink-400'
                       : 'bg-white/15 text-purple-100 border-white/25 hover:bg-white/25 hover:text-white'
                   }`}
-                  title="Switch between current period and all periods"
+                  title={hideCompleted ? 'Showing pending only' : 'Showing all tasks (including completed)'}
                 >
-                  <Layers className={`w-3.5 h-3.5 ${scopeAllPresets ? 'text-white' : 'text-amber-200'}`} />
-                  <span className="hidden xs:inline">
-                    {scopeAllPresets ? 'All Periods' : 'This Period'}
-                  </span>
-                  <span className="xs:hidden">{scopeAllPresets ? 'All' : 'Period'}</span>
+                  {hideCompleted ? (
+                    <EyeOff className="w-3.5 h-3.5 shrink-0" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5 text-pink-200 shrink-0" />
+                  )}
+                  <span>{hideCompleted ? 'Pending' : 'All'}</span>
                 </button>
-              )}
 
-              <div className="inline-flex items-center bg-black/20 rounded-xl border border-white/20 p-0.5 shadow-xs">
+                {hasMultiplePresets && (
+                  <button
+                    type="button"
+                    onClick={() => setScopeAllPresets((prev) => !prev)}
+                    className={`flex-1 sm:flex-none h-8 px-2 rounded-lg text-[11px] font-semibold border inline-flex items-center justify-center gap-1 transition shadow-xs whitespace-nowrap ${
+                      scopeAllPresets
+                        ? 'bg-pink-500 text-white border-pink-400'
+                        : 'bg-white/15 text-purple-100 border-white/25 hover:bg-white/25 hover:text-white'
+                    }`}
+                    title="Switch between current period and all periods"
+                  >
+                    <Layers className={`w-3.5 h-3.5 shrink-0 ${scopeAllPresets ? 'text-white' : 'text-amber-200'}`} />
+                    <span>{scopeAllPresets ? 'All Periods' : 'Period'}</span>
+                  </button>
+                )}
+
+                <div className="flex-[1.6] sm:flex-none grid grid-cols-2 sm:inline-flex items-center bg-black/20 rounded-lg border border-white/20 p-0.5 shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('month')}
+                    className={`h-7 px-2 sm:px-2.5 rounded-md text-[11px] font-bold inline-flex items-center justify-center gap-1 transition ${
+                      viewMode === 'month'
+                        ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs'
+                        : 'text-purple-100 hover:bg-white/15 hover:text-white'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                    <span>Month</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAnchorDate(selectedDate);
+                      setViewMode('week');
+                    }}
+                    className={`h-7 px-2 sm:px-2.5 rounded-md text-[11px] font-bold inline-flex items-center justify-center gap-1 transition ${
+                      viewMode === 'week'
+                        ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs'
+                        : 'text-purple-100 hover:bg-white/15 hover:text-white'
+                    }`}
+                  >
+                    <Columns3 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Week</span>
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setViewMode('month')}
-                  className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs font-bold inline-flex items-center gap-1.5 transition ${
-                    viewMode === 'month'
-                      ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs'
-                      : 'text-purple-100 hover:bg-white/15 hover:text-white'
-                  }`}
+                  onClick={onClose}
+                  className="hidden lg:flex h-8 w-8 rounded-full bg-white/15 hover:bg-white/25 text-purple-100 hover:text-white border border-white/25 transition items-center justify-center shrink-0 shadow-xs ml-0.5"
+                  aria-label="Close calendar"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Month</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAnchorDate(selectedDate);
-                    setViewMode('week');
-                  }}
-                  className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs font-bold inline-flex items-center gap-1.5 transition ${
-                    viewMode === 'week'
-                      ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xs'
-                      : 'text-purple-100 hover:bg-white/15 hover:text-white'
-                  }`}
-                >
-                  <Columns3 className="w-3.5 h-3.5" />
-                  <span>Week</span>
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -440,7 +564,12 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
               selectedDateKey={selectedDateKey}
               itemsByDate={itemsByDate}
               busyDaysCount={periodSummary.busyDays}
+              draggingItemId={draggingItemId}
+              highlightedDropDateKey={highlightedDropDateKey}
+              isPendingDropTarget={Boolean(pendingDrop)}
               onSelectDay={handleSelectDay}
+              onStartItemDrag={startItemDrag}
+              shouldSuppressClick={shouldSuppressClick}
             />
             <CalendarDayInspector
               selectedDate={selectedDate}
@@ -449,10 +578,13 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
               selectedDayItems={selectedDayItems}
               nearbyDeadlineDays={nearbyDeadlineDays}
               togglingTaskId={togglingTaskId}
+              draggingItemId={draggingItemId}
               onSelectDay={handleSelectDay}
               onToggleItem={handleToggleItem}
               onEditTask={onEditTask}
+              onRequestDeleteItem={setDeletingItem}
               onAddTaskForDate={onAddTaskForDate}
+              onStartItemDrag={startItemDrag}
             />
           </div>
         ) : (
@@ -462,13 +594,70 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
             selectedDateKey={selectedDateKey}
             itemsByDate={itemsByDate}
             togglingTaskId={togglingTaskId}
+            draggingItemId={draggingItemId}
+            highlightedDropDateKey={highlightedDropDateKey}
+            isPendingDropTarget={Boolean(pendingDrop)}
             onSelectDate={setSelectedDate}
             onToggleItem={handleToggleItem}
             onEditTask={onEditTask}
+            onRequestDeleteItem={setDeletingItem}
             onAddTaskForDate={onAddTaskForDate}
+            onStartItemDrag={startItemDrag}
+            shouldSuppressClick={shouldSuppressClick}
           />
         )}
       </div>
+
+      {/* Quick Month / Year Picker Popover */}
+      <CalendarMonthYearPicker
+        isOpen={isMonthPickerOpen}
+        anchorEl={monthPickerTriggerRef.current}
+        currentDate={anchorDate}
+        today={today}
+        activeYearMonths={activeYearMonths}
+        onSelectMonthYear={handleSelectMonthYear}
+        onJumpToday={handleJumpToday}
+        onClose={() => setIsMonthPickerOpen(false)}
+      />
+
+      {/* Smooth 60fps Drag Ghost & Drop Action Popover */}
+      <CalendarDragGhost
+        activeDrag={activeDrag}
+        hoveredDateKey={hoveredDateKey}
+        ghostRef={ghostRef}
+      />
+      <CalendarDropActionPopover
+        pendingDrop={pendingDrop}
+        onMove={handleConfirmDropMove}
+        onDuplicate={handleConfirmDropDuplicate}
+        onCancel={dismissPendingDrop}
+      />
+      <ConfirmDialog
+        isOpen={Boolean(deletingItem)}
+        title={deletingItem?.type === 'subtask' ? 'Delete Subtask?' : 'Delete Task?'}
+        description={
+          deletingItem?.type === 'subtask' ? (
+            <>
+              Remove subtask <span className="font-bold text-gray-900">"{deletingItem.title}"</span>{' '}
+              from <span className="font-semibold text-purple-800">"{deletingItem.parentTask.title}"</span>?
+            </>
+          ) : (
+            <>
+              Are you sure you want to delete{' '}
+              <span className="font-bold text-gray-900">"{deletingItem?.title}"</span>? This action
+              cannot be undone.
+            </>
+          )
+        }
+        confirmLabel="Delete"
+        loadingLabel="Deleting..."
+        isLoading={isDeletingItem}
+        tone="danger"
+        onCancel={() => {
+          if (!isDeletingItem) setDeletingItem(null);
+        }}
+        onConfirm={handleConfirmDeleteItem}
+      />
     </div>,
     document.body
   );

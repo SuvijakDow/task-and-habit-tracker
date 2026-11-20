@@ -153,15 +153,50 @@ export const deleteTask = async (taskId: string): Promise<void> => {
   }
 };
 
-export const duplicateTask = async (userId: string, task: Task): Promise<string> => {
+export const duplicateTask = async (
+  userId: string,
+  task: Task,
+  options?: { dueDate?: Date | null }
+): Promise<string> => {
   try {
+    const targetDueDate =
+      options && options.dueDate !== undefined
+        ? options.dueDate
+        : task.dueDate
+        ? new Date(task.dueDate)
+        : null;
+
+    let dayOffsetMs = 0;
+    if (options && options.dueDate !== undefined && task.dueDate && targetDueDate) {
+      const origStart = new Date(
+        task.dueDate.getFullYear(),
+        task.dueDate.getMonth(),
+        task.dueDate.getDate()
+      );
+      const nextStart = new Date(
+        targetDueDate.getFullYear(),
+        targetDueDate.getMonth(),
+        targetDueDate.getDate()
+      );
+      dayOffsetMs = nextStart.getTime() - origStart.getTime();
+    }
+
     const rawSubtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
-    const newSubtasks = rawSubtasks.map((st, index) => ({
-      id: `st-${Date.now()}-${index}`,
-      title: st.title || '',
-      isCompleted: false,
-      ...(st.dueDate ? { dueDate: st.dueDate } : {}),
-    }));
+    const newSubtasks = rawSubtasks.map((st, index) => {
+      let shiftedDueDate = st.dueDate;
+      if (st.dueDate && dayOffsetMs !== 0) {
+        const parsed = toLocalDate(st.dueDate);
+        if (parsed) {
+          shiftedDueDate = formatToDateString(new Date(parsed.getTime() + dayOffsetMs));
+        }
+      }
+      return {
+        id: `st-${Date.now()}-${index}`,
+        title: st.title || '',
+        isCompleted: false,
+        ...(shiftedDueDate ? { dueDate: shiftedDueDate } : {}),
+      };
+    });
 
     const duplicateTitle = task.title.endsWith('(Copy)') ? task.title : `${task.title} (Copy)`;
 
@@ -169,7 +204,7 @@ export const duplicateTask = async (userId: string, task: Task): Promise<string>
       title: duplicateTitle,
       description: task.description || '',
       category: task.category,
-      dueDate: task.dueDate ? new Date(task.dueDate) : null,
+      dueDate: targetDueDate,
       isCompleted: false,
       isStarred: Boolean(task.isStarred),
       setId: task.setId,

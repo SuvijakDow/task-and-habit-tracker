@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Check, CheckCircle2, CornerDownRight, Pencil, Plus, Sparkles, Star } from 'lucide-react';
+import { Check, CheckCircle2, CornerDownRight, GripVertical, Pencil, Plus, Sparkles, Star, Trash2 } from 'lucide-react';
 import { Task } from '@/types';
 import { getDeadlineStatus } from '@/utils/dateUtils';
 import { hexToRgba } from '@/utils/colorUtils';
@@ -14,10 +14,13 @@ interface CalendarDayInspectorProps {
   selectedDayItems: CalendarDeadlineItem[];
   nearbyDeadlineDays: NearbyDeadlineDay[];
   togglingTaskId: string | null;
+  draggingItemId?: string | null;
   onSelectDay: (day: Date) => void;
   onToggleItem: (item: CalendarDeadlineItem) => void;
   onEditTask: (task: Task) => void;
+  onRequestDeleteItem: (item: CalendarDeadlineItem) => void;
   onAddTaskForDate: (dateStr: string) => void;
+  onStartItemDrag?: (item: CalendarDeadlineItem, e: React.PointerEvent) => void;
 }
 
 export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
@@ -27,10 +30,13 @@ export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
   selectedDayItems,
   nearbyDeadlineDays,
   togglingTaskId,
+  draggingItemId = null,
   onSelectDay,
   onToggleItem,
   onEditTask,
+  onRequestDeleteItem,
   onAddTaskForDate,
+  onStartItemDrag,
 }) => {
   const selectedDateStatus = getDeadlineStatus(selectedDate);
 
@@ -112,10 +118,14 @@ export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
         ) : (
           selectedDayItems.map((item) => {
             const isUpdating = togglingTaskId === item.parentTask.id;
+            const isBeingDragged = draggingItemId === item.id;
             return (
               <div
                 key={item.id}
-                className={`p-3 rounded-2xl border transition shadow-xs ${
+                onPointerDown={(e) => onStartItemDrag?.(item, e)}
+                className={`group/insp p-3 rounded-2xl border transition shadow-xs select-none cursor-grab active:cursor-grabbing ${
+                  isBeingDragged ? 'opacity-40 scale-[0.98] border-dashed' : ''
+                } ${
                   item.isCompleted
                     ? 'bg-emerald-50/75 border-emerald-200/95'
                     : 'bg-white border-purple-200 hover:border-purple-400'
@@ -124,6 +134,7 @@ export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
                   borderLeftWidth: '4px',
                   borderLeftColor: item.isCompleted ? '#10b981' : item.categoryColor,
                 }}
+                title="Hold & drag onto a calendar date to move or duplicate"
               >
                 <div className="flex items-start gap-2.5">
                   <button
@@ -166,15 +177,32 @@ export const CalendarDayInspector: React.FC<CalendarDayInspectorProps> = ({
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onEditTask(item.parentTask)}
-                        className="h-6 w-6 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center shrink-0 transition"
-                        title="Edit task"
-                        aria-label={`Edit ${item.parentTask.title}`}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <span
+                          className="hidden sm:inline-flex h-6 w-4 items-center justify-center text-purple-300 opacity-0 group-hover/insp:opacity-100 transition"
+                          aria-hidden="true"
+                        >
+                          <GripVertical className="w-3.5 h-3.5" />
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onEditTask(item.parentTask)}
+                          className="h-6 w-6 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center shrink-0 transition"
+                          title="Edit task"
+                          aria-label={`Edit ${item.parentTask.title}`}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onRequestDeleteItem(item)}
+                          className="h-6 w-6 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center shrink-0 transition"
+                          title={item.type === 'subtask' ? 'Delete subtask' : 'Delete task'}
+                          aria-label={`Delete ${item.title}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     {item.type === 'task' && item.parentTask.description && (
