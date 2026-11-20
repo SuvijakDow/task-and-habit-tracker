@@ -28,7 +28,14 @@ import { ManageTaskPresetsModal } from '@/components/modals/ManageTaskPresetsMod
 import { TaskFormModal, TaskFormSubmitData } from '@/components/modals/TaskFormModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
-import { playSuccessSound } from '@/utils/audio';
+import {
+  playActionSound,
+  playCheckSound,
+  playDeleteSound,
+  playStarSound,
+  playSuccessSound,
+  playUncheckSound,
+} from '@/utils/audio';
 import { buildCategoryMap, getCategoryErrorMessage } from '@/utils/categoryUtils';
 import {
   formatShortDueDateDisplay,
@@ -207,12 +214,15 @@ export function TasksPage() {
   const handleCreateTaskSubmit = useCallback(async (data: TaskFormSubmitData) => {
     if (!user) return;
 
+    const initialCompleted =
+      data.subtasks.length > 0 && data.subtasks.every((st) => st.isCompleted);
+
     const createdTaskId = await createTask(user.uid, {
       title: data.title,
       description: data.description,
       category: data.category,
       dueDate: data.dueDate,
-      isCompleted: false,
+      isCompleted: initialCompleted,
       setId: data.setId,
       subtasks: data.subtasks,
       linkChip: data.linkChip,
@@ -226,7 +236,7 @@ export function TasksPage() {
       description: data.description,
       category: data.category,
       dueDate: data.dueDate,
-      isCompleted: false,
+      isCompleted: initialCompleted,
       isStarred: false,
       setId: data.setId,
       subtasks: data.subtasks,
@@ -238,6 +248,11 @@ export function TasksPage() {
     // Update local state immediately without triggering a full collection re-fetch
     setTasks((prev) => [newTask, ...prev]);
     setIsAddModalOpen(false);
+    if (initialCompleted) {
+      playSuccessSound();
+    } else {
+      playActionSound();
+    }
   }, [user]);
 
   const handleToggleCompletion = useCallback(async (taskId: string, currentStatus: boolean) => {
@@ -247,6 +262,8 @@ export function TasksPage() {
     const newStatus = !currentStatus;
     if (newStatus) {
       playSuccessSound();
+    } else {
+      playUncheckSound();
     }
 
     const previousSubtasks = task.subtasks;
@@ -295,6 +312,11 @@ export function TasksPage() {
 
   const handleToggleStar = useCallback(async (taskId: string, currentStarred: boolean) => {
     const newStarred = !currentStarred;
+    if (newStarred) {
+      playStarSound();
+    } else {
+      playUncheckSound();
+    }
 
     // Optimistic state update
     setTasks((prevTasks) =>
@@ -317,6 +339,8 @@ export function TasksPage() {
 
     const wasAlreadyComplete = currentTask.isCompleted;
     const currentSubtasks = currentTask.subtasks || [];
+    const targetSubtask = currentSubtasks.find((st) => st.id === subtaskId);
+    const nextSubtaskDone = targetSubtask ? !targetSubtask.isCompleted : true;
     const updatedSubtasks = currentSubtasks.map((st) =>
       st.id === subtaskId ? { ...st, isCompleted: !st.isCompleted } : st
     );
@@ -324,6 +348,15 @@ export function TasksPage() {
     // When all subtasks are checked: mark task as complete
     // When any subtask is unchecked: mark task as incomplete
     const isTaskNowComplete = updatedSubtasks.length > 0 && updatedSubtasks.every((st) => st.isCompleted);
+
+    // Instant tactile audio feedback
+    if (isTaskNowComplete && !wasAlreadyComplete) {
+      playSuccessSound();
+    } else if (nextSubtaskDone) {
+      playCheckSound();
+    } else {
+      playUncheckSound();
+    }
 
     // Optimistic update
     setTasks((prevTasks) =>
@@ -347,7 +380,6 @@ export function TasksPage() {
       
       // Only show toast after successful save
       if (isTaskNowComplete && !wasAlreadyComplete) {
-        playSuccessSound();
         showToast('All subtasks completed! Task marked as done 🎉', 'success');
       }
     } catch (err) {
@@ -393,6 +425,7 @@ export function TasksPage() {
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, dueDate: targetDate } : t))
     );
+    playActionSound();
 
     try {
       await updateTask(taskId, { dueDate: targetDate });
@@ -456,6 +489,7 @@ export function TasksPage() {
       };
 
       setTasks((prev) => [optimisticTask, ...prev]);
+      playActionSound();
 
       try {
         const createdId = await duplicateTask(user.uid, task, { dueDate: targetDate });
@@ -488,6 +522,7 @@ export function TasksPage() {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t))
       );
+      playActionSound();
 
       try {
         await updateTask(taskId, { subtasks: updatedSubtasks });
@@ -542,6 +577,7 @@ export function TasksPage() {
             : t
         )
       );
+      playActionSound();
 
       try {
         await updateTask(taskId, {
@@ -566,6 +602,8 @@ export function TasksPage() {
 
     if (isCompleted) {
       playSuccessSound();
+    } else {
+      playUncheckSound();
     }
 
     try {
@@ -625,6 +663,7 @@ export function TasksPage() {
       await Promise.all(taskIds.map((taskId) => deleteTask(taskId)));
       const idSet = new Set(taskIds);
       setTasks((prev) => prev.filter((task) => !idSet.has(task.id)));
+      playDeleteSound();
       showToast(`Deleted ${taskIds.length} task(s).`, 'success');
     } catch (err) {
       showToast('Bulk delete failed. Please try again.', 'error');
@@ -639,6 +678,7 @@ export function TasksPage() {
       setTogglingTaskId(task.id);
       await duplicateTask(user.uid, task);
       await loadTasks();
+      playActionSound();
       showToast(`Duplicated "${task.title}" successfully.`, 'success');
     } catch (err) {
       showToast('Could not duplicate task. Please try again.', 'error');
@@ -655,6 +695,7 @@ export function TasksPage() {
       const tasksToDuplicate = tasksRef.current.filter((t) => idSet.has(t.id));
       await Promise.all(tasksToDuplicate.map((task) => duplicateTask(user.uid, task)));
       await loadTasks();
+      playActionSound();
       showToast(`Duplicated ${tasksToDuplicate.length} task(s).`, 'success');
     } catch (err) {
       showToast('Bulk duplicate failed. Please try again.', 'error');
@@ -675,7 +716,11 @@ export function TasksPage() {
     if (!editingTask) return;
     const taskId = editingTask.id;
     const currentTask = tasksRef.current.find((t) => t.id === taskId) || editingTask;
-    const isCompleted = currentTask.isCompleted ?? false;
+    const wasCompleted = currentTask.isCompleted ?? false;
+    const isCompleted =
+      data.subtasks.length > 0
+        ? data.subtasks.every((st) => st.isCompleted)
+        : wasCompleted;
 
     const updates: any = {
       title: data.title,
@@ -712,6 +757,15 @@ export function TasksPage() {
     );
 
     setEditingTask(null);
+    if (isCompleted && !wasCompleted) {
+      playSuccessSound();
+      showToast('All subtasks completed! Task marked as done 🎉', 'success');
+    } else if (!isCompleted && wasCompleted) {
+      playUncheckSound();
+      showToast('Task moved back to pending.', 'info');
+    } else {
+      playActionSound();
+    }
   }, [editingTask]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
@@ -723,6 +777,7 @@ export function TasksPage() {
     try {
       await deleteTask(taskId);
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      playDeleteSound();
       showToast(
         targetTask ? `Deleted "${targetTask.title}"` : 'Task deleted.',
         'success'
@@ -742,12 +797,20 @@ export function TasksPage() {
       if (!targetSubtask) return;
 
       const updatedSubtasks = currentTask.subtasks.filter((st) => st.id !== subtaskId);
+      const nextIsCompleted =
+        updatedSubtasks.length > 0
+          ? updatedSubtasks.every((st) => st.isCompleted)
+          : currentTask.isCompleted;
+
       setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, subtasks: updatedSubtasks } : t))
+        prev.map((t) =>
+          t.id === taskId ? { ...t, subtasks: updatedSubtasks, isCompleted: nextIsCompleted } : t
+        )
       );
+      playDeleteSound();
 
       try {
-        await updateTask(taskId, { subtasks: updatedSubtasks });
+        await updateTask(taskId, { subtasks: updatedSubtasks, isCompleted: nextIsCompleted });
         showToast(`Deleted subtask "${targetSubtask.title}"`, 'success');
       } catch (err) {
         console.error('Error deleting subtask:', err);
@@ -765,6 +828,7 @@ export function TasksPage() {
       await deleteTask(deletingTaskId);
       setTasks((prev) => prev.filter((t) => t.id !== deletingTaskId));
       setDeletingTaskId(null);
+      playDeleteSound();
     } catch (err) {
       showToast('Could not delete this task. Please try again.', 'error');
       console.error('Error deleting task:', err);

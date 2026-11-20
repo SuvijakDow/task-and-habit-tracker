@@ -23,6 +23,14 @@ import {
 } from '@/services/backupService';
 import { applyAppFont, getStoredFontId, preloadAllAppFonts } from '@/utils/fontUtils';
 import { GradientMode, applyGradientMode, getStoredGradientMode } from '@/utils/gradientUtils';
+import {
+  SoundTheme,
+  applySoundTheme,
+  getStoredSoundTheme,
+  playActionSound,
+  playDeleteSound,
+  playThemePreviewSound,
+} from '@/utils/audio';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 import { ProfileThemeTab } from './ProfileThemeTab';
@@ -53,6 +61,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
   const [selectedGradientMode, setSelectedGradientMode] = useState<GradientMode>(
     userProfile?.gradientMode || getStoredGradientMode()
   );
+  const [selectedSoundTheme, setSelectedSoundTheme] = useState<SoundTheme>(
+    userProfile?.soundTheme || getStoredSoundTheme()
+  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -76,6 +87,9 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
   const initialGradientModeRef = useRef<GradientMode>(
     userProfile?.gradientMode || getStoredGradientMode()
   );
+  const initialSoundThemeRef = useRef<SoundTheme>(
+    userProfile?.soundTheme || getStoredSoundTheme()
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -85,16 +99,20 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
     const avatar = userProfile?.photoURL || user?.photoURL || DEFAULT_AVATARS[0];
     const font = userProfile?.selectedFont || getStoredFontId();
     const gradientMode = userProfile?.gradientMode || getStoredGradientMode();
+    const soundTheme = userProfile?.soundTheme || getStoredSoundTheme();
 
     initialFontRef.current = font;
     initialGradientModeRef.current = gradientMode;
+    initialSoundThemeRef.current = soundTheme;
 
     setDisplayName(name);
     setSelectedAvatar(avatar);
     setSelectedFont(font);
     setSelectedGradientMode(gradientMode);
+    setSelectedSoundTheme(soundTheme);
     applyAppFont(font, false);
     applyGradientMode(gradientMode, false);
+    applySoundTheme(soundTheme, false);
     preloadAllAppFonts();
 
     setActiveTab('profile');
@@ -139,10 +157,17 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
     applyGradientMode(mode, false);
   };
 
+  const handleSoundThemeSelect = (theme: SoundTheme) => {
+    setSelectedSoundTheme(theme);
+    applySoundTheme(theme, false);
+    playThemePreviewSound(theme);
+  };
+
   const handleClose = () => {
     if (busy) return;
     applyAppFont(initialFontRef.current, false);
     applyGradientMode(initialGradientModeRef.current, false);
+    applySoundTheme(initialSoundThemeRef.current, false);
     onClose();
   };
 
@@ -177,12 +202,16 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
         photoURL: normalizeProfilePhotoURL(selectedAvatar),
         selectedFont,
         gradientMode: selectedGradientMode,
+        soundTheme: selectedSoundTheme,
       });
 
       initialFontRef.current = selectedFont;
       initialGradientModeRef.current = selectedGradientMode;
+      initialSoundThemeRef.current = selectedSoundTheme;
       applyAppFont(selectedFont, true);
       applyGradientMode(selectedGradientMode, true);
+      applySoundTheme(selectedSoundTheme, true);
+      playActionSound();
       await refreshUserProfile();
       setSuccess(true);
 
@@ -222,7 +251,10 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
 
       const result = await importUserBackupFile(user.uid, file, importMode);
 
-      if (importMode === 'replace' && (result.importedFont || result.importedGradient)) {
+      if (
+        importMode === 'replace' &&
+        (result.importedFont || result.importedGradient || result.importedSoundTheme)
+      ) {
         if (result.importedFont) {
           setSelectedFont(result.importedFont);
           initialFontRef.current = result.importedFont;
@@ -233,9 +265,15 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
           initialGradientModeRef.current = result.importedGradient;
           applyGradientMode(result.importedGradient, true);
         }
+        if (result.importedSoundTheme) {
+          const resolved = applySoundTheme(result.importedSoundTheme, true);
+          setSelectedSoundTheme(resolved);
+          initialSoundThemeRef.current = resolved;
+        }
         await updateUserProfile(user.uid, {
           selectedFont: result.importedFont || selectedFont,
           gradientMode: result.importedGradient || selectedGradientMode,
+          soundTheme: result.importedSoundTheme || selectedSoundTheme,
         });
         await refreshUserProfile();
       }
@@ -280,6 +318,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       refreshTasks();
       refreshTaskPresets();
       refreshAnalytics();
+      playDeleteSound();
       showToast('Reset all tasks and presets.', 'success');
     } catch (err) {
       console.error('Error resetting tasks:', err);
@@ -299,6 +338,7 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
       refreshHabits();
       refreshHabitSets();
       refreshAnalytics();
+      playDeleteSound();
       showToast('Reset all habits and routine presets.', 'success');
     } catch (err) {
       console.error('Error resetting habits:', err);
@@ -412,6 +452,8 @@ export const SettingsModal = memo(function SettingsModal({ isOpen, onClose }: Se
               onSelectFont={handleFontSelect}
               selectedGradientMode={selectedGradientMode}
               onSelectGradientMode={handleGradientModeSelect}
+              selectedSoundTheme={selectedSoundTheme}
+              onSelectSoundTheme={handleSoundThemeSelect}
               disabled={busy}
             />
           ) : (

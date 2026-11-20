@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { playDropSound, playPickupSound } from '@/utils/audio';
 import { CalendarDeadlineItem } from './calendarTypes';
 
 export interface ActiveCalendarDrag {
@@ -81,6 +82,7 @@ export const useCalendarDrag = (isModalOpen: boolean) => {
       const initialHover = detectDropDateKey(x, y);
       hoveredDateKeyRef.current = initialHover;
       setHoveredDateKey(initialHover);
+      playPickupSound();
 
       if (pointerType === 'touch' && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         try {
@@ -169,6 +171,7 @@ export const useCalendarDrag = (isModalOpen: boolean) => {
       cancelDrag();
 
       if (!isCancel && finalTargetDateKey && finalTargetDateKey !== currentActive.item.dateKey) {
+        playDropSound();
         setPendingDrop({
           item: currentActive.item,
           targetDateKey: finalTargetDateKey,

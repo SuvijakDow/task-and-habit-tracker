@@ -102,6 +102,7 @@ export interface UserProfile {
   photoURL: string;
   selectedFont?: string;
   gradientMode?: 'gradient' | 'solid';
+  soundTheme?: 'bubble' | 'crisp' | 'arcade' | 'off';
   createdAt: Date;
   updatedAt: Date;
 }

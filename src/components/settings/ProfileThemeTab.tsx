@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
-import { Check, ImagePlus, Palette, Sparkles, Type, Upload } from 'lucide-react';
+import { Check, ImagePlus, Palette, Sparkles, Type, Upload, Volume2, VolumeX } from 'lucide-react';
 import { APP_FONTS } from '@/utils/fontUtils';
 import { GradientMode } from '@/utils/gradientUtils';
+import { SOUND_THEMES, SoundTheme } from '@/utils/audio';
 import { normalizeProfilePhotoURL } from '@/services/userService';
 
 interface ProfileThemeTabProps {
@@ -17,6 +18,8 @@ interface ProfileThemeTabProps {
   onSelectFont: (fontId: string) => void;
   selectedGradientMode: GradientMode;
   onSelectGradientMode: (mode: GradientMode) => void;
+  selectedSoundTheme: SoundTheme;
+  onSelectSoundTheme: (theme: SoundTheme) => void;
   disabled: boolean;
 }
 
@@ -33,6 +36,8 @@ export const ProfileThemeTab: React.FC<ProfileThemeTabProps> = ({
   onSelectFont,
   selectedGradientMode,
   onSelectGradientMode,
+  selectedSoundTheme,
+  onSelectSoundTheme,
   disabled,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -285,6 +290,68 @@ export const ProfileThemeTab: React.FC<ProfileThemeTabProps> = ({
               Vibrant & colorful gradients (Default)
             </p>
           </button>
+        </div>
+      </div>
+
+      {/* Sound Effects */}
+      <div className="p-4 rounded-2xl bg-purple-100/60 border border-purple-200/90 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <label className="text-xs font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
+            {selectedSoundTheme === 'off' ? (
+              <VolumeX className="w-4 h-4 text-purple-700 flex-shrink-0" />
+            ) : (
+              <Volume2 className="w-4 h-4 text-purple-700 flex-shrink-0" />
+            )}
+            <span className="truncate">Sound Effects</span>
+          </label>
+          <span className="text-[11px] font-semibold text-purple-700 bg-white px-2 py-0.5 rounded-md border border-purple-200/80 flex-shrink-0 whitespace-nowrap">
+            Click to preview
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {SOUND_THEMES.map((sound) => {
+            const isSelected = selectedSoundTheme === sound.id;
+            return (
+              <button
+                key={sound.id}
+                type="button"
+                data-sound="none"
+                onClick={() => onSelectSoundTheme(sound.id)}
+                disabled={disabled}
+                className={`flex flex-col text-left p-3 rounded-xl border transition-[border-color,box-shadow,background-color] duration-150 cursor-pointer relative overflow-hidden ${
+                  isSelected
+                    ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
+                    : 'bg-white/80 border-purple-100 hover:border-purple-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1.5 w-full mb-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-xs sm:text-sm font-extrabold text-gray-900 truncate">
+                      {sound.name}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${
+                        sound.id === 'off'
+                          ? 'bg-gray-100 text-gray-600 border-gray-200'
+                          : 'bg-purple-50 text-purple-700 border-purple-200/80'
+                      }`}
+                    >
+                      {sound.badge}
+                    </span>
+                  </div>
+                  {isSelected && (
+                    <div className="h-4 w-4 bg-purple-600 rounded-full flex items-center justify-center shrink-0">
+                      <Check className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-500 font-medium leading-tight">
+                  {sound.description}
+                </p>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { ArrowDown, ArrowUp, ListChecks, Plus, Settings2, Sparkles, X } from 'lucide-react';
 import { Category, Subtask, Task, TaskPreset } from '@/types';
 import { DEFAULT_TASK_CATEGORY_NAME } from '@/constants/defaults';
-import { formatToDateString, toLocalDate } from '@/utils/dateUtils';
+import { formatToDateString, parseToDate, toLocalDate } from '@/utils/dateUtils';
 import { findCategoryByTaskValue, getDefaultCategoryValue } from '@/utils/categoryUtils';
+import { playCheckSound, playUncheckSound } from '@/utils/audio';
 import { CHIP_ICON_OPTIONS, TaskSmartChip, autoDetectLinkChip } from '@/components/tasks/TaskSmartChip';
 import { SubtaskDateControl } from '@/components/tasks/SubtaskDateControl';
 
@@ -161,6 +162,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   };
 
   const handleToggleSubtask = (id: string) => {
+    const target = formData.subtasks.find((st) => st.id === id);
+    if (target) {
+      if (!target.isCompleted) {
+        playCheckSound();
+      } else {
+        playUncheckSound();
+      }
+    }
     setFormData((prev) => ({
       ...prev,
       subtasks: prev.subtasks.map((st) =>
@@ -229,7 +238,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         title: formData.title,
         description: formData.description,
         category: selectedCategory?.id || formData.category || getDefaultCategoryValue(categories),
-        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+        dueDate: formData.dueDate ? parseToDate(formData.dueDate) : null,
         setId: formData.setId || activePresetId || undefined,
         subtasks: formData.subtasks || [],
         linkChip,

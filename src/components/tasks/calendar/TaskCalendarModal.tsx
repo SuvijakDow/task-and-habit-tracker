@@ -428,6 +428,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
                 <div className="flex sm:inline-flex flex-1 sm:flex-none items-center justify-between bg-white/15 rounded-lg border border-white/25 p-0.5 shadow-xs">
                   <button
                     type="button"
+                    data-sound="switch"
                     onClick={handlePrev}
                     className="h-7 w-8 sm:h-7 sm:w-7 rounded-md text-purple-100 hover:text-white hover:bg-white/20 flex items-center justify-center transition shrink-0"
                     title={viewMode === 'month' ? 'Previous month' : 'Previous week'}
@@ -455,6 +456,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
                   </button>
                   <button
                     type="button"
+                    data-sound="switch"
                     onClick={handleNext}
                     className="h-7 w-8 sm:h-7 sm:w-7 rounded-md text-purple-100 hover:text-white hover:bg-white/20 flex items-center justify-center transition shrink-0"
                     title={viewMode === 'month' ? 'Next month' : 'Next week'}
@@ -466,6 +468,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
 
                 <button
                   type="button"
+                  data-sound="switch"
                   onClick={handleJumpToday}
                   className={`h-8 sm:h-8 px-3.5 sm:px-2.5 rounded-lg text-[11px] font-bold border transition shadow-xs shrink-0 ${
                     isViewingCurrentPeriod && isSameDay(selectedDate, today)
@@ -481,6 +484,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
               <div className="flex items-center gap-1.5 sm:gap-1.5 w-full sm:w-auto">
                 <button
                   type="button"
+                  data-sound="switch"
                   onClick={() => setHideCompleted((prev) => !prev)}
                   className={`flex-1 sm:flex-none h-8 px-2 rounded-lg text-[11px] font-semibold border inline-flex items-center justify-center gap-1 transition shadow-xs whitespace-nowrap ${
                     hideCompleted
@@ -500,6 +504,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
                 {hasMultiplePresets && (
                   <button
                     type="button"
+                    data-sound="switch"
                     onClick={() => setScopeAllPresets((prev) => !prev)}
                     className={`flex-1 sm:flex-none h-8 px-2 rounded-lg text-[11px] font-semibold border inline-flex items-center justify-center gap-1 transition shadow-xs whitespace-nowrap ${
                       scopeAllPresets
@@ -516,6 +521,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
                 <div className="flex-[1.6] sm:flex-none grid grid-cols-2 sm:inline-flex items-center bg-black/20 rounded-lg border border-white/20 p-0.5 shadow-xs">
                   <button
                     type="button"
+                    data-sound="switch"
                     onClick={() => setViewMode('month')}
                     className={`h-7 px-2 sm:px-2.5 rounded-md text-[11px] font-bold inline-flex items-center justify-center gap-1 transition ${
                       viewMode === 'month'
@@ -528,6 +534,7 @@ export const TaskCalendarModal: React.FC<TaskCalendarModalProps> = ({
                   </button>
                   <button
                     type="button"
+                    data-sound="switch"
                     onClick={() => {
                       setAnchorDate(selectedDate);
                       setViewMode('week');

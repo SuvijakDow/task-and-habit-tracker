@@ -7,6 +7,7 @@ import { createTaskPreset, getUserTaskPresets } from '@/services/taskPresetServi
 import { clearAllUserData } from '@/services/accountService';
 import { getStoredFontId } from '@/utils/fontUtils';
 import { GradientMode, getStoredGradientMode } from '@/utils/gradientUtils';
+import { SoundTheme, getStoredSoundTheme } from '@/utils/audio';
 
 export type BackupImportMode = 'replace' | 'merge';
 
@@ -17,6 +18,7 @@ export interface ImportBackupResult {
   habitsMergedCount: number;
   importedFont?: string;
   importedGradient?: GradientMode;
+  importedSoundTheme?: SoundTheme;
 }
 
 export const exportUserBackupFile = async (
@@ -33,6 +35,7 @@ export const exportUserBackupFile = async (
 
   const selectedFont = userProfile?.selectedFont || getStoredFontId();
   const gradientMode = userProfile?.gradientMode || getStoredGradientMode();
+  const soundTheme = userProfile?.soundTheme || getStoredSoundTheme();
 
   const backupObj = {
     exportDate: new Date().toISOString(),
@@ -44,6 +47,7 @@ export const exportUserBackupFile = async (
       displayName: userProfile?.displayName || user.displayName,
       selectedFont,
       gradientMode,
+      soundTheme,
     },
     data: {
       tasks: userTasks,
@@ -54,6 +58,7 @@ export const exportUserBackupFile = async (
       settings: {
         selectedFont,
         gradientMode,
+        soundTheme,
       },
     },
   };
@@ -396,6 +401,7 @@ export const importUserBackupFile = async (
 
   const importedFont = backupObj.data?.settings?.selectedFont || backupObj.user?.selectedFont;
   const importedGradient = backupObj.data?.settings?.gradientMode || backupObj.user?.gradientMode;
+  const importedSoundTheme = backupObj.data?.settings?.soundTheme || backupObj.user?.soundTheme;
 
   return {
     tasksAddedCount,
@@ -404,5 +410,6 @@ export const importUserBackupFile = async (
     habitsMergedCount,
     importedFont,
     importedGradient,
+    importedSoundTheme,
   };
 };

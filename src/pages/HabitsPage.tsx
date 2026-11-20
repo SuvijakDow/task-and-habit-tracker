@@ -24,7 +24,13 @@ import { getHabitColorHex } from '@/utils/colorUtils';
 import { sortHabitsByTodaySchedule } from '@/utils/habitSchedule';
 import { showToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { playSuccessSound } from '@/utils/audio';
+import {
+  playActionSound,
+  playCheckSound,
+  playDeleteSound,
+  playSuccessSound,
+  playUncheckSound,
+} from '@/utils/audio';
 import { HabitTimeline } from '@/components/habits/HabitTimeline';
 import { HabitCard } from '@/components/habits/HabitCard';
 import { HabitFormModal, HabitFormSubmitData } from '@/components/habits/HabitFormModal';
@@ -253,6 +259,7 @@ export function HabitsPage() {
 
       setHabits((prev) => sortHabitsByTodaySchedule([...prev, created], new Date().getDay()));
       setIsAddModalOpen(false);
+      playActionSound();
       refreshAnalytics();
     },
     [user, refreshAnalytics]
@@ -300,6 +307,7 @@ export function HabitsPage() {
         )
       );
       setEditingHabit(null);
+      playActionSound();
       refreshAnalytics();
     },
     [user, editingHabit, refreshAnalytics]
@@ -312,6 +320,7 @@ export function HabitsPage() {
       if (!habit) return;
 
       const target = habit.targetValue && habit.targetValue > 0 ? habit.targetValue : 1;
+      const previousVal = habit.dailyProgress?.[todayDate] ?? 0;
       const val =
         habit.targetValue && habit.targetValue > 0
           ? Math.min(target, Math.max(0, newProgressValue))
@@ -321,6 +330,10 @@ export function HabitsPage() {
 
       if (isCompletedNow && !wasCompleted) {
         playSuccessSound();
+      } else if (val > previousVal) {
+        playCheckSound();
+      } else if (val < previousVal) {
+        playUncheckSound();
       }
 
       const updatedDailyProgress = { ...(habit.dailyProgress || {}), [todayDate]: val };
@@ -360,6 +373,8 @@ export function HabitsPage() {
 
       if (!isCompletedToday) {
         playSuccessSound();
+      } else {
+        playUncheckSound();
       }
 
       const previousDates = [...habit.completedDates];
@@ -399,6 +414,7 @@ export function HabitsPage() {
       await deleteDailyHabit(deletingHabitId);
       setHabits((prev) => prev.filter((h) => h.id !== deletingHabitId));
       setDeletingHabitId(null);
+      playDeleteSound();
       refreshAnalytics();
     } catch (err) {
       showToast('Failed to delete habit. Please try again.', 'error');
@@ -412,6 +428,7 @@ export function HabitsPage() {
       await Promise.all(habitIds.map((id) => deleteDailyHabit(id)));
       const idSet = new Set(habitIds);
       setHabits((prev) => prev.filter((h) => !idSet.has(h.id)));
+      playDeleteSound();
       showToast(`Deleted ${habitIds.length} habit(s).`, 'success');
       refreshAnalytics();
     } catch (err) {

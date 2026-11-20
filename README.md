@@ -38,7 +38,8 @@ A fast, modular productivity web application for managing period-based tasks, da
 
 ### 🎨 Themes, Micro-Interactions & Backup
 - **60–120 FPS UI Architecture**: Optimistic Firestore mutations, isolated Add/Edit modal states, `React.memo` + `O(1)` category/date-set lookups, `content-visibility: auto` list virtualization, idle/hover route chunk prefetching, and a GPU-composited stationary ambient canvas.
-- **Tactile Polish**: GPU-accelerated **Click Spark Effect** on click/tap, skeleton shimmer loaders, hidden visual scrollbars for centered mobile layouts, and floating toast notifications.
+- **Tactile Polish & Multi-Theme Sound Engine**: GPU-accelerated **Click Spark Effect** on click/tap, singleton Web Audio API sound engine with capture-phase global click detection and distinct semantic sounds (tap, tab switch, subtask check, uncheck, completion chime, star sparkle, action pop, drag pickup/drop, delete, error) across 4 selectable sound themes (**Soft Bubble**, **Crisp Minimal**, **Playful Chime**, **Muted**) synced in Settings & JSON backups, skeleton shimmer loaders, hidden visual scrollbars, and adaptive toast notifications.
+- **Standalone PWA Ready**: Installable as a fullscreen web app (`display: standalone`) on iPadOS/iOS Safari and Android Chrome with custom high-resolution PNG icons (`192×192`, `512×512`, maskable, and `180×180` Apple touch icon) and a lightweight network-first service worker.
 - **Single-Viewport Auth Screen**: Split-panel Sign In / Sign Up showcase engineered to fit at 100% zoom across Desktop, iPad, and Mobile with Email/Password and Google Sign-In.
 - **Live Theme & Font Customization**: Switch between **Gradient Theme** and **High-Contrast Solid Color Mode** with live preview & safe Cancel revert, plus curated Thai & English Google Fonts.
 - **Full JSON Backup, Merge & Account Control**: Export v2.0 JSON backups (tasks, subtasks, deadlines, link chips, habits, categories, periods, routines, theme settings), restore via **Replace** or intelligent non-destructive **Merge** mode, reset individual modules, or permanently delete accounts with re-authentication (Email/Password & Google).
@@ -106,6 +107,11 @@ npm run preview     # Preview production build locally
 The codebase is organized cleanly by domain and architectural layer—separating UI components, pure domain utilities, constants, and Firebase service modules:
 
 ```
+public/
+├── manifest.webmanifest                # Standalone PWA manifest (iPad Safari & Android Chrome)
+├── sw.js                               # Lightweight network-first service worker (production)
+└── icons/                              # Real PNG icons (192x192, 512x512, maskable, apple-touch-icon)
+
 src/
 ├── config/
 │   └── firebase.ts                     # Firebase app, Auth & Firestore initialization
@@ -119,7 +125,7 @@ src/
 ├── types/
 │   └── index.ts                        # Shared domain interfaces (Task, DailyHabit, Category, etc.)
 ├── utils/
-│   ├── audio.ts                        # Web Audio API completion sound feedback
+│   ├── audio.ts                        # Singleton Web Audio engine, 4 sound themes & semantic UI sounds
 │   ├── categoryUtils.ts                # O(1) category map builder, display resolver & error mapping
 │   ├── colorUtils.ts                   # Shared hex validation, rgba conversion & contrast helpers
 │   ├── dateUtils.ts                    # Local date coercion, formatting & deadline status helpers
@@ -139,7 +145,7 @@ src/
 │   ├── taskService.ts                  # Task CRUD, subtask normalization & date-aware duplication
 │   └── userService.ts                  # User profile CRUD & avatar upload/normalization
 ├── components/
-│   ├── ui/                             # Shared primitives (ConfirmDialog, Toast, ClickSparkEffect, TimePickerInput)
+│   ├── ui/                             # Shared primitives (ConfirmDialog, Toast, ClickSparkEffect, GlobalSoundEffects, TimePickerInput)
 │   ├── tasks/                          # TaskItem, TasksTable, TasksFilterBar, TaskSmartChip, SubtaskDateControl
 │   │   └── calendar/                   # TaskCalendarModal, CalendarMonthView, CalendarDayInspector, CalendarWeekView, CalendarMonthYearPicker, CalendarDragOverlay, useCalendarDrag
 │   ├── habits/                         # HabitCard, HabitFormModal, HabitsTable, HabitTimeline, ContributionHeatmap, RoutineSelectorDropdown

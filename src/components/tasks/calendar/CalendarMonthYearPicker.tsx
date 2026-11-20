@@ -114,6 +114,7 @@ export const CalendarMonthYearPicker: React.FC<CalendarMonthYearPickerProps> = (
         <div className="flex items-center justify-between gap-1.5 mb-2.5 pb-2 border-b border-purple-100">
           <button
             type="button"
+            data-sound="switch"
             onClick={() => {
               if (pickingYearGrid) setYearRangeStart((prev) => prev - 12);
               else setViewYear((prev) => prev - 1);
@@ -127,6 +128,7 @@ export const CalendarMonthYearPicker: React.FC<CalendarMonthYearPickerProps> = (
 
           <button
             type="button"
+            data-sound="switch"
             onClick={() => {
               if (!pickingYearGrid) {
                 setYearRangeStart(viewYear - 4);
@@ -143,6 +145,7 @@ export const CalendarMonthYearPicker: React.FC<CalendarMonthYearPickerProps> = (
 
           <button
             type="button"
+            data-sound="switch"
             onClick={() => {
               if (pickingYearGrid) setYearRangeStart((prev) => prev + 12);
               else setViewYear((prev) => prev + 1);
@@ -169,6 +172,7 @@ export const CalendarMonthYearPicker: React.FC<CalendarMonthYearPickerProps> = (
                 <button
                   key={yr}
                   type="button"
+                  data-sound="switch"
                   onClick={() => {
                     setViewYear(yr);
                     setPickingYearGrid(false);
@@ -205,6 +209,7 @@ export const CalendarMonthYearPicker: React.FC<CalendarMonthYearPickerProps> = (
                 <button
                   key={label}
                   type="button"
+                  data-sound="switch"
                   onClick={() => {
                     onSelectMonthYear(viewYear, monthIdx);
                     onClose();

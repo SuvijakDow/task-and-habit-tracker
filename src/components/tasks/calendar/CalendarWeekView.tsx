@@ -63,6 +63,7 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
               <button
                 key={dateKey}
                 type="button"
+                data-sound="switch"
                 onClick={() => {
                   onSelectDate(day);
                   mobileDaySectionRefs.current[dateKey]?.scrollIntoView({
@@ -461,10 +462,18 @@ export const CalendarWeekView: React.FC<CalendarWeekViewProps> = ({
                             </button>
 
                             <div
+                              role="button"
+                              tabIndex={0}
                               className="flex-1 min-w-0 cursor-pointer"
                               onClick={() => {
                                 if (shouldSuppressClick?.()) return;
                                 onEditTask(item.parentTask);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  onEditTask(item.parentTask);
+                                }
                               }}
                               title="Click to edit, or hold & drag to another day"
                             >

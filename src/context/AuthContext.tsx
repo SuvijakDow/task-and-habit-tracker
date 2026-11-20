@@ -4,6 +4,7 @@ import { ensureUserProfile, getUserProfile } from '@/services/userService';
 import { UserProfile } from '@/types';
 import { applyAppFont } from '@/utils/fontUtils';
 import { applyGradientMode } from '@/utils/gradientUtils';
+import { applySoundTheme } from '@/utils/audio';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -42,6 +43,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (profile?.gradientMode) {
                 applyGradientMode(profile.gradientMode);
               }
+              if (profile?.soundTheme) {
+                applySoundTheme(profile.soundTheme);
+              }
             } catch (error) {
               console.error('Error syncing user profile:', error);
               setUserProfile(null);
@@ -75,6 +79,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         if (updated.gradientMode) {
           applyGradientMode(updated.gradientMode);
+        }
+        if (updated.soundTheme) {
+          applySoundTheme(updated.soundTheme);
         }
       }
     } catch (err) {

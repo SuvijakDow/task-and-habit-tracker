@@ -90,6 +90,7 @@ export function MainPage() {
           {navItems.map((item) => (
             <button
               key={item.key}
+              data-sound="switch"
               onClick={() => handlePageChange(item.key)}
               onMouseEnter={() => prefetchPage(item.key)}
               onFocus={() => prefetchPage(item.key)}
@@ -114,6 +115,7 @@ export function MainPage() {
           {navItems.map((item) => (
             <button
               key={item.key}
+              data-sound="switch"
               onClick={() => handlePageChange(item.key)}
               onTouchStart={() => prefetchPage(item.key)}
               className={`min-h-[42px] rounded-xl px-1 py-1.5 text-[11px] font-bold transition-all duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${

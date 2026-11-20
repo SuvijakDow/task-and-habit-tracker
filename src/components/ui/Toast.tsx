@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { playErrorSound } from '@/utils/audio';
 
 export interface ToastMessage {
   id: string;
@@ -14,6 +15,9 @@ let globalAddToast: ((message: string, type: ToastMessage['type']) => void) | nu
  * The ToastContainer must be mounted for this to work.
  */
 export function showToast(message: string, type: ToastMessage['type'] = 'error') {
+  if (type === 'error') {
+    playErrorSound();
+  }
   if (globalAddToast) {
     globalAddToast(message, type);
   }
